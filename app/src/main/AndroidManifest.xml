@@ -9,6 +9,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HikingApp">
+        <activity android:name=".SampleNavigationActivity" />
+        <activity android:name=".SampleMapActivity" />
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name">
