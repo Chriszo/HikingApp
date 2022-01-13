@@ -7,17 +7,17 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivitySampleMapBinding
+import com.example.hikingapp.persistence.MapInfo
+import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.api.directions.v5.models.DirectionsRoute
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.LineString
+import com.mapbox.geojson.FeatureCollection
+import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
 import com.mapbox.maps.extension.style.layers.generated.lineLayer
 import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
 import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
-import com.mapbox.maps.extension.style.sources.addSource
-import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
@@ -76,6 +76,7 @@ import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
  * - You should now be able to navigate to the destination with the route line and route arrows drawn.
  */
 class SampleMapActivity : AppCompatActivity() {
+
     /**
      * Debug tool used to play, pause and seek route progress events that can be used to produce mocked location updates along the route.
      */
@@ -302,25 +303,49 @@ class SampleMapActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(viewBinding.root)
-        init()
+
+        //TODO Retrieve current Route Map information
+        var routeName = savedInstanceState?.get("RouteName")
+        routeName = routeName?.let { it as String }
+        val mapInfo = retrieveMapInformation(routeName)
+
+        init(mapInfo)
     }
 
-    private fun init() {
-        initStyle()
+    private fun retrieveMapInformation(routeName: String?): MapInfo {
+
+        val jsonSource = assets.open(MockDatabase.routesMap["Philopapou"]?.second!!).readBytes()
+            .toString(Charsets.UTF_8)
+        val routeJson: MultiLineString =
+            FeatureCollection.fromJson(jsonSource).features()?.get(0)?.geometry() as MultiLineString
+
+        val origin: Point = routeJson.coordinates()[0][0]
+        val destination: Point = routeJson.coordinates()[0][routeJson.coordinates()[0].size - 1]
+
+        return MapInfo(
+            origin,
+            destination,
+            routeJson.bbox()!!,
+            routeJson,
+            MockDatabase.routesMap["Philopapou"]?.second!!
+        )
+    }
+
+    private fun init(mapInfo: MapInfo) {
+        initStyle(mapInfo)
         initNavigation()
         initListeners()
     }
 
     @SuppressLint("MissingPermission")
-    private fun initStyle() {
+    private fun initStyle(mapInfo: MapInfo) {
         mapboxMap.loadStyle(
             (
                     style(styleUri = Style.OUTDOORS) {
-                        +geoJsonSource("line") {
-//                            url("asset://seichsou_trail.geojson")
-                            url("asset://philopappou_trail.geojson")
+                        +geoJsonSource(GlobalUtils.SOURCE_ID) {
+                            url("asset://" + mapInfo.routeGeoJsonFileName)
                         }
-                        +lineLayer("linelayer", "line") {
+                        +lineLayer(GlobalUtils.LAYER_ID, GlobalUtils.SOURCE_ID) {
                             lineCap(LineCap.ROUND)
                             lineJoin(LineJoin.ROUND)
                             lineOpacity(0.7)
@@ -330,7 +355,7 @@ class SampleMapActivity : AppCompatActivity() {
                     }
                     ),
             {
-                updateCamera(Point.fromLngLat(23.71711, 37.96523), null)
+                updateCamera(mapInfo.origin!!, null)
                 viewBinding.startNavigation.visibility = View.VISIBLE
             },
             object : OnMapLoadErrorListener {
