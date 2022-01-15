@@ -1,13 +1,19 @@
 package com.example.hikingapp
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
@@ -414,6 +420,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         println("INTO CREATE")
@@ -473,11 +480,15 @@ class SampleNavigationActivity : AppCompatActivity() {
         navigationCamera.registerNavigationCameraStateChangeObserver { navigationCameraState ->
             // shows/hide the recenter button depending on the camera state
             when (navigationCameraState) {
-                NavigationCameraState.TRANSITION_TO_FOLLOWING,
-                NavigationCameraState.FOLLOWING -> binding.recenter.visibility = View.INVISIBLE
-                NavigationCameraState.TRANSITION_TO_OVERVIEW,
-                NavigationCameraState.OVERVIEW,
-                NavigationCameraState.IDLE -> binding.recenter.visibility = View.VISIBLE
+//                NavigationCameraState.TRANSITION_TO_FOLLOWING,
+//                NavigationCameraState.FOLLOWING -> binding.recenter.visibility = View.INVISIBLE
+//                NavigationCameraState.FOLLOWING -> binding.routeOverview.visibility = View.VISIBLE
+//                NavigationCameraState.TRANSITION_TO_OVERVIEW,
+//                NavigationCameraState.OVERVIEW -> binding.routeOverview.visibility = View.INVISIBLE
+//                NavigationCameraState.TRANSITION_TO_OVERVIEW,
+//                NavigationCameraState.OVERVIEW -> binding.routeOverview.visibility = View.VISIBLE
+//                NavigationCameraState.IDLE -> binding.routeOverview.visibility = View.VISIBLE
+//                NavigationCameraState.OVERVIEW -> binding.recenter.visibility = View.VISIBLE
             }
         }
         // set the padding values depending on screen orientation and visible view layout
@@ -565,7 +576,7 @@ class SampleNavigationActivity : AppCompatActivity() {
                         +lineLayer(GlobalUtils.LAYER_ID, GlobalUtils.SOURCE_ID) {
                             lineCap(LineCap.ROUND)
                             lineJoin(LineJoin.ROUND)
-                            lineOpacity(0.7)
+                            lineOpacity(1.0)
                             lineWidth(8.0)
                             lineColor("#FF0000")
                         }
@@ -604,6 +615,16 @@ class SampleNavigationActivity : AppCompatActivity() {
         binding.soundButton.setOnClickListener {
             // mute/unmute voice instructions
             isVoiceInstructionsMuted = !isVoiceInstructionsMuted
+        }
+        binding.cameraButton.setOnClickListener {
+
+            var cameraRequest = 1888
+            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
+                requestPermissions( arrayOf(Manifest.permission.CAMERA), cameraRequest)
+
+
+            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            startActivityForResult(cameraIntent, cameraRequest)
         }
 
         // set initial sounds button state
