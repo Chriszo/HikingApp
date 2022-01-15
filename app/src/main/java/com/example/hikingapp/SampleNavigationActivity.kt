@@ -10,14 +10,12 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.example.hikingapp.R
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.api.directions.v5.models.Bearing
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
-import com.mapbox.api.matching.v5.MapboxMapMatching
 import com.mapbox.bindgen.Expected
 import com.mapbox.geojson.*
 import com.mapbox.maps.EdgeInsets
@@ -71,11 +69,7 @@ import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineView
 import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineOptions
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLine
 import com.mapbox.navigation.ui.tripprogress.api.MapboxTripProgressApi
-import com.mapbox.navigation.ui.tripprogress.model.DistanceRemainingFormatter
-import com.mapbox.navigation.ui.tripprogress.model.EstimatedTimeToArrivalFormatter
-import com.mapbox.navigation.ui.tripprogress.model.PercentDistanceTraveledFormatter
-import com.mapbox.navigation.ui.tripprogress.model.TimeRemainingFormatter
-import com.mapbox.navigation.ui.tripprogress.model.TripProgressUpdateFormatter
+import com.mapbox.navigation.ui.tripprogress.model.*
 import com.mapbox.navigation.ui.tripprogress.view.MapboxTripProgressView
 import com.mapbox.navigation.ui.voice.api.MapboxSpeechApi
 import com.mapbox.navigation.ui.voice.api.MapboxVoiceInstructionsPlayer
@@ -83,8 +77,7 @@ import com.mapbox.navigation.ui.voice.model.SpeechAnnouncement
 import com.mapbox.navigation.ui.voice.model.SpeechError
 import com.mapbox.navigation.ui.voice.model.SpeechValue
 import com.mapbox.navigation.ui.voice.model.SpeechVolume
-import java.util.Locale
-import java.util.stream.IntStream
+import java.util.*
 
 /**
  * This example demonstrates a basic turn-by-turn navigation experience by putting together some UI elements to showcase
@@ -113,7 +106,7 @@ import java.util.stream.IntStream
  */
 class SampleNavigationActivity : AppCompatActivity() {
 
-    private lateinit var mapInfo: MapInfo
+    private var mapInfo: MapInfo? = null
 
     private companion object {
         private const val BUTTON_ANIMATION_DURATION = 1500L
@@ -423,14 +416,23 @@ class SampleNavigationActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
+        println("INTO CREATE")
         super.onCreate(savedInstanceState)
         binding = ActivitySampleNavigationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        retrieveMapInformation(savedInstanceState?.get("routeName") as String?)
-
-
         mapboxMap = binding.mapView.getMapboxMap()
+
+        val obj = intent.getSerializableExtra("mapInfo")
+
+        mapInfo = if (obj != null) {
+            println("Getting mapInfo from Intent")
+            obj as MapInfo
+        } else {
+            println("Getting mapInfo from retrieveMapInformation() method")
+            retrieveMapInformation(null)
+        }
+
 
         // initialize the location puck
         binding.mapView.location.apply {
@@ -558,7 +560,7 @@ class SampleNavigationActivity : AppCompatActivity() {
                     style(styleUri = Style.OUTDOORS) {
                         +geoJsonSource("line") {
 //                            url("asset://seichsou_trail.geojson")
-                            url("asset://" + mapInfo.routeGeoJsonFileName)
+                            url("asset://" + mapInfo?.routeGeoJsonFileName)
                         }
                         +lineLayer(GlobalUtils.LAYER_ID, GlobalUtils.SOURCE_ID) {
                             lineCap(LineCap.ROUND)
@@ -572,7 +574,7 @@ class SampleNavigationActivity : AppCompatActivity() {
             {
                 // In each trail, the start and end point will be constant and defined once in route initialization.
                 binding.mapView.gestures.addOnMapLongClickListener { point ->
-                    findRoute(filterRoutePoints(mapInfo.jsonRoute.coordinates()[0]))
+                    findRoute(filterRoutePoints(mapInfo?.jsonRoute!!.coordinates()[0]))
                     true
                 }
             },
@@ -614,10 +616,10 @@ class SampleNavigationActivity : AppCompatActivity() {
 
     private fun filterRoutePoints(coordinates: List<Point>): List<Point> {
         var counter = 0
-        return coordinates.filterIndexed{ index, _ -> index%10 == 0 && ++counter < 25}
+        return coordinates.filterIndexed { index, _ -> index % 10 == 0 && ++counter < 25 }
     }
 
-    private fun retrieveMapInformation(routeName: String?) {
+    private fun retrieveMapInformation(routeName: String?): MapInfo {
 
         val jsonSource = assets.open(MockDatabase.routesMap["Philopapou"]?.second!!).readBytes()
             .toString(Charsets.UTF_8)
@@ -627,7 +629,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         val origin: Point = routeJson.coordinates()[0][0]
         val destination: Point = routeJson.coordinates()[0][routeJson.coordinates()[0].size - 1]
 
-        mapInfo = MapInfo(
+        return MapInfo(
             origin,
             destination,
             routeJson.bbox()!!,
@@ -639,6 +641,7 @@ class SampleNavigationActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        println("INTO START")
 
         // register event listeners
         mapboxNavigation.registerRoutesObserver(routesObserver)
@@ -655,8 +658,7 @@ class SampleNavigationActivity : AppCompatActivity() {
                 listOf(
                     ReplayRouteMapper.mapToUpdateLocation(
                         eventTimestamp = 0.0,
-                        point = mapInfo.origin
-//                        point = Point.fromLngLat(23.72004, 37.97462)
+                        point = mapInfo!!.origin as Point
                     )
                 )
             )
@@ -676,15 +678,12 @@ class SampleNavigationActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        println("ON DESTROY CALLED")
         super.onDestroy()
         MapboxNavigationProvider.destroy()
         speechApi.cancel()
         voiceInstructionsPlayer.shutdown()
     }
-
-//    private fun matchRoute() {
-//        MapboxMapMatching.builder().coordinates()
-//    }
 
     private fun findRoute(destination: Point) {
         val originLocation = navigationLocationProvider.lastLocation

@@ -1,6 +1,7 @@
 package com.example.hikingapp
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
@@ -333,8 +334,7 @@ class SampleMapActivity : AppCompatActivity() {
 
     private fun init(mapInfo: MapInfo) {
         initStyle(mapInfo)
-        initNavigation()
-        initListeners()
+        initListeners(mapInfo)
     }
 
     @SuppressLint("MissingPermission")
@@ -367,26 +367,9 @@ class SampleMapActivity : AppCompatActivity() {
                 }
             }
         )
-
-//        mapboxMap.loadStyleUri(
-//            Style.OUTDOORS,
-//            {
-//                it.addSource(jsonSource)
-//                updateCamera(Point.fromLngLat(23.01963401852181, 40.61499579989502), null)
-//                viewBinding.startNavigation.visibility = View.VISIBLE
-//            },
-//            object : OnMapLoadErrorListener {
-//                override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
-//                    Log.e(
-//                        RenderRouteLineActivity::class.java.simpleName,
-//                        "Error loading map: " + eventData.message
-//                    )
-//                }
-//            }
-//        )
     }
 
-    @SuppressLint("MissingPermission")
+    /*@SuppressLint("MissingPermission")
     private fun initNavigation() {
         mapboxNavigation.run {
             setRoutes(listOf(hardCodedRoute))
@@ -396,19 +379,23 @@ class SampleMapActivity : AppCompatActivity() {
             registerRouteProgressObserver(replayProgressObserver)
             startTripSession()
         }
-    }
+    }*/
 
     @SuppressLint("SetTextI18n")
-    private fun initListeners() {
-        viewBinding.startNavigation.text = "Start Navigation"
+    private fun initListeners(mapInfo: MapInfo) {
         viewBinding.startNavigation.setOnClickListener {
             viewBinding.startNavigation.visibility = View.INVISIBLE
-            locationComponent.addOnIndicatorPositionChangedListener(onPositionChangedListener)
-            // RouteLine: Hiding the alternative routes when navigation starts.
-            mapboxMap.getStyle()?.apply {
-                routeLineView.hideAlternativeRoutes(this)
+            this?.let{
+                val navigationIntent: Intent = Intent(this, SampleNavigationActivity::class.java)
+//                navigationIntent.putExtra("mapInfo", mapInfo)
+                it.startActivity(navigationIntent)
             }
-            startSimulation(hardCodedRoute)
+//            locationComponent.addOnIndicatorPositionChangedListener(onPositionChangedListener)
+//            // RouteLine: Hiding the alternative routes when navigation starts.
+//            mapboxMap.getStyle()?.apply {
+//                routeLineView.hideAlternativeRoutes(this)
+//            }
+//            startSimulation(hardCodedRoute)
         }
     }
 
