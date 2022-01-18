@@ -67,6 +67,7 @@ import com.mapbox.navigation.ui.maneuver.view.MapboxManeuverView
 import com.mapbox.navigation.ui.maps.camera.NavigationCamera
 import com.mapbox.navigation.ui.maps.camera.data.MapboxNavigationViewportDataSource
 import com.mapbox.navigation.ui.maps.camera.lifecycle.NavigationBasicGesturesHandler
+import com.mapbox.navigation.ui.maps.camera.state.NavigationCameraState
 import com.mapbox.navigation.ui.maps.camera.transition.NavigationCameraTransitionOptions
 import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
 import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowApi
@@ -484,13 +485,14 @@ class SampleNavigationActivity : AppCompatActivity() {
             // shows/hide the recenter button depending on the camera state
             //TODO fix camera states
             when (navigationCameraState) {
-//                NavigationCameraState.TRANSITION_TO_FOLLOWING,
-//                NavigationCameraState.FOLLOWING -> binding.recenter.visibility = View.INVISIBLE
-//                NavigationCameraState.TRANSITION_TO_OVERVIEW,
-//                NavigationCameraState.OVERVIEW -> binding.routeOverview.visibility = View.INVISIBLE
-//                NavigationCameraState.TRANSITION_TO_OVERVIEW,
-//                NavigationCameraState.OVERVIEW -> binding.routeOverview.visibility = View.VISIBLE
-//                NavigationCameraState.IDLE -> binding.routeOverview.visibility = View.VISIBLE
+                NavigationCameraState.TRANSITION_TO_FOLLOWING -> binding.recenter.visibility =
+                    View.GONE
+                NavigationCameraState.FOLLOWING -> binding.routeOverview.visibility = View.VISIBLE
+                NavigationCameraState.TRANSITION_TO_OVERVIEW -> binding.routeOverview.visibility =
+                    View.GONE
+                NavigationCameraState.OVERVIEW -> binding.recenter.visibility = View.VISIBLE
+                NavigationCameraState.IDLE -> binding.routeOverview.visibility = View.GONE
+                NavigationCameraState.IDLE -> binding.recenter.visibility = View.VISIBLE
             }
         }
         // set the padding values depending on screen orientation and visible view layout
