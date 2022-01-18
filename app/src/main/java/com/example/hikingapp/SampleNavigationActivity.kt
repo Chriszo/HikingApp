@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -29,7 +30,9 @@ import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
+import com.mapbox.maps.extension.style.image.image
 import com.mapbox.maps.extension.style.layers.generated.lineLayer
+import com.mapbox.maps.extension.style.layers.generated.symbolLayer
 import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
 import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
@@ -64,7 +67,6 @@ import com.mapbox.navigation.ui.maneuver.view.MapboxManeuverView
 import com.mapbox.navigation.ui.maps.camera.NavigationCamera
 import com.mapbox.navigation.ui.maps.camera.data.MapboxNavigationViewportDataSource
 import com.mapbox.navigation.ui.maps.camera.lifecycle.NavigationBasicGesturesHandler
-import com.mapbox.navigation.ui.maps.camera.state.NavigationCameraState
 import com.mapbox.navigation.ui.maps.camera.transition.NavigationCameraTransitionOptions
 import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
 import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowApi
@@ -478,17 +480,17 @@ class SampleNavigationActivity : AppCompatActivity() {
             NavigationBasicGesturesHandler(navigationCamera)
         )
         navigationCamera.registerNavigationCameraStateChangeObserver { navigationCameraState ->
+            
             // shows/hide the recenter button depending on the camera state
+            //TODO fix camera states
             when (navigationCameraState) {
 //                NavigationCameraState.TRANSITION_TO_FOLLOWING,
 //                NavigationCameraState.FOLLOWING -> binding.recenter.visibility = View.INVISIBLE
-//                NavigationCameraState.FOLLOWING -> binding.routeOverview.visibility = View.VISIBLE
 //                NavigationCameraState.TRANSITION_TO_OVERVIEW,
 //                NavigationCameraState.OVERVIEW -> binding.routeOverview.visibility = View.INVISIBLE
 //                NavigationCameraState.TRANSITION_TO_OVERVIEW,
 //                NavigationCameraState.OVERVIEW -> binding.routeOverview.visibility = View.VISIBLE
 //                NavigationCameraState.IDLE -> binding.routeOverview.visibility = View.VISIBLE
-//                NavigationCameraState.OVERVIEW -> binding.recenter.visibility = View.VISIBLE
             }
         }
         // set the padding values depending on screen orientation and visible view layout
@@ -573,12 +575,41 @@ class SampleNavigationActivity : AppCompatActivity() {
 //                            url("asset://seichsou_trail.geojson")
                             url("asset://" + mapInfo?.routeGeoJsonFileName)
                         }
-                        +lineLayer(GlobalUtils.LAYER_ID, GlobalUtils.SOURCE_ID) {
+                        +lineLayer(GlobalUtils.LINE_LAYER_ID, GlobalUtils.LINE_SOURCE_ID) {
                             lineCap(LineCap.ROUND)
                             lineJoin(LineJoin.ROUND)
                             lineOpacity(1.0)
                             lineWidth(8.0)
                             lineColor("#FF0000")
+                        }
+                        +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
+                            featureCollection(
+                                FeatureCollection.fromFeatures(
+                                    listOf(
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo!!.origin.longitude(),
+                                                mapInfo!!.origin.latitude()
+                                            )
+                                        ),
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo!!.destination.longitude(),
+                                                mapInfo!!.destination.latitude()
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                        +image(GlobalUtils.RED_MARKER_ID) {
+                            bitmap(BitmapFactory.decodeResource(resources, R.drawable.red_marker))
+                        }
+                        +symbolLayer(GlobalUtils.SYMBOL_LAYER_ID, GlobalUtils.SYMBOL_SOURCE_ID) {
+                            iconImage(GlobalUtils.RED_MARKER_ID)
+                            iconAllowOverlap(true)
+                            iconSize(0.5)
+                            iconIgnorePlacement(true)
                         }
                     }
                     ),
@@ -618,9 +649,10 @@ class SampleNavigationActivity : AppCompatActivity() {
         }
         binding.cameraButton.setOnClickListener {
 
-            var cameraRequest = 1888
+            //TODO change permission granting
+            val cameraRequest = 1888
             if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
-                requestPermissions( arrayOf(Manifest.permission.CAMERA), cameraRequest)
+                requestPermissions(arrayOf(Manifest.permission.CAMERA), cameraRequest)
 
 
             val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)

@@ -2,6 +2,7 @@ package com.example.hikingapp
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
@@ -11,12 +12,15 @@ import com.example.hikingapp.databinding.ActivitySampleMapBinding
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.api.directions.v5.models.DirectionsRoute
+import com.mapbox.geojson.Feature
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
+import com.mapbox.maps.extension.style.image.image
 import com.mapbox.maps.extension.style.layers.generated.lineLayer
+import com.mapbox.maps.extension.style.layers.generated.symbolLayer
 import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
 import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
@@ -47,6 +51,7 @@ import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineOptions
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLine
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
+import kotlinx.android.synthetic.main.activity_sample_map.*
 
 /**
  * This example demonstrates the usage of the route line and route arrow API's and UI elements.
@@ -339,21 +344,50 @@ class SampleMapActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun initStyle(mapInfo: MapInfo) {
+
         mapboxMap.loadStyle(
             (
                     style(styleUri = Style.OUTDOORS) {
-                        +geoJsonSource(GlobalUtils.SOURCE_ID) {
+                        +geoJsonSource(GlobalUtils.LINE_SOURCE_ID) {
                             url("asset://" + mapInfo.routeGeoJsonFileName)
                         }
-                        +lineLayer(GlobalUtils.LAYER_ID, GlobalUtils.SOURCE_ID) {
+                        +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
+                            featureCollection(
+                                FeatureCollection.fromFeatures(
+                                    listOf(
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo.origin.longitude(),
+                                                mapInfo.origin.latitude()
+                                            )
+                                        ),
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo.destination.longitude(),
+                                                mapInfo.destination.latitude()
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                        +lineLayer(GlobalUtils.LINE_LAYER_ID, GlobalUtils.LINE_SOURCE_ID) {
                             lineCap(LineCap.ROUND)
                             lineJoin(LineJoin.ROUND)
                             lineOpacity(1.0)
                             lineWidth(8.0)
                             lineColor("#FF0000")
                         }
-                    }
-                    ),
+                        +image(GlobalUtils.RED_MARKER_ID) {
+                            bitmap(BitmapFactory.decodeResource(resources, R.drawable.red_marker))
+                        }
+                        +symbolLayer(GlobalUtils.SYMBOL_LAYER_ID, GlobalUtils.SYMBOL_SOURCE_ID) {
+                            iconImage(GlobalUtils.RED_MARKER_ID)
+                            iconAllowOverlap(true)
+                            iconSize(0.5)
+                            iconIgnorePlacement(true)
+                        }
+                    }),
             {
                 updateCamera(mapInfo.origin!!, null)
                 viewBinding.startNavigation.visibility = View.VISIBLE
@@ -385,9 +419,9 @@ class SampleMapActivity : AppCompatActivity() {
     private fun initListeners(mapInfo: MapInfo) {
         viewBinding.startNavigation.setOnClickListener {
             viewBinding.startNavigation.visibility = View.INVISIBLE
-            this?.let{
-                val navigationIntent: Intent = Intent(this, SampleNavigationActivity::class.java)
-//                navigationIntent.putExtra("mapInfo", mapInfo)
+            this?.let {
+                val navigationIntent = Intent(this, SampleNavigationActivity::class.java)
+                navigationIntent.putExtra("mapInfo", mapInfo)
                 it.startActivity(navigationIntent)
             }
 //            locationComponent.addOnIndicatorPositionChangedListener(onPositionChangedListener)
@@ -406,7 +440,7 @@ class SampleMapActivity : AppCompatActivity() {
                 .center(point)
                 .bearing(bearing)
                 .pitch(0.0)
-                .zoom(14.0)
+                .zoom(15.0)
                 .padding(EdgeInsets(1000.0, 0.0, 0.0, 0.0))
                 .build(),
             mapAnimationOptionsBuilder.build()
