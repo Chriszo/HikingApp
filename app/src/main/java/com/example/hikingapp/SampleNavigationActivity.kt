@@ -480,7 +480,7 @@ class SampleNavigationActivity : AppCompatActivity() {
             NavigationBasicGesturesHandler(navigationCamera)
         )
         navigationCamera.registerNavigationCameraStateChangeObserver { navigationCameraState ->
-            
+
             // shows/hide the recenter button depending on the camera state
             //TODO fix camera states
             when (navigationCameraState) {

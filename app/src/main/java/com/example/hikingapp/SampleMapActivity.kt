@@ -12,10 +12,7 @@ import com.example.hikingapp.databinding.ActivitySampleMapBinding
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.api.directions.v5.models.DirectionsRoute
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.FeatureCollection
-import com.mapbox.geojson.MultiLineString
-import com.mapbox.geojson.Point
+import com.mapbox.geojson.*
 import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
 import com.mapbox.maps.extension.style.image.image
@@ -389,7 +386,7 @@ class SampleMapActivity : AppCompatActivity() {
                         }
                     }),
             {
-                updateCamera(mapInfo.origin!!, null)
+                updateCamera(mapInfo, null)
                 viewBinding.startNavigation.visibility = View.VISIBLE
             },
             object : OnMapLoadErrorListener {
@@ -433,6 +430,29 @@ class SampleMapActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateCamera(mapInfo: MapInfo, bearing: Double?) {
+        // Create a polygon
+        val triangleCoordinates = listOf(
+            listOf(
+                Point.fromLngLat(
+                    mapInfo.boundingBox.northeast().longitude(),
+                    mapInfo.boundingBox.northeast().latitude()
+                ),
+                Point.fromLngLat(
+                    mapInfo.boundingBox.southwest().longitude(),
+                    mapInfo.boundingBox.southwest().latitude()
+                )
+            )
+        )
+        val polygon = Polygon.fromLngLats(triangleCoordinates)
+        // Convert to a camera options from a given geometry and padding
+        val cameraPosition =
+            mapboxMap.cameraForGeometry(polygon, EdgeInsets(75.0, 40.0, 60.0, 40.0))
+        // Set camera position
+        mapboxMap.setCamera(cameraPosition)
+    }
+
+
     private fun updateCamera(point: Point, bearing: Double?) {
         val mapAnimationOptionsBuilder = MapAnimationOptions.Builder()
         viewBinding.mapView.camera.easeTo(
@@ -445,6 +465,7 @@ class SampleMapActivity : AppCompatActivity() {
                 .build(),
             mapAnimationOptionsBuilder.build()
         )
+
     }
 
     // Starts the navigation simulator
