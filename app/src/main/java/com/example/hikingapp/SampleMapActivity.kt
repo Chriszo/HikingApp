@@ -8,7 +8,9 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivitySampleMapBinding
-import com.example.hikingapp.persistence.MapInfo
+import com.example.hikingapp.domain.map.MapInfo
+import com.example.hikingapp.domain.weather.WeatherForecast
+import com.example.hikingapp.domain.weather.WeatherInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.FeatureCollection
@@ -47,6 +49,12 @@ import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineOptions
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLine
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 /**
  * This example demonstrates the usage of the route line and route arrow API's and UI elements.
@@ -310,7 +318,27 @@ class SampleMapActivity : AppCompatActivity() {
         routeName = routeName?.let { it as String }
         val mapInfo = retrieveMapInformation(routeName)
 
+        GlobalScope.launch {
+            getWeatherInformation(mapInfo)
+        }
         init(mapInfo)
+    }
+
+    private suspend fun getWeatherInformation(mapInfo: MapInfo) {
+
+        val client = HttpClient()
+        val response: HttpResponse = client.get(
+            "https://dark-sky.p.rapidapi.com/" + mapInfo.origin.latitude() + "," + mapInfo.origin.longitude() +
+                    "?lang=en&units=auto"
+        ) {
+            header("x-rapidapi-host", "dark-sky.p.rapidapi.com")
+            header("x-rapidapi-key", "22333fdf19msh7342040f2befa30p1305b9jsn53524d7ffd0e")
+        }
+        val weatherDataResponse: String = response.receive()
+        mapInfo.weatherInformation = WeatherForecast()
+        mapInfo.weatherInformation.weatherForecast = listOf(WeatherInfo(weatherDataResponse))
+
+        println(mapInfo.weatherInformation.weatherForecast[0].weatherInformation)
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
@@ -385,8 +413,8 @@ class SampleMapActivity : AppCompatActivity() {
     private fun initListeners(mapInfo: MapInfo) {
         viewBinding.startNavigation.setOnClickListener {
             viewBinding.startNavigation.visibility = View.INVISIBLE
-            this?.let{
-                val navigationIntent: Intent = Intent(this, SampleNavigationActivity::class.java)
+            this?.let {
+                val navigationIntent = Intent(this, SampleNavigationActivity::class.java)
 //                navigationIntent.putExtra("mapInfo", mapInfo)
                 it.startActivity(navigationIntent)
             }
