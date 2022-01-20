@@ -1,4 +1,4 @@
-package com.example.hikingapp
+package com.example.hikingapp.utils
 
 class GlobalUtils {
 
