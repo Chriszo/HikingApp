@@ -12,6 +12,8 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.weather.WeatherForecast
 import com.example.hikingapp.domain.weather.WeatherInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.example.hikingapp.utils.GlobalUtils
+import com.example.hikingapp.utils.SampleData
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.MultiLineString
@@ -55,6 +57,8 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 
 /**
  * This example demonstrates the usage of the route line and route arrow API's and UI elements.
@@ -326,19 +330,50 @@ class SampleMapActivity : AppCompatActivity() {
 
     private suspend fun getWeatherInformation(mapInfo: MapInfo) {
 
-        val client = HttpClient()
-        val response: HttpResponse = client.get(
-            "https://dark-sky.p.rapidapi.com/" + mapInfo.origin.latitude() + "," + mapInfo.origin.longitude() +
-                    "?lang=en&units=auto"
-        ) {
-            header("x-rapidapi-host", "dark-sky.p.rapidapi.com")
-            header("x-rapidapi-key", "22333fdf19msh7342040f2befa30p1305b9jsn53524d7ffd0e")
-        }
-        val weatherDataResponse: String = response.receive()
-        mapInfo.weatherInformation = WeatherForecast()
-        mapInfo.weatherInformation.weatherForecast = listOf(WeatherInfo(weatherDataResponse))
+        var weatherDataResponse: String
 
-        println(mapInfo.weatherInformation.weatherForecast[0].weatherInformation)
+        val onTestMode = getString(R.string.onTestMode) == "true"
+        if (onTestMode) {
+            weatherDataResponse = SampleData.rawWeatherData
+        } else {
+
+            val client = HttpClient()
+            val response: HttpResponse = client.get(
+                "https://dark-sky.p.rapidapi.com/" + mapInfo.origin.latitude() + "," + mapInfo.origin.longitude() +
+                        "?lang=en&units=auto&exclude=hourly,minutely"
+            ) {
+                header("x-rapidapi-host", "dark-sky.p.rapidapi.com")
+                header("x-rapidapi-key", "22333fdf19msh7342040f2befa30p1305b9jsn53524d7ffd0e")
+            }
+            weatherDataResponse = response.receive()
+
+
+        }
+        mapInfo.weatherInformation = WeatherForecast()
+        mapInfo.weatherInformation.weatherForecast =
+            listOf(WeatherInfo.fromJson(weatherDataResponse))
+        println(mapInfo.weatherInformation.weatherForecast[0])
+        println(mapInfo.weatherInformation.weatherForecast[0].temperatureHigh)
+
+    }
+
+    //TODO Make a proper implementation for write operations
+    private fun writeFile(weatherDataResponse: String) {
+
+        val path = getExternalFilesDir(null)
+
+        val letDirectory = File(path, "test")
+        letDirectory.mkdir()
+
+        val file = File(letDirectory, "weather_info.txt")
+
+        val outputStream = FileOutputStream(file)
+
+        outputStream.bufferedWriter().use {
+            it.write(weatherDataResponse)
+        }
+        outputStream.close()
+
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
