@@ -9,14 +9,16 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivitySampleMapBinding
 import com.example.hikingapp.domain.map.MapInfo
+import com.example.hikingapp.domain.map.service.MapService
+import com.example.hikingapp.domain.map.service.MapServiceImpl
+import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.route.RouteInfo
 import com.example.hikingapp.domain.weather.WeatherForecast
-import com.example.hikingapp.domain.weather.WeatherInfo
+import com.example.hikingapp.domain.weather.service.WeatherService
+import com.example.hikingapp.domain.weather.service.WeatherServiceImpl
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.utils.GlobalUtils
-import com.example.hikingapp.utils.SampleData
 import com.mapbox.api.directions.v5.models.DirectionsRoute
-import com.mapbox.geojson.FeatureCollection
-import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
@@ -55,8 +57,7 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
 
@@ -89,6 +90,14 @@ import java.io.FileOutputStream
  * - You should now be able to navigate to the destination with the route line and route arrows drawn.
  */
 class SampleMapActivity : AppCompatActivity() {
+
+    private val weatherService: WeatherService by lazy {
+        WeatherServiceImpl()
+    }
+
+    private val mapService: MapService by lazy {
+        MapServiceImpl()
+    }
 
     /**
      * Debug tool used to play, pause and seek route progress events that can be used to produce mocked location updates along the route.
@@ -320,41 +329,24 @@ class SampleMapActivity : AppCompatActivity() {
         //TODO Retrieve current Route Map information
         var routeName = savedInstanceState?.get("RouteName")
         routeName = routeName?.let { it as String }
-        val mapInfo = retrieveMapInformation(routeName)
 
-        GlobalScope.launch {
-            getWeatherInformation(mapInfo)
-        }
-        init(mapInfo)
-    }
+        //TODO Replace philopappou with routeName variable
+        val mapInfo = mapService.getMapInformation(getJson("Philopapou"))
 
-    private suspend fun getWeatherInformation(mapInfo: MapInfo) {
+        GlobalScope.async {
+            val weatherForecast = WeatherForecast()
+            weatherForecast.weatherForecast = weatherService.getForecastForDays(
+                mapInfo.origin,
+                4,
+                true
+            ) //TODO remove this test flag when in PROD
 
-        var weatherDataResponse: String
-
-        val onTestMode = getString(R.string.onTestMode) == "true"
-        if (onTestMode) {
-            weatherDataResponse = SampleData.rawWeatherData
-        } else {
-
-            val client = HttpClient()
-            val response: HttpResponse = client.get(
-                "https://dark-sky.p.rapidapi.com/" + mapInfo.origin.latitude() + "," + mapInfo.origin.longitude() +
-                        "?lang=en&units=auto&exclude=hourly,minutely"
-            ) {
-                header("x-rapidapi-host", "dark-sky.p.rapidapi.com")
-                header("x-rapidapi-key", "22333fdf19msh7342040f2befa30p1305b9jsn53524d7ffd0e")
+            Route(RouteInfo(), mapInfo)?.let {
+                it.weatherInformation = weatherForecast
             }
-            weatherDataResponse = response.receive()
-
-
         }
-        mapInfo.weatherInformation = WeatherForecast()
-        mapInfo.weatherInformation.weatherForecast =
-            listOf(WeatherInfo.fromJson(weatherDataResponse))
-        println(mapInfo.weatherInformation.weatherForecast[0])
-        println(mapInfo.weatherInformation.weatherForecast[0].temperatureHigh)
 
+        init(mapInfo)
     }
 
     //TODO Make a proper implementation for write operations
@@ -376,23 +368,9 @@ class SampleMapActivity : AppCompatActivity() {
 
     }
 
-    private fun retrieveMapInformation(routeName: String?): MapInfo {
-
-        val jsonSource = assets.open(MockDatabase.routesMap["Philopapou"]?.second!!).readBytes()
+    private fun getJson(routeName: String?): String {
+        return assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
             .toString(Charsets.UTF_8)
-        val routeJson: MultiLineString =
-            FeatureCollection.fromJson(jsonSource).features()?.get(0)?.geometry() as MultiLineString
-
-        val origin: Point = routeJson.coordinates()[0][0]
-        val destination: Point = routeJson.coordinates()[0][routeJson.coordinates()[0].size - 1]
-
-        return MapInfo(
-            origin,
-            destination,
-            routeJson.bbox()!!,
-            routeJson,
-            MockDatabase.routesMap["Philopapou"]?.second!!
-        )
     }
 
     private fun init(mapInfo: MapInfo) {
