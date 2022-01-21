@@ -4,5 +4,5 @@ class WeatherInfoWrapper {
 
     lateinit var summary: String
     lateinit var icon: String
-    lateinit var data: List<WeatherInfo>
+    lateinit var data: List<WeatherInfoDto>
 }
