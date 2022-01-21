@@ -11,5 +11,4 @@ import java.io.Serializable
 class MapInfo(val origin: Point, val destination: Point, val boundingBox: BoundingBox, val jsonRoute: MultiLineString, val routeGeoJsonFileName: String): Serializable {
 
     lateinit var directionInstructions: List<DirectionsRoute>
-    lateinit var weatherInformation: WeatherForecast
 }
