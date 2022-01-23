@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.Bearing
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
@@ -116,6 +117,40 @@ import java.util.*
 class SampleNavigationActivity : AppCompatActivity() {
 
     private var mapInfo: MapInfo? = null
+
+    private val hikingRouteOptionsBuilder: RouteOptions.Builder by lazy {
+        RouteOptions.builder()
+            .profile(DirectionsCriteria.PROFILE_WALKING)
+            .overview(DirectionsCriteria.OVERVIEW_FULL)
+            .steps(true)
+            .bannerInstructions(true)
+            .annotationsList(
+                listOf(
+                    DirectionsCriteria.ANNOTATION_CONGESTION_NUMERIC,
+                    DirectionsCriteria.ANNOTATION_MAXSPEED,
+                    DirectionsCriteria.ANNOTATION_SPEED,
+                    DirectionsCriteria.ANNOTATION_DURATION,
+                    DirectionsCriteria.ANNOTATION_DISTANCE,
+                    DirectionsCriteria.ANNOTATION_CLOSURE
+                )
+            )
+            .enableRefresh(false)
+//                .applyDefaultNavigationOptions()
+            .applyLanguageAndVoiceUnitOptions(this)
+//            .coordinatesList(coordinates)
+//            .waypointIndicesList(listOf(0, coordinates.size - 1))
+            // provide the bearing for the origin of the request to ensure
+            // that the returned route faces in the direction of the current user movement
+//                .bearingsList(
+//                    listOf(
+//                        Bearing.builder()
+//                            .angle(originLocation.bearing.toDouble())
+//                            .degrees(45.0)
+//                            .build(),
+//                        null
+//                    )
+//                )
+    }
 
     private companion object {
         private const val BUTTON_ANIMATION_DURATION = 1500L
@@ -483,7 +518,6 @@ class SampleNavigationActivity : AppCompatActivity() {
         navigationCamera.registerNavigationCameraStateChangeObserver { navigationCameraState ->
 
             // shows/hide the recenter button depending on the camera state
-            //TODO fix camera states
             when (navigationCameraState) {
                 NavigationCameraState.TRANSITION_TO_FOLLOWING -> binding.recenter.visibility =
                     View.GONE
@@ -617,9 +651,12 @@ class SampleNavigationActivity : AppCompatActivity() {
                     ),
             {
                 // In each trail, the start and end point will be constant and defined once in route initialization.
-                binding.mapView.gestures.addOnMapLongClickListener { point ->
-                    findRoute(filterRoutePoints(mapInfo?.jsonRoute!!.coordinates()[0]))
-                    true
+//                binding.mapView.gestures.addOnMapLongClickListener { point ->
+//                    findRoute(filterRoutePoints(mapInfo?.jsonRoute!!.coordinates()[0]))
+//                    true
+//                }
+                mapboxMap.addOnMapLoadedListener {
+                    findRoute(filterRoutePoints(mapInfo!!.jsonRoute.coordinates()[0]))
                 }
             },
             object : OnMapLoadErrorListener {
@@ -631,7 +668,6 @@ class SampleNavigationActivity : AppCompatActivity() {
                 }
             }
         )
-
 
         // initialize view interactions
         binding.stop.setOnClickListener {
@@ -671,7 +707,7 @@ class SampleNavigationActivity : AppCompatActivity() {
 
     private fun filterRoutePoints(coordinates: List<Point>): List<Point> {
         var counter = 0
-        return coordinates.filterIndexed { index, _ -> index % 10 == 0 && ++counter < 25 }
+        return coordinates.filterIndexed { index, _ -> index % 50 == 0 && ++counter < 25 }
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
@@ -713,7 +749,7 @@ class SampleNavigationActivity : AppCompatActivity() {
                 listOf(
                     ReplayRouteMapper.mapToUpdateLocation(
                         eventTimestamp = 0.0,
-                        point = mapInfo!!.origin as Point
+                        point = mapInfo!!.origin
                     )
                 )
             )
@@ -781,6 +817,8 @@ class SampleNavigationActivity : AppCompatActivity() {
                     routeOptions: RouteOptions
                 ) {
                     // no impl
+                    println("AN ERROR OCCURED")
+                    println(reasons)
                 }
 
                 override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
@@ -802,22 +840,11 @@ class SampleNavigationActivity : AppCompatActivity() {
         // applyDefaultNavigationOptions and applyLanguageAndVoiceUnitOptions
         // that make sure the route request is optimized
         // to allow for support of all of the Navigation SDK features
+
         mapboxNavigation.requestRoutes(
-            RouteOptions.builder()
-                .applyDefaultNavigationOptions()
-                .applyLanguageAndVoiceUnitOptions(this)
+            hikingRouteOptionsBuilder
                 .coordinatesList(coordinates)
-                // provide the bearing for the origin of the request to ensure
-                // that the returned route faces in the direction of the current user movement
-                .bearingsList(
-                    listOf(
-                        Bearing.builder()
-                            .angle(originLocation.bearing.toDouble())
-                            .degrees(45.0)
-                            .build(),
-                        null
-                    )
-                )
+                .waypointIndicesList(listOf(0, coordinates.size - 1))
                 .build(),
             object : RouterCallback {
                 override fun onRoutesReady(
@@ -832,6 +859,8 @@ class SampleNavigationActivity : AppCompatActivity() {
                     routeOptions: RouteOptions
                 ) {
                     // no impl
+                    println("AN ERROR OCCURED")
+                    println(reasons)
                 }
 
                 override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
