@@ -609,17 +609,17 @@ class SampleNavigationActivity : AppCompatActivity() {
         mapboxMap.loadStyle(
             (
                     style(styleUri = Style.OUTDOORS) {
-                        +geoJsonSource("line") {
-//                            url("asset://seichsou_trail.geojson")
-                            url("asset://" + mapInfo?.routeGeoJsonFileName)
-                        }
-                        +lineLayer(GlobalUtils.LINE_LAYER_ID, GlobalUtils.LINE_SOURCE_ID) {
-                            lineCap(LineCap.ROUND)
-                            lineJoin(LineJoin.ROUND)
-                            lineOpacity(1.0)
-                            lineWidth(8.0)
-                            lineColor("#FF0000")
-                        }
+//                        +geoJsonSource("line") {
+////                            url("asset://seichsou_trail.geojson")
+//                            url("asset://" + mapInfo?.routeGeoJsonFileName)
+//                        }
+//                        +lineLayer(GlobalUtils.LINE_LAYER_ID, GlobalUtils.LINE_SOURCE_ID) {
+//                            lineCap(LineCap.ROUND)
+//                            lineJoin(LineJoin.ROUND)
+//                            lineOpacity(1.0)
+//                            lineWidth(8.0)
+//                            lineColor("#FF0000")
+//                        }
                         +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
                             featureCollection(
                                 FeatureCollection.fromFeatures(
@@ -882,6 +882,7 @@ class SampleNavigationActivity : AppCompatActivity() {
             .overview(DirectionsCriteria.OVERVIEW_FULL)
             .steps(true)
             .bannerInstructions(true)
+            .voiceInstructions(true)
             //TODO Find a more eficient way to compute route points for the obtaining of instructions. This is fully customed to current route at fillopapou.
             .coordinates(listOf(
                 coordinates[0],
