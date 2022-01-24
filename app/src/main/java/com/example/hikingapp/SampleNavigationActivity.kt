@@ -21,9 +21,10 @@ import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.api.directions.v5.DirectionsCriteria
-import com.mapbox.api.directions.v5.models.Bearing
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
+import com.mapbox.api.matching.v5.MapboxMapMatching
+import com.mapbox.api.matching.v5.models.MapMatchingResponse
 import com.mapbox.bindgen.Expected
 import com.mapbox.geojson.*
 import com.mapbox.maps.EdgeInsets
@@ -41,10 +42,8 @@ import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
-import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.navigation.base.TimeFormat
-import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
 import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
 import com.mapbox.navigation.base.options.NavigationOptions
 import com.mapbox.navigation.base.route.RouterCallback
@@ -87,6 +86,9 @@ import com.mapbox.navigation.ui.voice.model.SpeechAnnouncement
 import com.mapbox.navigation.ui.voice.model.SpeechError
 import com.mapbox.navigation.ui.voice.model.SpeechValue
 import com.mapbox.navigation.ui.voice.model.SpeechVolume
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.*
 
 /**
@@ -139,8 +141,8 @@ class SampleNavigationActivity : AppCompatActivity() {
             .applyLanguageAndVoiceUnitOptions(this)
 //            .coordinatesList(coordinates)
 //            .waypointIndicesList(listOf(0, coordinates.size - 1))
-            // provide the bearing for the origin of the request to ensure
-            // that the returned route faces in the direction of the current user movement
+        // provide the bearing for the origin of the request to ensure
+        // that the returned route faces in the direction of the current user movement
 //                .bearingsList(
 //                    listOf(
 //                        Bearing.builder()
@@ -656,7 +658,7 @@ class SampleNavigationActivity : AppCompatActivity() {
 //                    true
 //                }
                 mapboxMap.addOnMapLoadedListener {
-                    findRoute(filterRoutePoints(mapInfo!!.jsonRoute.coordinates()[0]))
+                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
                 }
             },
             object : OnMapLoadErrorListener {
@@ -705,9 +707,9 @@ class SampleNavigationActivity : AppCompatActivity() {
         mapboxNavigation.startTripSession()
     }
 
-    private fun filterRoutePoints(coordinates: List<Point>): List<Point> {
+    private fun filterRoutePoints(coordinates: List<Point>, modulo: Int): MutableList<Point> {
         var counter = 0
-        return coordinates.filterIndexed { index, _ -> index % 50 == 0 && ++counter < 25 }
+        return coordinates.filterIndexed { index, _ -> index % modulo == 0 && ++counter < 25 }.toMutableList()
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
@@ -776,57 +778,57 @@ class SampleNavigationActivity : AppCompatActivity() {
         voiceInstructionsPlayer.shutdown()
     }
 
-    private fun findRoute(destination: Point) {
-        val originLocation = navigationLocationProvider.lastLocation
-        val originPoint = originLocation?.let {
-            Point.fromLngLat(it.longitude, it.latitude)
-        } ?: return
-
-        // execute a route request
-        // it's recommended to use the
-        // applyDefaultNavigationOptions and applyLanguageAndVoiceUnitOptions
-        // that make sure the route request is optimized
-        // to allow for support of all of the Navigation SDK features
-        mapboxNavigation.requestRoutes(
-            RouteOptions.builder()
-                .applyDefaultNavigationOptions()
-                .applyLanguageAndVoiceUnitOptions(this)
-                .coordinatesList(listOf(originPoint, destination))
-                // provide the bearing for the origin of the request to ensure
-                // that the returned route faces in the direction of the current user movement
-                .bearingsList(
-                    listOf(
-                        Bearing.builder()
-                            .angle(originLocation.bearing.toDouble())
-                            .degrees(45.0)
-                            .build(),
-                        null
-                    )
-                )
-                .build(),
-            object : RouterCallback {
-                override fun onRoutesReady(
-                    routes: List<DirectionsRoute>,
-                    routerOrigin: RouterOrigin
-                ) {
-                    setRouteAndStartNavigation(routes)
-                }
-
-                override fun onFailure(
-                    reasons: List<RouterFailure>,
-                    routeOptions: RouteOptions
-                ) {
-                    // no impl
-                    println("AN ERROR OCCURED")
-                    println(reasons)
-                }
-
-                override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
-                    // no impl
-                }
-            }
-        )
-    }
+//    private fun findRoute(destination: Point) {
+//        val originLocation = navigationLocationProvider.lastLocation
+//        val originPoint = originLocation?.let {
+//            Point.fromLngLat(it.longitude, it.latitude)
+//        } ?: return
+//
+//        // execute a route request
+//        // it's recommended to use the
+//        // applyDefaultNavigationOptions and applyLanguageAndVoiceUnitOptions
+//        // that make sure the route request is optimized
+//        // to allow for support of all of the Navigation SDK features
+//        mapboxNavigation.requestRoutes(
+//            RouteOptions.builder()
+//                .applyDefaultNavigationOptions()
+//                .applyLanguageAndVoiceUnitOptions(this)
+//                .coordinatesList(listOf(originPoint, destination))
+//                // provide the bearing for the origin of the request to ensure
+//                // that the returned route faces in the direction of the current user movement
+//                .bearingsList(
+//                    listOf(
+//                        Bearing.builder()
+//                            .angle(originLocation.bearing.toDouble())
+//                            .degrees(45.0)
+//                            .build(),
+//                        null
+//                    )
+//                )
+//                .build(),
+//            object : RouterCallback {
+//                override fun onRoutesReady(
+//                    routes: List<DirectionsRoute>,
+//                    routerOrigin: RouterOrigin
+//                ) {
+//                    setRouteAndStartNavigation(routes)
+//                }
+//
+//                override fun onFailure(
+//                    reasons: List<RouterFailure>,
+//                    routeOptions: RouteOptions
+//                ) {
+//                    // no impl
+//                    println("AN ERROR OCCURED")
+//                    println(reasons)
+//                }
+//
+//                override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
+//                    // no impl
+//                }
+//            }
+//        )
+//    }
 
 
     private fun findRoute(coordinates: List<Point>) {
@@ -835,39 +837,109 @@ class SampleNavigationActivity : AppCompatActivity() {
             Point.fromLngLat(it.longitude, it.latitude)
         } ?: return
 
+        requestCustomRoute(coordinates)
+
         // execute a route request
         // it's recommended to use the
         // applyDefaultNavigationOptions and applyLanguageAndVoiceUnitOptions
         // that make sure the route request is optimized
         // to allow for support of all of the Navigation SDK features
 
-        mapboxNavigation.requestRoutes(
-            hikingRouteOptionsBuilder
-                .coordinatesList(coordinates)
-                .waypointIndicesList(listOf(0, coordinates.size - 1))
-                .build(),
-            object : RouterCallback {
-                override fun onRoutesReady(
-                    routes: List<DirectionsRoute>,
-                    routerOrigin: RouterOrigin
-                ) {
-                    setRouteAndStartNavigation(routes)
-                }
+//        mapboxNavigation.requestRoutes(
+//            hikingRouteOptionsBuilder
+//                .coordinatesList(coordinates)
+//                .waypointIndicesList(listOf(0, coordinates.size - 1))
+//                .build(),
+//            object : RouterCallback {
+//                override fun onRoutesReady(
+//                    routes: List<DirectionsRoute>,
+//                    routerOrigin: RouterOrigin
+//                ) {
+//                    setRouteAndStartNavigation(routes)
+//                }
+//
+//                override fun onFailure(
+//                    reasons: List<RouterFailure>,
+//                    routeOptions: RouteOptions
+//                ) {
+//                    // no impl
+//                    println("AN ERROR OCCURED")
+//                    println(reasons)
+//                }
+//
+//                override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
+//                    // no impl
+//                }
+//            }
+//        )
+    }
 
-                override fun onFailure(
-                    reasons: List<RouterFailure>,
-                    routeOptions: RouteOptions
-                ) {
-                    // no impl
-                    println("AN ERROR OCCURED")
-                    println(reasons)
-                }
+    private fun requestCustomRoute(coordinates: List<Point>) {
 
-                override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
-                    // no impl
+        val mapboxMapMatchingRequest = MapboxMapMatching.builder()
+            .accessToken(getString(R.string.mapbox_access_token))
+            .profile(DirectionsCriteria.PROFILE_WALKING)
+            .overview(DirectionsCriteria.OVERVIEW_FULL)
+            .steps(true)
+            .bannerInstructions(true)
+            //TODO Find a more eficient way to compute route points for the obtaining of instructions. This is fully customed to current route at fillopapou.
+            .coordinates(listOf(
+                coordinates[0],
+                coordinates[12],
+                coordinates[24],
+                coordinates[36],
+                coordinates[48],
+                coordinates[60],
+                coordinates[72],
+                coordinates[84],
+                coordinates[96],
+                coordinates[108],
+                coordinates[120],
+                coordinates[132],
+                coordinates[144],
+                coordinates[156],
+                coordinates[168],
+                coordinates[180],
+                coordinates[192],
+                coordinates[204],
+                coordinates[216],
+                coordinates[228],
+                coordinates[240],
+                coordinates[252],
+                coordinates[264],
+                coordinates[276],
+                coordinates[coordinates.size-1]))
+            .waypointIndices(0, 24)
+
+                //DEFAULT
+
+//            .waypointIndices(0, 12)
+//            .steps(true)
+//            .voiceInstructions(true)
+//            .bannerInstructions(true)
+//            .profile(DirectionsCriteria.PROFILE_DRIVING)
+            .build()
+
+        mapboxMapMatchingRequest.enqueueCall(object : Callback<MapMatchingResponse> {
+            override fun onResponse(
+                call: Call<MapMatchingResponse>,
+                response: Response<MapMatchingResponse>
+            ) {
+                if (response.isSuccessful) {
+                    response.body()?.matchings()?.let { matchingList ->
+                        matchingList[0].toDirectionRoute().apply {
+                            setRouteAndStartNavigation(listOf(this))
+                        }
+                    }
+
                 }
             }
-        )
+
+            override fun onFailure(call: Call<MapMatchingResponse>, throwable: Throwable) {
+
+            }
+        })
+
     }
 
     private fun setRouteAndStartNavigation(routes: List<DirectionsRoute>) {
