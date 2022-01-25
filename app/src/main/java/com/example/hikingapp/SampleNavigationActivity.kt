@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
+import com.example.hikingapp.domain.DistanceUnitType
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.api.directions.v5.DirectionsCriteria
@@ -43,6 +44,7 @@ import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.navigation.base.TimeFormat
 import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
+import com.mapbox.navigation.base.formatter.UnitType
 import com.mapbox.navigation.base.options.NavigationOptions
 import com.mapbox.navigation.base.trip.model.RouteLegProgress
 import com.mapbox.navigation.core.MapboxNavigation
@@ -387,6 +389,7 @@ class SampleNavigationActivity : AppCompatActivity() {
     /**
      * Gets notified with progress along the currently active route.
      */
+    @RequiresApi(Build.VERSION_CODES.N)
     private val routeProgressObserver = RouteProgressObserver { routeProgress ->
         // update the camera position to account for the progressed fragment of the route
         viewportDataSource.onRouteProgressChanged(routeProgress)
@@ -416,9 +419,53 @@ class SampleNavigationActivity : AppCompatActivity() {
         )
 
         // update bottom trip progress summary
-        binding.tripProgressView.render(
-            tripProgressApi.getTripProgress(routeProgress)
-        )
+
+        binding.textDistanceRemaining.text = "Remaining:" +
+                getTwoDigitsDistance(
+                    routeProgress.distanceRemaining.toDouble(),
+                    DistanceUnitType.KILOMETERS
+                )
+
+        binding.textDistanceCovered.text =
+            "Covered:" + getTwoDigitsDistance(
+                routeProgress.distanceTraveled.toDouble(),
+                DistanceUnitType.KILOMETERS
+            )
+
+        binding.textTimeEstimated.text = "Estimated:" + String.format(
+            "%.2f",
+            getTimeInMinutes(routeProgress.durationRemaining)
+        ) + " min"
+
+//        binding.textTimeCovered.text = "Time: " + routeProgress. + " m"
+//        binding.tripProgressView.render(
+//            tripProgressApi.getTripProgress(routeProgress)
+//        )
+    }
+
+    private fun getTwoDigitsDistance(
+        rawDistance: Double,
+        distanceUnitType: DistanceUnitType
+    ): String {
+        /*if (DistanceUnitType.KILOMETERS == distanceUnitType) {
+            return String.format("%.2f", rawDistance).toDouble()
+                .div(1000.0)
+        }
+        return String.format("%.2f", rawDistance).toDouble()*/
+        when (distanceUnitType) {
+            DistanceUnitType.METERS -> return String.format(
+                "%.2f",
+                rawDistance
+            ) + DistanceUnitType.METERS.distanceUnit
+            DistanceUnitType.KILOMETERS -> return String.format(
+                "%.2f",
+                (rawDistance.div(1000.0))
+            ) + DistanceUnitType.KILOMETERS.distanceUnit
+        }
+    }
+
+    private fun getTimeInMinutes(seconds: Double): Double {
+        return seconds.div(60.0)
     }
 
     /**
@@ -483,6 +530,13 @@ class SampleNavigationActivity : AppCompatActivity() {
             retrieveMapInformation(null)
         }
 
+        binding.textDistanceRemaining.text = "Remaining: -"
+
+        binding.textDistanceCovered.text = "Covered: -"
+
+        binding.textTimeEstimated.text = "Estimated: -"
+
+//        binding.textTimeCovered.text = "Time: -"
 
         // initialize the location puck
         binding.mapView.location.apply {
@@ -548,6 +602,10 @@ class SampleNavigationActivity : AppCompatActivity() {
 
         // make sure to use the same DistanceFormatterOptions across different features
         val distanceFormatterOptions = mapboxNavigation.navigationOptions.distanceFormatterOptions
+            .toBuilder()
+            .unitType(UnitType.METRIC)
+            .locale(Locale.ENGLISH)
+            .build()
 
         // initialize maneuver api that feeds the data to the top banner maneuver view
         maneuverApi = MapboxManeuverApi(
@@ -567,7 +625,7 @@ class SampleNavigationActivity : AppCompatActivity() {
                     PercentDistanceTraveledFormatter()
                 )
                 .estimatedTimeToArrivalFormatter(
-                    EstimatedTimeToArrivalFormatter(this, TimeFormat.NONE_SPECIFIED)
+                    EstimatedTimeToArrivalFormatter(this, TimeFormat.TWENTY_FOUR_HOURS)
                 )
                 .build()
         )
@@ -661,6 +719,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         // initialize view interactions
         binding.stop.setOnClickListener {
             clearRouteAndStopNavigation()
+            // TODO Go to another Fragment/ Activity (?)
         }
 
         // Action which starts the Navigation
@@ -740,6 +799,7 @@ class SampleNavigationActivity : AppCompatActivity() {
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onStart() {
         super.onStart()
         println("INTO START")
@@ -768,6 +828,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onStop() {
         super.onStop()
 
@@ -943,6 +1004,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun resumeNavigation() {
         if (TripSessionState.STOPPED == mapboxNavigation.getTripSessionState()) {
             if (ActivityCompat.checkSelfPermission(
@@ -960,7 +1022,13 @@ class SampleNavigationActivity : AppCompatActivity() {
                 //                                          int[] grantResults)
                 // to handle the case where the user grants the permission. See the documentation
                 // for ActivityCompat#requestPermissions for more details.
-                return
+                requestPermissions(
+                    arrayOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ), 234
+                )
+//                return
             }
             mapboxNavigation.startTripSession()
         }

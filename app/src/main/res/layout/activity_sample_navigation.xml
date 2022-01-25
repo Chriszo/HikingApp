@@ -19,30 +19,92 @@
 
     <androidx.cardview.widget.CardView
         android:id="@+id/tripProgressCard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
         android:layout_marginTop="550dp"
+        android:layout_marginBottom="0dp"
         app:cardElevation="8dp"
         app:cardUseCompatPadding="false"
         app:layout_constraintEnd_toEndOf="parent"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.mapbox.navigation.ui.tripprogress.view.MapboxTripProgressView
-            android:id="@+id/tripProgressView"
+        <!--        <com.mapbox.navigation.ui.tripprogress.view.MapboxTripProgressView-->
+        <!--            android:id="@+id/tripProgressView"-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="wrap_content" />-->
+
+        <TextView
+            android:id="@+id/text_distance_remaining"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start|center_vertical"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:textSize="13sp"
+            app:layout_constraintBottom_toBottomOf="@id/tripProgressCard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/text_distance_covered"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center|center_vertical"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:textSize="13sp"
+            app:layout_constraintBottom_toBottomOf="@id/tripProgressCard"
+            app:layout_constraintStart_toEndOf="@+id/text_distance_remaining"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/text_time_estimated"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="5dp"
+            android:textSize="13sp"
+            app:layout_constraintBottom_toBottomOf="@id/tripProgressCard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/text_distance_covered"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!--<TextView
+            android:id="@+id/text_time_covered"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_gravity="center_vertical"
+            app:layout_constraintStart_toEndOf="@+id/text_time_estimated"
+            android:textSize="15sp"
+            app:layout_constraintBottom_toBottomOf="@id/tripProgressCard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />-->
+
+
     </androidx.cardview.widget.CardView>
 
     <!-- TODO Fix Constraints for the Card views at the bottom of the navigation page-->
     <androidx.cardview.widget.CardView
         android:id="@+id/actionsCard"
         android:layout_width="0dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="10dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="-20dp"
         app:cardElevation="8dp"
         app:cardUseCompatPadding="false"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/mapView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tripProgressCard">
