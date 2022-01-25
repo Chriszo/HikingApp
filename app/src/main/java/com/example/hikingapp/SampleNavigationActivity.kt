@@ -644,9 +644,9 @@ class SampleNavigationActivity : AppCompatActivity() {
                     }
                     ),
             {
-                mapboxMap.addOnMapLoadedListener {
-                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
-                }
+//                mapboxMap.addOnMapLoadedListener {
+//                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
+//                }
             },
             object : OnMapLoadErrorListener {
                 override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
@@ -665,11 +665,21 @@ class SampleNavigationActivity : AppCompatActivity() {
 
         // Action which starts the Navigation
         binding.play.setOnClickListener {
-            findRoute(mapInfo!!.jsonRoute.coordinates()[0])
+            if (mapboxNavigation.getRoutes().isEmpty()) {
+                findRoute(mapInfo!!.jsonRoute.coordinates()[0])
+            } else {
+                resumeNavigation()
+            }
+            binding.play.visibility = View.GONE
+            binding.pause.visibility = View.VISIBLE
         }
-
         binding.pause.setOnClickListener {
             pauseNavigation()
+            binding.play.visibility = View.VISIBLE
+            binding.pause.visibility = View.GONE
+        }
+        binding.lostButton.setOnClickListener {
+            // TODO Inform Contacts for being lost functionality
         }
 
         binding.recenter.setOnClickListener {
@@ -925,6 +935,15 @@ class SampleNavigationActivity : AppCompatActivity() {
 
     private fun pauseNavigation() {
 
+        if (TripSessionState.STARTED == mapboxNavigation.getTripSessionState()) {
+            mapboxNavigation.stopTripSession()
+
+            // stop simulation
+            mapboxReplayer.stop()
+        }
+    }
+
+    private fun resumeNavigation() {
         if (TripSessionState.STOPPED == mapboxNavigation.getTripSessionState()) {
             if (ActivityCompat.checkSelfPermission(
                     this,
@@ -944,13 +963,7 @@ class SampleNavigationActivity : AppCompatActivity() {
                 return
             }
             mapboxNavigation.startTripSession()
-
-        } else {
-            mapboxNavigation.stopTripSession()
         }
-
-        // stop simulation
-        mapboxReplayer.stop()
     }
 
     /*private fun permissionsAreGranted(operator: String, vararg permissions: String): Boolean {
