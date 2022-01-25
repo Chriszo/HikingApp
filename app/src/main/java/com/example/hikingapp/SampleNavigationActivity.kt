@@ -33,10 +33,7 @@ import com.mapbox.maps.MapboxMap
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
 import com.mapbox.maps.extension.style.image.image
-import com.mapbox.maps.extension.style.layers.generated.lineLayer
 import com.mapbox.maps.extension.style.layers.generated.symbolLayer
-import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
-import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
@@ -46,9 +43,6 @@ import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.navigation.base.TimeFormat
 import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
 import com.mapbox.navigation.base.options.NavigationOptions
-import com.mapbox.navigation.base.route.RouterCallback
-import com.mapbox.navigation.base.route.RouterFailure
-import com.mapbox.navigation.base.route.RouterOrigin
 import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.core.MapboxNavigationProvider
 import com.mapbox.navigation.core.directions.session.RoutesObserver
@@ -595,17 +589,6 @@ class SampleNavigationActivity : AppCompatActivity() {
         val routeArrowOptions = RouteArrowOptions.Builder(this).build()
         routeArrowView = MapboxRouteArrowView(routeArrowOptions)
 
-//         load map style
-//        mapboxMap.loadStyleUri(
-//            Style.MAPBOX_STREETS
-//        ) {
-//            // add long click listener that search for a route to the clicked destination
-//            binding.mapView.gestures.addOnMapLongClickListener { point ->
-//                findRoute(point)
-//                true
-//            }
-//        }
-
         mapboxMap.loadStyle(
             (
                     style(styleUri = Style.OUTDOORS) {
@@ -652,11 +635,6 @@ class SampleNavigationActivity : AppCompatActivity() {
                     }
                     ),
             {
-                // In each trail, the start and end point will be constant and defined once in route initialization.
-//                binding.mapView.gestures.addOnMapLongClickListener { point ->
-//                    findRoute(filterRoutePoints(mapInfo?.jsonRoute!!.coordinates()[0]))
-//                    true
-//                }
                 mapboxMap.addOnMapLoadedListener {
                     findRoute(mapInfo!!.jsonRoute.coordinates()[0])
                 }
@@ -675,6 +653,15 @@ class SampleNavigationActivity : AppCompatActivity() {
         binding.stop.setOnClickListener {
             clearRouteAndStopNavigation()
         }
+
+        binding.play.setOnClickListener {
+            findRoute(mapInfo!!.jsonRoute.coordinates()[0])
+        }
+
+        binding.pause.setOnClickListener {
+            pauseNavigation()
+        }
+
         binding.recenter.setOnClickListener {
             navigationCamera.requestNavigationCameraToFollowing()
             binding.routeOverview.showTextAndExtend(BUTTON_ANIMATION_DURATION)
@@ -709,7 +696,8 @@ class SampleNavigationActivity : AppCompatActivity() {
 
     private fun filterRoutePoints(coordinates: List<Point>, modulo: Int): MutableList<Point> {
         var counter = 0
-        return coordinates.filterIndexed { index, _ -> index % modulo == 0 && ++counter < 25 }.toMutableList()
+        return coordinates.filterIndexed { index, _ -> index % modulo == 0 && ++counter < 25 }
+            .toMutableList()
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
@@ -778,59 +766,6 @@ class SampleNavigationActivity : AppCompatActivity() {
         voiceInstructionsPlayer.shutdown()
     }
 
-//    private fun findRoute(destination: Point) {
-//        val originLocation = navigationLocationProvider.lastLocation
-//        val originPoint = originLocation?.let {
-//            Point.fromLngLat(it.longitude, it.latitude)
-//        } ?: return
-//
-//        // execute a route request
-//        // it's recommended to use the
-//        // applyDefaultNavigationOptions and applyLanguageAndVoiceUnitOptions
-//        // that make sure the route request is optimized
-//        // to allow for support of all of the Navigation SDK features
-//        mapboxNavigation.requestRoutes(
-//            RouteOptions.builder()
-//                .applyDefaultNavigationOptions()
-//                .applyLanguageAndVoiceUnitOptions(this)
-//                .coordinatesList(listOf(originPoint, destination))
-//                // provide the bearing for the origin of the request to ensure
-//                // that the returned route faces in the direction of the current user movement
-//                .bearingsList(
-//                    listOf(
-//                        Bearing.builder()
-//                            .angle(originLocation.bearing.toDouble())
-//                            .degrees(45.0)
-//                            .build(),
-//                        null
-//                    )
-//                )
-//                .build(),
-//            object : RouterCallback {
-//                override fun onRoutesReady(
-//                    routes: List<DirectionsRoute>,
-//                    routerOrigin: RouterOrigin
-//                ) {
-//                    setRouteAndStartNavigation(routes)
-//                }
-//
-//                override fun onFailure(
-//                    reasons: List<RouterFailure>,
-//                    routeOptions: RouteOptions
-//                ) {
-//                    // no impl
-//                    println("AN ERROR OCCURED")
-//                    println(reasons)
-//                }
-//
-//                override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
-//                    // no impl
-//                }
-//            }
-//        )
-//    }
-
-
     private fun findRoute(coordinates: List<Point>) {
         val originLocation = navigationLocationProvider.lastLocation
         val originPoint = originLocation?.let {
@@ -884,35 +819,38 @@ class SampleNavigationActivity : AppCompatActivity() {
             .bannerInstructions(true)
             .voiceInstructions(true)
             //TODO Find a more eficient way to compute route points for the obtaining of instructions. This is fully customed to current route at fillopapou.
-            .coordinates(listOf(
-                coordinates[0],
-                coordinates[12],
-                coordinates[24],
-                coordinates[36],
-                coordinates[48],
-                coordinates[60],
-                coordinates[72],
-                coordinates[84],
-                coordinates[96],
-                coordinates[108],
-                coordinates[120],
-                coordinates[132],
-                coordinates[144],
-                coordinates[156],
-                coordinates[168],
-                coordinates[180],
-                coordinates[192],
-                coordinates[204],
-                coordinates[216],
-                coordinates[228],
-                coordinates[240],
-                coordinates[252],
-                coordinates[264],
-                coordinates[276],
-                coordinates[coordinates.size-1]))
+            .coordinates(
+                listOf(
+                    coordinates[0],
+                    coordinates[12],
+                    coordinates[24],
+                    coordinates[36],
+                    coordinates[48],
+                    coordinates[60],
+                    coordinates[72],
+                    coordinates[84],
+                    coordinates[96],
+                    coordinates[108],
+                    coordinates[120],
+                    coordinates[132],
+                    coordinates[144],
+                    coordinates[156],
+                    coordinates[168],
+                    coordinates[180],
+                    coordinates[192],
+                    coordinates[204],
+                    coordinates[216],
+                    coordinates[228],
+                    coordinates[240],
+                    coordinates[252],
+                    coordinates[264],
+                    coordinates[276],
+                    coordinates[coordinates.size - 1]
+                )
+            )
             .waypointIndices(0, 24)
 
-                //DEFAULT
+            //DEFAULT
 
 //            .waypointIndices(0, 12)
 //            .steps(true)
@@ -972,6 +910,20 @@ class SampleNavigationActivity : AppCompatActivity() {
         binding.maneuverView.visibility = View.INVISIBLE
         binding.routeOverview.visibility = View.INVISIBLE
         binding.tripProgressCard.visibility = View.INVISIBLE
+    }
+
+    private fun pauseNavigation() {
+        // clear
+//        mapboxNavigation.setRoutes(listOf())
+
+        // stop simulation
+        mapboxReplayer.finish()
+
+        // hide UI elements
+//        binding.soundButton.visibility = View.INVISIBLE
+//        binding.maneuverView.visibility = View.INVISIBLE
+//        binding.routeOverview.visibility = View.INVISIBLE
+//        binding.tripProgressCard.visibility = View.INVISIBLE
     }
 
     private fun startSimulation(route: DirectionsRoute) {

@@ -13,22 +13,56 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+    </com.mapbox.maps.MapView>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/tripProgressCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="550dp"
         app:cardElevation="8dp"
         app:cardUseCompatPadding="false"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <com.mapbox.navigation.ui.tripprogress.view.MapboxTripProgressView
             android:id="@+id/tripProgressView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- TODO Fix Constraints for the Card views at the bottom of the navigation page-->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/actionsCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="-20dp"
+        app:cardElevation="8dp"
+        app:cardUseCompatPadding="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tripProgressCard">
+
+        <ImageView
+            android:id="@+id/play"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="start|center_vertical"
+            android:layout_marginEnd="12dp"
+            app:srcCompat="@android:drawable/ic_media_play" />
+
+
+        <ImageView
+            android:id="@+id/pause"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center|center_vertical"
+            android:layout_marginEnd="12dp"
+            app:srcCompat="@android:drawable/ic_media_pause" />
 
         <ImageView
             android:id="@+id/stop"
