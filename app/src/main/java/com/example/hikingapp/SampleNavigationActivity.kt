@@ -16,6 +16,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
 import com.example.hikingapp.persistence.MapInfo
@@ -43,18 +44,17 @@ import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.navigation.base.TimeFormat
 import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
 import com.mapbox.navigation.base.options.NavigationOptions
+import com.mapbox.navigation.base.trip.model.RouteLegProgress
 import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.core.MapboxNavigationProvider
+import com.mapbox.navigation.core.arrival.ArrivalController
 import com.mapbox.navigation.core.directions.session.RoutesObserver
 import com.mapbox.navigation.core.formatter.MapboxDistanceFormatter
 import com.mapbox.navigation.core.replay.MapboxReplayer
 import com.mapbox.navigation.core.replay.ReplayLocationEngine
 import com.mapbox.navigation.core.replay.route.ReplayProgressObserver
 import com.mapbox.navigation.core.replay.route.ReplayRouteMapper
-import com.mapbox.navigation.core.trip.session.LocationMatcherResult
-import com.mapbox.navigation.core.trip.session.LocationObserver
-import com.mapbox.navigation.core.trip.session.RouteProgressObserver
-import com.mapbox.navigation.core.trip.session.VoiceInstructionsObserver
+import com.mapbox.navigation.core.trip.session.*
 import com.mapbox.navigation.ui.base.util.MapboxNavigationConsumer
 import com.mapbox.navigation.ui.maneuver.api.MapboxManeuverApi
 import com.mapbox.navigation.ui.maneuver.view.MapboxManeuverView
@@ -146,6 +146,15 @@ class SampleNavigationActivity : AppCompatActivity() {
 //                        null
 //                    )
 //                )
+    }
+
+    private val arrivalController = object : ArrivalController {
+        override fun navigateNextRouteLeg(routeLegProgress: RouteLegProgress): Boolean {
+            if (mapboxNavigation.getTripSessionState() == TripSessionState.STOPPED) {
+                return false
+            }
+            return true
+        }
     }
 
     private companion object {
@@ -654,6 +663,7 @@ class SampleNavigationActivity : AppCompatActivity() {
             clearRouteAndStopNavigation()
         }
 
+        // Action which starts the Navigation
         binding.play.setOnClickListener {
             findRoute(mapInfo!!.jsonRoute.coordinates()[0])
         }
@@ -730,6 +740,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         mapboxNavigation.registerLocationObserver(locationObserver)
         mapboxNavigation.registerVoiceInstructionsObserver(voiceInstructionsObserver)
         mapboxNavigation.registerRouteProgressObserver(replayProgressObserver)
+        mapboxNavigation.setArrivalController(arrivalController)
 
         if (mapboxNavigation.getRoutes().isEmpty()) {
             // if simulation is enabled (ReplayLocationEngine set to NavigationOptions)
@@ -913,18 +924,56 @@ class SampleNavigationActivity : AppCompatActivity() {
     }
 
     private fun pauseNavigation() {
-        // clear
-//        mapboxNavigation.setRoutes(listOf())
+
+        if (TripSessionState.STOPPED == mapboxNavigation.getTripSessionState()) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return
+            }
+            mapboxNavigation.startTripSession()
+
+        } else {
+            mapboxNavigation.stopTripSession()
+        }
 
         // stop simulation
-        mapboxReplayer.finish()
-
-        // hide UI elements
-//        binding.soundButton.visibility = View.INVISIBLE
-//        binding.maneuverView.visibility = View.INVISIBLE
-//        binding.routeOverview.visibility = View.INVISIBLE
-//        binding.tripProgressCard.visibility = View.INVISIBLE
+        mapboxReplayer.stop()
     }
+
+    /*private fun permissionsAreGranted(operator: String, vararg permissions: String): Boolean {
+        val permissionValues = listOf<Boolean>().toMutableList()
+        permissions.iterator().forEach {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    it
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionValues.add(false)
+            } else {
+                permissionValues.add(true)
+            }
+        }
+
+        if ((operator.contentEquals("AND") && permissionValues.contains(false)) ||
+            (operator.contentEquals("OR") && !permissionValues.contains(true))
+        ) {
+            return false
+        }
+        return true
+    }*/
 
     private fun startSimulation(route: DirectionsRoute) {
         mapboxReplayer.run {
