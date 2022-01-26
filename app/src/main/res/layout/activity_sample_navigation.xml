@@ -20,7 +20,7 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/tripProgressCard"
         android:layout_width="match_parent"
-        android:layout_height="75dp"
+        android:layout_height="80dp"
         android:layout_marginTop="550dp"
         android:layout_marginBottom="0dp"
         app:cardElevation="8dp"
@@ -43,6 +43,7 @@
             android:layout_marginStart="5dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
             android:textSize="13sp"
             app:layout_constraintBottom_toBottomOf="@id/tripProgressCard"
             app:layout_constraintEnd_toEndOf="parent"
@@ -57,6 +58,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
             android:textSize="13sp"
             app:layout_constraintBottom_toBottomOf="@id/tripProgressCard"
             app:layout_constraintStart_toEndOf="@+id/text_distance_remaining"
@@ -70,6 +72,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="5dp"
+            android:layout_marginBottom="8dp"
             android:textSize="13sp"
             app:layout_constraintBottom_toBottomOf="@id/tripProgressCard"
             app:layout_constraintEnd_toEndOf="parent"
@@ -77,31 +80,15 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!--<TextView
-            android:id="@+id/text_time_covered"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_gravity="center_vertical"
-            app:layout_constraintStart_toEndOf="@+id/text_time_estimated"
-            android:textSize="15sp"
-            app:layout_constraintBottom_toBottomOf="@id/tripProgressCard"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />-->
-
-
     </androidx.cardview.widget.CardView>
 
     <!-- TODO Fix Constraints for the Card views at the bottom of the navigation page-->
     <androidx.cardview.widget.CardView
         android:id="@+id/actionsCard"
         android:layout_width="0dp"
-        android:layout_marginTop="0dp"
-        android:layout_marginBottom="10dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="35dp"
         app:cardElevation="8dp"
         app:cardUseCompatPadding="false"
         app:layout_constraintBottom_toBottomOf="@+id/mapView"
@@ -110,104 +97,73 @@
         app:layout_constraintTop_toBottomOf="@+id/tripProgressCard">
 
 
+        <!--Card Divider element -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@android:color/darker_gray" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!--<ImageView
-                android:id="@+id/play"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="60dp"
-                android:layout_gravity="start|center_vertical"
-                android:layout_marginEnd="12dp"
-                app:srcCompat="@android:drawable/ic_media_play" />-->
-
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/play"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="60dp"
-                android:layout_marginBottom="5dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:layout_gravity="end|center_vertical"
-                android:backgroundTint="@android:color/white"
+                android:layout_marginStart="60dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
                 android:background="@drawable/circular_button"
-                android:drawableStart="@android:drawable/ic_media_play"/>
-
-
-           <!-- <ImageView
-                android:id="@+id/pause"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="start|center_vertical"
-                android:layout_marginStart="100dp"
-                android:layout_marginEnd="12dp"
-                android:visibility="gone"
-                app:srcCompat="@android:drawable/ic_media_pause" />-->
+                android:backgroundTint="@color/white"
+                android:drawableStart="@drawable/ic_play_foreground"
+                android:paddingStart="-25dp"
+                android:paddingEnd="-25dp" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/pause"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:layout_gravity="end|center_vertical"
                 android:layout_marginStart="60dp"
+                android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
-                android:visibility="gone"
                 android:background="@drawable/circular_button"
-                android:backgroundTint="@android:color/white"
-                android:drawableStart="@android:drawable/ic_media_pause"/>
-
-           <!-- <ImageView
-                android:id="@+id/lost_button"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center|center_vertical"
-                android:layout_marginEnd="12dp"
-                app:srcCompat="@android:drawable/ic_dialog_alert" />-->
+                android:backgroundTint="@color/white"
+                android:drawableStart="@drawable/ic_pause_foreground"
+                android:paddingStart="-25dp"
+                android:paddingEnd="-25dp"
+                android:visibility="gone" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/lost_button"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center|center_vertical"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center_horizontal|center_vertical"
                 android:layout_marginStart="60dp"
+                android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
-                android:backgroundTint="@android:color/white"
                 android:background="@drawable/circular_button"
-                android:drawableStart="@android:drawable/ic_dialog_alert"/>
-
-
-            <!--<com.google.android.material.button.MaterialButton
-                android:id="@+id/stop"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="60dp"
-                android:layout_marginBottom="5dp"
-                android:layout_gravity="end|center_vertical"
                 android:backgroundTint="@android:color/white"
-                android:background="@drawable/circular_button"
-                app:icon=""
-                android:drawableStart="@android:drawable/ic_delete"
-                />-->
+                android:drawableStart="@drawable/ic_alert_foreground"
+                android:paddingStart="-18dp"
+                android:paddingTop="7dp"
+                android:paddingEnd="-18dp" />
+
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/stop"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="end|center_vertical"
                 android:layout_marginStart="60dp"
+                android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
-                android:layout_gravity="end|center_vertical"
-                android:backgroundTint="@android:color/white"
                 android:background="@drawable/circular_button"
-                android:drawableStart="@android:drawable/ic_delete"/>
-
-            <!--<ImageView
-                android:id="@+id/stop"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="end|center_vertical"
-                android:layout_marginEnd="12dp"
-                app:srcCompat="@android:drawable/ic_delete" />-->
-
+                android:backgroundTint="@android:color/white"
+                android:drawableStart="@drawable/ic_stop_foreground"
+                android:paddingStart="-25dp"
+                android:paddingEnd="-25dp" />
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
@@ -255,6 +211,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:background="@color/white"
+        android:contentDescription="@string/camera_action_button"
         app:backgroundTint="#FFFFFF"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/recenter"
