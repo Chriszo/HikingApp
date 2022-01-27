@@ -658,7 +658,7 @@ class SampleNavigationActivity : AppCompatActivity() {
 
         mapboxMap.loadStyle(
             (
-                    style(styleUri = Style.OUTDOORS) {
+                    style(styleUri = Style.SATELLITE) {
 //                        +geoJsonSource("line") {
 ////                            url("asset://seichsou_trail.geojson")
 //                            url("asset://" + mapInfo?.routeGeoJsonFileName)
@@ -794,6 +794,7 @@ class SampleNavigationActivity : AppCompatActivity() {
             destination,
             routeJson.bbox()!!,
             routeJson,
+            null,
             MockDatabase.routesMap["Philopapou"]?.second!!
         )
     }

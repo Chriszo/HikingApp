@@ -4,14 +4,21 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivitySampleMapBinding
+import com.example.hikingapp.domain.map.ExtendedMapPoint
+import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.persistence.MapInfo
+import com.example.hikingapp.persistence.RouteInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.api.directions.v5.models.DirectionsRoute
+import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.*
 import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
@@ -25,6 +32,7 @@ import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
+import com.mapbox.maps.plugin.gestures.addOnMapClickListener
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.navigation.base.options.NavigationOptions
@@ -49,6 +57,13 @@ import com.mapbox.navigation.ui.maps.route.line.model.RouteLine
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
 import kotlinx.android.synthetic.main.activity_sample_map.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.net.SocketTimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * This example demonstrates the usage of the route line and route arrow API's and UI elements.
@@ -303,6 +318,7 @@ class SampleMapActivity : AppCompatActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(viewBinding.root)
@@ -310,9 +326,131 @@ class SampleMapActivity : AppCompatActivity() {
         //TODO Retrieve current Route Map information
         var routeName = savedInstanceState?.get("RouteName")
         routeName = routeName?.let { it as String }
+
         val mapInfo = retrieveMapInformation(routeName)
 
+        val routeInfo = RouteInfo()
+
+        val pointIndexMap = HashMap<String, Int>()
+
+        val errors = mutableListOf<Throwable>()
+
+        mapboxMap.addOnMapLoadedListener {
+            setRouteElevationData(mapInfo, pointIndexMap, errors)
+        }
+
+        // For debugging and monitoring only
+        mapboxMap.addOnMapClickListener {
+            println(routeInfo.elevationData)
+            val filteredCoordinates = filterRoutePoints(mapInfo.mapPoints!!, 3)
+            println(filteredCoordinates)
+            println(errors)
+            true
+        }
+
         init(mapInfo)
+    }
+
+    private fun filterRoutePoints(
+        coordinates: List<MapPoint>,
+        modulo: Int
+    ): MutableList<ExtendedMapPoint> {
+
+        return coordinates.filterIndexed { index, _ -> index % modulo == 0 }
+            .map { mapPoint ->
+                ExtendedMapPoint(mapPoint.point, mapPoint.elevation, coordinates.indexOf(mapPoint))
+            }
+            .toMutableList()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun setRouteElevationData(
+        mapInfo: MapInfo,
+        pointIndexMap: HashMap<String, Int>,
+        errors: MutableList<Throwable>
+    ) {
+
+        val filteredPoints = filterRoutePoints(mapInfo.mapPoints!!, 3)
+
+        filteredPoints.forEach {
+
+            pointIndexMap[it.point.longitude().toString() + "," + it.point.latitude().toString()] =
+                it.index
+
+            val elevationQuery = MapboxTilequery.builder()
+                .accessToken(getString(R.string.mapbox_access_token))
+                .tilesetIds(GlobalUtils.TERRAIN_ID)
+                .limit(50)
+                .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
+                .query(it.point)
+                .build()
+
+            elevationQuery.enqueueCall(object : Callback<FeatureCollection> {
+
+                override fun onResponse(
+                    call: Call<FeatureCollection>,
+                    response: Response<FeatureCollection>
+                ) {
+                    GlobalScope.async {
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+
+                            val point = (response.body()?.features()?.get(0)?.geometry() as Point)
+                            val pointsMapKey =
+                                point.longitude().toString() + "," + point.latitude().toString()
+
+                            response.body()?.features()
+                                ?.stream()
+                                ?.mapToInt { feature ->
+                                    feature.properties()?.get("ele")?.asInt!!
+                                }
+                                ?.max()
+                                ?.ifPresent { max ->
+                                    val index = pointIndexMap[pointsMapKey]
+                                    mapInfo.mapPoints[index!!].elevation = max
+                                }
+                        }
+                    } //TODO add implementation for backwards compatibility
+
+                    /*response.body()?.features().apply {
+                        this?.forEach {
+                            if (routeInfo.elevationData == null) {
+                                routeInfo.elevationData = mutableListOf()
+                            }
+                            routeInfo.elevationData!!.add(it)
+                        }
+                        Toast.makeText(
+                            this@SampleMapActivity,
+                            "Elevation Data retrieved successfully " + counter.incrementAndGet(),//(this?.get(this.size-1)?.properties()?.get("ele")?.asInt),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }*/
+
+                }
+
+                override fun onFailure(call: Call<FeatureCollection>, t: Throwable) {
+                    Log.e(Log.ERROR.toString(), "An error occured. {}", t)
+                    errors.add(t)
+                    if (t is SocketTimeoutException) {
+                        Toast.makeText(
+                            this@SampleMapActivity,
+                            "SocketTimeoutException.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                    } else {
+                        println(t)
+                        Toast.makeText(
+                            this@SampleMapActivity,
+                            "Unkown exception.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                }
+            })
+        }
+
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
@@ -325,13 +463,23 @@ class SampleMapActivity : AppCompatActivity() {
         val origin: Point = routeJson.coordinates()[0][0]
         val destination: Point = routeJson.coordinates()[0][routeJson.coordinates()[0].size - 1]
 
+        val mapPoints = getMapPoints(routeJson)
+
         return MapInfo(
             origin,
             destination,
             routeJson.bbox()!!,
             routeJson,
+            mapPoints,
             MockDatabase.routesMap["Philopapou"]?.second!!
         )
+    }
+
+    private fun getMapPoints(json: MultiLineString): List<MapPoint> {
+        return json.coordinates()[0].map {
+            MapPoint(it)
+        }
+
     }
 
     private fun init(mapInfo: MapInfo) {
@@ -344,7 +492,7 @@ class SampleMapActivity : AppCompatActivity() {
 
         mapboxMap.loadStyle(
             (
-                    style(styleUri = Style.OUTDOORS) {
+                    style(styleUri = Style.SATELLITE) {
                         +geoJsonSource(GlobalUtils.LINE_SOURCE_ID) {
                             url("asset://" + mapInfo.routeGeoJsonFileName)
                         }
@@ -416,7 +564,7 @@ class SampleMapActivity : AppCompatActivity() {
     private fun initListeners(mapInfo: MapInfo) {
         viewBinding.startNavigation.setOnClickListener {
             viewBinding.startNavigation.visibility = View.INVISIBLE
-            this?.let {
+            this.let {
                 val navigationIntent = Intent(this, SampleNavigationActivity::class.java)
                 navigationIntent.putExtra("mapInfo", mapInfo)
                 it.startActivity(navigationIntent)

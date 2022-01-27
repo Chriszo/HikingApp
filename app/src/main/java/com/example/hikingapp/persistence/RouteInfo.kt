@@ -3,17 +3,15 @@ package com.example.hikingapp.persistence
 import com.example.hikingapp.domain.DifficultyLevel
 import com.example.hikingapp.domain.RouteType
 
-class RouteInfo {
+class RouteInfo(
+    var distance: Int,
+    var timeEstimation: Double,
+    var routeType: RouteType?,
+    var difficultyLevel: DifficultyLevel?,
+    var elevationData: MutableList<Int>?
+) {
 
-    private var distance: Int
-    private var timeEstimation: Double
-    private var routeType: RouteType
-    private var difficultyLevel: DifficultyLevel
 
-    constructor(distance: Int, timeEstimation: Double, routeType: RouteType, difficultyLevel: DifficultyLevel) {
-        this.distance = distance
-        this.timeEstimation = timeEstimation
-        this.routeType = routeType
-        this.difficultyLevel = difficultyLevel
-    }
+    constructor() : this(0, 0.0, null, null, null)
+
 }
