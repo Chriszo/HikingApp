@@ -1,6 +1,7 @@
 package com.example.hikingapp
 
 import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.location.Location
@@ -8,7 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivitySampleMapBinding
@@ -17,6 +17,9 @@ import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.RouteInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.jjoe64.graphview.GraphView
+import com.jjoe64.graphview.series.DataPoint
+import com.jjoe64.graphview.series.LineGraphSeries
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.*
@@ -57,13 +60,10 @@ import com.mapbox.navigation.ui.maps.route.line.model.RouteLine
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
 import kotlinx.android.synthetic.main.activity_sample_map.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.net.SocketTimeoutException
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * This example demonstrates the usage of the route line and route arrow API's and UI elements.
@@ -335,8 +335,21 @@ class SampleMapActivity : AppCompatActivity() {
 
         val errors = mutableListOf<Throwable>()
 
+        val test = viewBinding.graph
+        val series = LineGraphSeries<DataPoint>(
+            arrayOf(
+                DataPoint(0.0, 1.0),
+                DataPoint(1.0, 5.0),
+                DataPoint(2.0, 3.0),
+                DataPoint(3.0, 2.0),
+                DataPoint(4.0, 6.0)
+            )
+        )
+        test.addSeries(series)
+
+
         mapboxMap.addOnMapLoadedListener {
-            setRouteElevationData(mapInfo, pointIndexMap, errors)
+            setRouteElevationData(mapInfo, pointIndexMap, errors, true, graph)
         }
 
         // For debugging and monitoring only
@@ -347,6 +360,7 @@ class SampleMapActivity : AppCompatActivity() {
             println(errors)
             true
         }
+
 
         init(mapInfo)
     }
@@ -367,90 +381,97 @@ class SampleMapActivity : AppCompatActivity() {
     private fun setRouteElevationData(
         mapInfo: MapInfo,
         pointIndexMap: HashMap<String, Int>,
-        errors: MutableList<Throwable>
+        errors: MutableList<Throwable>,
+        isExecutable: Boolean,// TODO Remove it when you must. It is used in order to bypass execution during test., graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}
+        graph: GraphView
+
     ) {
+        if (isExecutable) {
 
-        val filteredPoints = filterRoutePoints(mapInfo.mapPoints!!, 3)
+            val filteredPoints = filterRoutePoints(mapInfo.mapPoints!!, 3)
 
-        filteredPoints.forEach {
+            val series = LineGraphSeries<DataPoint>()
 
-            pointIndexMap[it.point.longitude().toString() + "," + it.point.latitude().toString()] =
-                it.index
-
-            val elevationQuery = MapboxTilequery.builder()
-                .accessToken(getString(R.string.mapbox_access_token))
-                .tilesetIds(GlobalUtils.TERRAIN_ID)
-                .limit(50)
-                .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
-                .query(it.point)
-                .build()
-
-            elevationQuery.enqueueCall(object : Callback<FeatureCollection> {
-
-                override fun onResponse(
-                    call: Call<FeatureCollection>,
-                    response: Response<FeatureCollection>
-                ) {
-                    GlobalScope.async {
-
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-
-                            val point = (response.body()?.features()?.get(0)?.geometry() as Point)
-                            val pointsMapKey =
-                                point.longitude().toString() + "," + point.latitude().toString()
-
-                            response.body()?.features()
-                                ?.stream()
-                                ?.mapToInt { feature ->
-                                    feature.properties()?.get("ele")?.asInt!!
-                                }
-                                ?.max()
-                                ?.ifPresent { max ->
-                                    val index = pointIndexMap[pointsMapKey]
-                                    mapInfo.mapPoints[index!!].elevation = max
-                                }
+            GlobalScope.launch {
+                withTimeout(5000L) {
+                    repeat(filteredPoints.size) {
+                        if (isActive) {
+                            Log.d(TAG, "Executing call for map point: " + (it) + " with coordinates (lat: " +
+                                    filteredPoints[it].point.latitude() + " , lon: " +
+                                    filteredPoints[it].point.longitude() + ")"
+                            )
+                            pointIndexMap[filteredPoints[it].point.longitude()
+                                .toString() + "," + filteredPoints[it].point.latitude()
+                                .toString()] = filteredPoints[it].index
+                            callElevationDataAPI(filteredPoints[it], mapInfo, pointIndexMap, errors).await()
                         }
-                    } //TODO add implementation for backwards compatibility
-
-                    /*response.body()?.features().apply {
-                        this?.forEach {
-                            if (routeInfo.elevationData == null) {
-                                routeInfo.elevationData = mutableListOf()
-                            }
-                            routeInfo.elevationData!!.add(it)
-                        }
-                        Toast.makeText(
-                            this@SampleMapActivity,
-                            "Elevation Data retrieved successfully " + counter.incrementAndGet(),//(this?.get(this.size-1)?.properties()?.get("ele")?.asInt),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }*/
-
-                }
-
-                override fun onFailure(call: Call<FeatureCollection>, t: Throwable) {
-                    Log.e(Log.ERROR.toString(), "An error occured. {}", t)
-                    errors.add(t)
-                    if (t is SocketTimeoutException) {
-                        Toast.makeText(
-                            this@SampleMapActivity,
-                            "SocketTimeoutException.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                    } else {
-                        println(t)
-                        Toast.makeText(
-                            this@SampleMapActivity,
-                            "Unkown exception.",
-                            Toast.LENGTH_SHORT
-                        ).show()
                     }
-
                 }
-            })
+
+                mapInfo.mapPoints
+                    .stream()
+                    .filter { mp -> mp.elevation != -10000 }
+                    .forEach {
+                    series.appendData(DataPoint(mapInfo.mapPoints.indexOf(it).toDouble(),it.elevation.toDouble()),false, mapInfo.mapPoints.size)
+                }
+                graph.addSeries(series)
+            }
+
         }
 
+    }
+
+    private suspend fun callElevationDataAPI(
+        it: ExtendedMapPoint,
+        mapInfo: MapInfo,
+        pointIndexMap: HashMap<String, Int>,
+        errors: MutableList<Throwable>
+    ):Deferred<ExtendedMapPoint> {
+
+        val elevationQuery = MapboxTilequery.builder()
+            .accessToken(getString(R.string.mapbox_access_token))
+            .tilesetIds(GlobalUtils.TERRAIN_ID)
+            .limit(50)
+            .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
+            .query(it.point)
+            .build()
+
+        elevationQuery.enqueueCall(object : Callback<FeatureCollection> {
+
+            override fun onResponse(
+                call: Call<FeatureCollection>,
+                response: Response<FeatureCollection>
+            ) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+
+                    val point =
+                        (response.body()?.features()?.get(0)?.geometry() as Point)
+                    val pointsMapKey =
+                        point.longitude().toString() + "," + point.latitude().toString()
+
+                    response.body()?.features()
+                        ?.stream()
+                        ?.mapToInt { feature ->
+                            feature.properties()?.get("ele")?.asInt!!
+                        }
+                        ?.max()
+                        ?.ifPresent { max ->
+                            val index = pointIndexMap[pointsMapKey]
+                            mapInfo.mapPoints?.get(index!!)?.elevation = max
+
+
+                        }
+                }
+                //TODO add implementation for backwards compatibility
+            }
+
+            override fun onFailure(call: Call<FeatureCollection>, t: Throwable) {
+                Log.e(Log.ERROR.toString(), "An error occured " +  t.message)
+                Log.e(Log.ERROR.toString(), t.stackTraceToString())
+                errors.add(t)
+            }
+        })
+        return CompletableDeferred(it)
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
