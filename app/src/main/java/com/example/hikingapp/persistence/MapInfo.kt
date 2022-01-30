@@ -7,7 +7,7 @@ import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import java.io.Serializable
 
-class MapInfo(val origin: Point, val destination: Point, val boundingBox: BoundingBox, val jsonRoute: MultiLineString, val mapPoints: List<MapPoint>?, val routeGeoJsonFileName: String): Serializable {
+class MapInfo(val origin: Point, val destination: Point, val boundingBox: BoundingBox, val jsonRoute: MultiLineString, val mapPoints: List<MapPoint>?, val routeGeoJsonFileName: String, val elevationDataLoaded: Boolean): Serializable {
 
     lateinit var directionInstructions: List<DirectionsRoute>
 }

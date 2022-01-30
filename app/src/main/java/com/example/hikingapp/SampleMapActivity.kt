@@ -1,7 +1,6 @@
 package com.example.hikingapp
 
 import android.annotation.SuppressLint
-import android.content.ContentValues.TAG
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.location.Location
@@ -12,10 +11,10 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivitySampleMapBinding
+import com.example.hikingapp.domain.Route
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.persistence.MapInfo
-import com.example.hikingapp.persistence.RouteInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
@@ -61,9 +60,13 @@ import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
 import kotlinx.android.synthetic.main.activity_sample_map.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.stream.Collectors
 
 /**
  * This example demonstrates the usage of the route line and route arrow API's and UI elements.
@@ -325,39 +328,20 @@ class SampleMapActivity : AppCompatActivity() {
 
         //TODO Retrieve current Route Map information
         var routeName = savedInstanceState?.get("RouteName")
+
+        val route = Route()
         routeName = routeName?.let { it as String }
 
         val mapInfo = retrieveMapInformation(routeName)
-
-        val routeInfo = RouteInfo()
-
-        val pointIndexMap = HashMap<String, Int>()
-
-        val errors = mutableListOf<Throwable>()
-
-        val test = viewBinding.graph
-        val series = LineGraphSeries<DataPoint>(
-            arrayOf(
-                DataPoint(0.0, 1.0),
-                DataPoint(1.0, 5.0),
-                DataPoint(2.0, 3.0),
-                DataPoint(3.0, 2.0),
-                DataPoint(4.0, 6.0)
-            )
-        )
-        test.addSeries(series)
-
+        route.mapInfo = mapInfo
 
         mapboxMap.addOnMapLoadedListener {
-            setRouteElevationData(mapInfo, pointIndexMap, errors, true, graph)
+            setRouteElevationData(route.mapInfo!!, true, graph)
         }
 
         // For debugging and monitoring only
         mapboxMap.addOnMapClickListener {
-            println(routeInfo.elevationData)
-            val filteredCoordinates = filterRoutePoints(mapInfo.mapPoints!!, 3)
-            println(filteredCoordinates)
-            println(errors)
+            println(route)
             true
         }
 
@@ -380,61 +364,96 @@ class SampleMapActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.N)
     private fun setRouteElevationData(
         mapInfo: MapInfo,
-        pointIndexMap: HashMap<String, Int>,
-        errors: MutableList<Throwable>,
         isExecutable: Boolean,// TODO Remove it when you must. It is used in order to bypass execution during test., graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}
         graph: GraphView
-
     ) {
         if (isExecutable) {
 
-            val filteredPoints = filterRoutePoints(mapInfo.mapPoints!!, 3)
-
             val series = LineGraphSeries<DataPoint>()
 
-            GlobalScope.launch {
-                withTimeout(5000L) {
-                    repeat(filteredPoints.size) {
-                        if (isActive) {
-                            Log.d(TAG, "Executing call for map point: " + (it) + " with coordinates (lat: " +
-                                    filteredPoints[it].point.latitude() + " , lon: " +
-                                    filteredPoints[it].point.longitude() + ")"
-                            )
-                            pointIndexMap[filteredPoints[it].point.longitude()
-                                .toString() + "," + filteredPoints[it].point.latitude()
-                                .toString()] = filteredPoints[it].index
-                            callElevationDataAPI(filteredPoints[it], mapInfo, pointIndexMap, errors).await()
-                        }
-                    }
-                }
+            if (mapInfo.elevationDataLoaded) { // Means that these data may be stored in db and can be retrieved from there
 
                 mapInfo.mapPoints
-                    .stream()
-                    .filter { mp -> mp.elevation != -10000 }
-                    .forEach {
-                    series.appendData(DataPoint(mapInfo.mapPoints.indexOf(it).toDouble(),it.elevation.toDouble()),false, mapInfo.mapPoints.size)
-                }
+                    ?.stream()
+                    ?.filter { point -> point.elevation != null }
+                    ?.forEach {
+                        series.appendData(
+                            DataPoint(
+                                mapInfo.mapPoints.indexOf(it).toDouble(),
+                                it.elevation!!.toDouble()
+                            ),
+                            false,
+                            mapInfo.mapPoints.size
+                        )
+                    }
                 graph.addSeries(series)
+
+            } else { // Data have not been loaded so need Tilequery async API calls to populate data.
+                GlobalScope.launch {
+
+                    collectionElevData(mapInfo).collect {
+
+                        println("Drawing graph")
+                        it.stream().forEach { ep ->
+                            series.appendData(
+                                DataPoint(ep.index.toDouble(), ep.elevation!!.toDouble()),
+                                false,
+                                it.size
+                            )
+                        }
+                        graph.addSeries(series)
+                    }
+
+                }
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun collectionElevData(
+        mapInfo: MapInfo
+    ): Flow<MutableList<ExtendedMapPoint>> = flow {
+
+        val pointIndexMap = HashMap<String, Int>()
+        var elevationData = mutableListOf<ExtendedMapPoint>()
+        val extendedMapPoints = filterRoutePoints(mapInfo.mapPoints!!, 3)
+
+
+        extendedMapPoints.stream().forEach {
+
+            GlobalScope.launch {
+                pointIndexMap[it.point.longitude().toString()+","+it.point.latitude().toString()] =
+                    it.index
+                callElevationDataAPI(it, mapInfo, pointIndexMap, elevationData)
             }
 
         }
+        while (elevationData.size != extendedMapPoints.size) {
+            // wait
+        }
+        elevationData = elevationData
+            .stream()
+            .filter { it.elevation != -10000 }
+            .sorted(Comparator.comparing(ExtendedMapPoint::index))
+            .collect(Collectors.toList()).toMutableList()
 
+        emit(elevationData)
     }
 
+
     private suspend fun callElevationDataAPI(
-        it: ExtendedMapPoint,
+        extendedPoint: ExtendedMapPoint,
         mapInfo: MapInfo,
         pointIndexMap: HashMap<String, Int>,
-        errors: MutableList<Throwable>
-    ):Deferred<ExtendedMapPoint> {
+        elevationData: MutableList<ExtendedMapPoint>
+    ) {
 
-        val elevationQuery = MapboxTilequery.builder()
-            .accessToken(getString(R.string.mapbox_access_token))
-            .tilesetIds(GlobalUtils.TERRAIN_ID)
-            .limit(50)
-            .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
-            .query(it.point)
-            .build()
+        if (extendedPoint.index % 50 == 0) {
+            delay(3000)
+            println("WAITING")
+        }
+
+        val elevationQuery = formElevationRequestQuery(extendedPoint)
 
         elevationQuery.enqueueCall(object : Callback<FeatureCollection> {
 
@@ -444,34 +463,52 @@ class SampleMapActivity : AppCompatActivity() {
             ) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 
-                    val point =
-                        (response.body()?.features()?.get(0)?.geometry() as Point)
-                    val pointsMapKey =
-                        point.longitude().toString() + "," + point.latitude().toString()
-
-                    response.body()?.features()
-                        ?.stream()
-                        ?.mapToInt { feature ->
-                            feature.properties()?.get("ele")?.asInt!!
-                        }
-                        ?.max()
-                        ?.ifPresent { max ->
-                            val index = pointIndexMap[pointsMapKey]
-                            mapInfo.mapPoints?.get(index!!)?.elevation = max
+                    if (response.isSuccessful) {
+                        val point =
+                            (response.body()?.features()?.get(0)?.geometry() as Point)
+                        val pointsMapKey =
+                            point.longitude().toString() + "," + point.latitude().toString()
 
 
-                        }
+                        response.body()?.features()
+                            ?.stream()
+                            ?.mapToInt { feature ->
+                                feature.properties()?.get("ele")?.asInt!!
+                            }
+                            ?.max()
+                            ?.ifPresent { max ->
+                                val index = pointIndexMap[pointsMapKey]
+                                mapInfo.mapPoints?.get(index!!)?.elevation = max
+                                extendedPoint.elevation = max
+                                elevationData.add(extendedPoint)
+                            }
+                        Log.d(
+                            "R",
+                            "" + elevationData.indexOf(extendedPoint) + ", " + extendedPoint.elevation
+                        )
+                        call.cancel()
+                    }
+                } else {
+                    //TODO add implementation for backwards compatibility
                 }
-                //TODO add implementation for backwards compatibility
             }
 
             override fun onFailure(call: Call<FeatureCollection>, t: Throwable) {
-                Log.e(Log.ERROR.toString(), "An error occured " +  t.message)
-                Log.e(Log.ERROR.toString(), t.stackTraceToString())
-                errors.add(t)
+                Log.e(Log.ERROR.toString(), "An error occured " + t.message)
+                elevationQuery.cancelCall()
+                return
             }
         })
-        return CompletableDeferred(it)
+    }
+
+    private fun formElevationRequestQuery(extendedPoint: ExtendedMapPoint): MapboxTilequery {
+        return MapboxTilequery.builder()
+            .accessToken(getString(R.string.mapbox_access_token))
+            .tilesetIds(GlobalUtils.TERRAIN_ID)
+            .limit(50)
+            .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
+            .query(extendedPoint.point)
+            .build()
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
@@ -492,7 +529,8 @@ class SampleMapActivity : AppCompatActivity() {
             routeJson.bbox()!!,
             routeJson,
             mapPoints,
-            MockDatabase.routesMap["Philopapou"]?.second!!
+            MockDatabase.routesMap["Philopapou"]?.second!!,
+            false
         )
     }
 
@@ -569,17 +607,17 @@ class SampleMapActivity : AppCompatActivity() {
         )
     }
 
-    /*@SuppressLint("MissingPermission")
-    private fun initNavigation() {
-        mapboxNavigation.run {
-            setRoutes(listOf(hardCodedRoute))
-            registerRoutesObserver(routesObserver)
-            registerLocationObserver(locationObserver)
-            registerRouteProgressObserver(routeProgressObserver)
-            registerRouteProgressObserver(replayProgressObserver)
-            startTripSession()
-        }
-    }*/
+/*@SuppressLint("MissingPermission")
+private fun initNavigation() {
+    mapboxNavigation.run {
+        setRoutes(listOf(hardCodedRoute))
+        registerRoutesObserver(routesObserver)
+        registerLocationObserver(locationObserver)
+        registerRouteProgressObserver(routeProgressObserver)
+        registerRouteProgressObserver(replayProgressObserver)
+        startTripSession()
+    }
+}*/
 
     @SuppressLint("SetTextI18n")
     private fun initListeners(mapInfo: MapInfo) {
@@ -652,6 +690,7 @@ class SampleMapActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        println("ON DESTROY CALLED")
         locationComponent.removeOnIndicatorPositionChangedListener(onPositionChangedListener)
         mapboxNavigation.run {
             // make sure to stop the trip session. In this case it is being called inside `onDestroy`.

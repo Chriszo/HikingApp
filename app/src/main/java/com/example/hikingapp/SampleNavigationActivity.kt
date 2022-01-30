@@ -795,7 +795,8 @@ class SampleNavigationActivity : AppCompatActivity() {
             routeJson.bbox()!!,
             routeJson,
             null,
-            MockDatabase.routesMap["Philopapou"]?.second!!
+            MockDatabase.routesMap["Philopapou"]?.second!!,
+            false
         )
     }
 
