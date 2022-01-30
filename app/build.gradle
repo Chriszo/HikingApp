@@ -53,6 +53,7 @@ dependencies {
     }
     implementation 'com.mapbox.mapboxsdk:mapbox-sdk-turf:5.8.0'
     implementation('com.jjoe64:graphview:4.2.2')
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

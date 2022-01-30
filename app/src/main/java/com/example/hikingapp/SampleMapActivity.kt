@@ -335,9 +335,9 @@ class SampleMapActivity : AppCompatActivity() {
         val mapInfo = retrieveMapInformation(routeName)
         route.mapInfo = mapInfo
 
-        mapboxMap.addOnMapLoadedListener {
+       /* mapboxMap.addOnMapLoadedListener {
             setRouteElevationData(route.mapInfo!!, true, graph)
-        }
+        }*/
 
         // For debugging and monitoring only
         mapboxMap.addOnMapClickListener {

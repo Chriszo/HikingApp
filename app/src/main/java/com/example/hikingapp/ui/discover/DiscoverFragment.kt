@@ -1,18 +1,16 @@
 package com.example.hikingapp.ui.discover
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.example.hikingapp.SampleMapActivity
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
-import com.example.hikingapp.SampleNavigationActivity
+import com.example.hikingapp.ui.RouteFragment
+import kotlinx.android.synthetic.main.activity_main.*
 
 class DiscoverFragment : Fragment() {
 
@@ -39,7 +37,14 @@ class DiscoverFragment : Fragment() {
             textView.text = it
         })
 
-        val showMapButton: Button = binding.showMap
+        val showRouteButton = binding.showRoute
+        showRouteButton.setOnClickListener {
+            val routePage = RouteFragment()
+            val transaction = fragmentManager?.beginTransaction()
+            transaction?.replace(nav_host_fragment_activity_main.id, routePage)?.commit()
+        }
+
+        /*val showMapButton: Button = binding.showMap
         showMapButton.setOnClickListener {
             activity?.let {
                 val intent = Intent(it, SampleMapActivity::class.java)
@@ -53,7 +58,7 @@ class DiscoverFragment : Fragment() {
                 val intent = Intent(it, SampleNavigationActivity::class.java)
                 it.startActivity(intent)
             }
-        }
+        }*/
 
         return root
     }

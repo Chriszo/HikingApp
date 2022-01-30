@@ -4,6 +4,9 @@
     <string name="title_navigation">Navigate</string>
     <string name="title_profile">Profile</string>
     <string name="sample_map">Show map</string>
+    <string name="route">Go to Route</string>
+    <string name="to_home">To Home</string>
     <string name="sample_navigation">Navigate</string>
     <string name="camera_action_button">Camera action button</string>
+    <string name="prodMode">true</string>
 </resources>
