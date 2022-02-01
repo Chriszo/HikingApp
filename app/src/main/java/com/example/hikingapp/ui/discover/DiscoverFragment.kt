@@ -1,5 +1,6 @@
 package com.example.hikingapp.ui.discover
 
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -7,15 +8,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.hikingapp.R
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
+import com.example.hikingapp.domain.Route
+import com.example.hikingapp.search.SearchType
+import com.example.hikingapp.search.SearchUtils
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.search.*
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.result.SearchSuggestion
+import kotlinx.android.synthetic.main.fragment_discover.view.*
 
 
 class DiscoverFragment : Fragment() {
@@ -72,7 +78,7 @@ class DiscoverFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         discoverViewModel =
             ViewModelProvider(this).get(DiscoverViewModel::class.java)
@@ -80,13 +86,17 @@ class DiscoverFragment : Fragment() {
         _binding = FragmentDiscoverBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        val searchType = SearchType.BY_PLACE
+
+        val searchQueryOptions = SearchUtils.defineSearchQueryOptions(searchType)
+
 
         MapboxSearchSdk.initialize(
             application = requireActivity().application,
             accessToken = getString(R.string.mapbox_access_token),
             locationEngine = LocationEngineProvider.getBestLocationEngine(requireContext())
         )
-        searchEngine = MapboxSearchSdk. getSearchEngine()
+        searchEngine = MapboxSearchSdk.getSearchEngine()
 
         binding.searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
@@ -95,29 +105,47 @@ class DiscoverFragment : Fragment() {
                 return true
             }
 
+            @RequiresApi(Build.VERSION_CODES.N)
             override fun onQueryTextChange(newText: String?): Boolean {
-                // TODO Make a geocoding API call
+
                 if (newText?.length!! < 4) {
                     return false
                 }
-                println("Made a geocoding API call")
-                searchEngine.search(
-                    newText,
-                    SearchOptions.Builder().limit(10).build(), searchCallback
-                )
-                println(newText)
+
+                if (searchType == SearchType.BY_PLACE) {
+
+                    val routesFound = SearchUtils.searchDatabaseByPlace(newText)
+
+                    if (!routesFound.isNullOrEmpty()) {
+
+                        routesFound.forEach { route ->
+                            root.text_discover.text = route.routeName
+                        }
+                    } else {
+
+                        // Make Geocoding API Call
+                        SearchUtils.performGeocodingAPICall(
+                            searchEngine,
+                            newText,
+                            searchQueryOptions,
+                            searchCallback
+                        )
+
+                    }
+                }
                 return true
             }
 
         })
 
         val textView: TextView = binding.textDiscover
-        discoverViewModel.text.observe(viewLifecycleOwner, Observer {
+        discoverViewModel.text.observe(viewLifecycleOwner, {
             textView.text = it
         })
 
         return root
     }
+
 
     override fun onDestroy() {
         searchRequestTask.cancel()
