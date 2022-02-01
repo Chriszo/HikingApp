@@ -10,14 +10,13 @@ import android.widget.SearchView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.hikingapp.R
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
-import com.example.hikingapp.domain.Route
 import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.search.SearchUtils
 import com.mapbox.android.core.location.LocationEngineProvider
+import com.mapbox.geojson.Point
 import com.mapbox.search.*
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.result.SearchSuggestion
@@ -74,6 +73,7 @@ class DiscoverFragment : Fragment() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -98,6 +98,31 @@ class DiscoverFragment : Fragment() {
         )
         searchEngine = MapboxSearchSdk.getSearchEngine()
 
+        binding.searchPosition.setOnClickListener {
+
+            if (binding.searchBar.visibility == View.VISIBLE) {
+                binding.searchBar.visibility = View.GONE
+                val routesFound = SearchUtils.searchByPosition(
+                    Point.fromLngLat(
+                        21.942563928989884,39.23945243147539
+//                        binding.textDiscover2.text.split(",")[1].toDouble(),binding.textDiscover2.text.split(",")[0].toDouble()
+                    )
+                )
+                binding.textDiscover.text = routesFound[0].routeName
+            } else {
+                binding.searchBar.visibility == View.VISIBLE
+            }
+        }
+
+        binding.searchPlace.setOnClickListener {
+
+            if (binding.searchBar.visibility == View.GONE || binding.searchBar.visibility == View.INVISIBLE) {
+                binding.searchBar.visibility = View.VISIBLE
+            } else {
+                binding.searchBar.visibility == View.VISIBLE
+            }
+        }
+
         binding.searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -114,7 +139,7 @@ class DiscoverFragment : Fragment() {
 
                 if (searchType == SearchType.BY_PLACE) {
 
-                    val routesFound = SearchUtils.searchDatabaseByPlace(newText)
+                    val routesFound = SearchUtils.searchByPlace(newText)
 
                     if (!routesFound.isNullOrEmpty()) {
 

@@ -30,7 +30,8 @@ class MockDatabase {
             "Philopapou" to Triple(
                 "Philopapou",
                 "philopappou_trail.geojson",
-                null)
+                null
+            )
         )
 //            ),
 //            "Olympus" to Triple(
@@ -51,17 +52,48 @@ class MockDatabase {
             Pair("olympus", Route("Olympus", null, null,null))
         )*/
 
-        val mockSearchResults = setOf<Triple<Set<String>, Point,Route>>(
-            Triple(setOf("philopappou","filopappou","filopapou","philopapou"), Point.fromLngLat(0.0,0.0),Route("Philopappou", null, null,null)),
-            Triple(setOf("Philolaou","filolaou"), Point.fromLngLat(0.0,0.0),Route("Philolaou", null, null,null)),
-            Triple(setOf("pilion", "pilio","pelion","pelio"), Point.fromLngLat(0.0,0.0),Route("Pelion", null, null,null)),
-            Triple(setOf("olympus","olympos", "όλυμπος", "ολυμπος"), Point.fromLngLat(0.0,0.0),Route("Olympus", null, null,null))
+        val mockSearchResults = setOf<Triple<Set<String>, Point, Route>>(
+            Triple(
+                setOf("philopappou", "filopappou", "filopapou", "philopapou"),
+                Point.fromLngLat(23.71683574779853, 37.97362915837593),
+                Route("Philopappou", null, null, null)
+            ),
+            Triple(
+                setOf("Philolaou", "filolaou"),
+                Point.fromLngLat(23.751349476821982, 37.965990579031484),
+                Route("Philolaou", null, null, null)
+            ),
+            Triple(
+                setOf("pilion", "pilio", "pelion", "pelio"),
+                Point.fromLngLat(23.044974025226864, 39.4436732830854),
+                Route("Pelion", null, null, null)
+            ),
+            Triple(
+                setOf("olympus", "olympos", "όλυμπος", "ολυμπος"),
+                Point.fromLngLat(22.34898859796338, 40.10140396689491),
+                Route("Olympus", null, null, null)
+            )
         )
 
 
         val mockKeywords = setOf(
-            "olympus","olympos", "όλυμπος", "ολυμπος", "πήλιο","πηλιο","φιλοπάππου","pilion", "pilio","pelion","pelio","philopappou","filopappou",
-            "filopapou","philopapou","Philolaou","filolaou"
+            "olympus",
+            "olympos",
+            "όλυμπος",
+            "ολυμπος",
+            "πήλιο",
+            "πηλιο",
+            "φιλοπάππου",
+            "pilion",
+            "pilio",
+            "pelion",
+            "pelio",
+            "philopappou",
+            "filopappou",
+            "filopapou",
+            "philopapou",
+            "Philolaou",
+            "filolaou"
         )
     }
 

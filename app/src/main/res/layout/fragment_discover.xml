@@ -10,14 +10,46 @@
     <SearchView
         android:id="@+id/search_bar"
         android:layout_width="match_parent"
-        android:background="@drawable/background"
         android:layout_height="40dp"
-        android:layout_marginTop="20dp"
         android:layout_marginLeft="25dp"
+        android:layout_marginTop="20dp"
         android:layout_marginRight="25dp"
+        android:background="@drawable/background"
+        android:focusable="true"
         app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="30dp"
-        android:focusable="true"/>
+        tools:layout_editor_absoluteX="30dp" />
+
+    <LinearLayout
+        android:id="@+id/liner_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/text_discover"
+        app:layout_constraintTop_toBottomOf="@+id/search_bar">
+
+        <Button
+            android:id="@+id/search_place"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:text="By Place"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_discover" />
+
+        <Button
+            android:id="@+id/search_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:text="By Position"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/show_map"
+            app:layout_constraintTop_toBottomOf="@+id/show_map"
+            app:layout_constraintVertical_bias="0.225" />
+    </LinearLayout>
 
     <!--<com.mapbox.search.ui.view.SearchBottomSheetView
         android:id="@+id/search_view"
@@ -26,6 +58,19 @@
         android:elevation="8dp"
         />-->
 
+    <EditText
+        android:id="@+id/text_discover2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@id/text_discover"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/liner_id" />
 
 
     <TextView
@@ -41,6 +86,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+
 
     <Button
         android:id="@+id/show_map"

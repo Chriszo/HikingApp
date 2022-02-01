@@ -9,21 +9,61 @@ import com.mapbox.search.*
 import org.apache.commons.lang3.StringUtils
 import java.util.*
 import java.util.stream.Collectors
+import kotlin.math.*
 
 class SearchUtils {
 
+
     companion object {
 
+        private const val earthRadius = 6371
+
         @RequiresApi(Build.VERSION_CODES.N)
-        fun searchDatabaseByPlace(placeName: String): MutableList<Route> {
+        fun searchByPlace(placeName: String): MutableList<Route> {
 
             return Optional.ofNullable(MockDatabase.mockSearchResults
-                    .stream()
-                    .filter { containsKeyword(it.first,placeName) }
-                    .map { it.third }
-                    .collect(Collectors.toList()))
-                    .orElse(listOf())
+                .stream()
+                .filter { containsKeyword(it.first, placeName) }
+                .map { it.third }
+                .collect(Collectors.toList()))
+                .orElse(listOf())
 
+        }
+
+        @RequiresApi(Build.VERSION_CODES.N)
+        fun searchByPosition(userLocation: Point): MutableList<Route> {
+
+            return MockDatabase.mockSearchResults
+                .stream()
+                .sorted(compareBy {
+                    distance(userLocation, it.second)
+                })
+                .map {
+                    it.third
+                }
+                .collect(Collectors.toList())
+
+        }
+
+        private fun distance(point1: Point, point2: Point): Double {
+
+            val latDistance = Math.toRadians(point2.latitude() - point1.latitude())
+            val lonDistance = Math.toRadians(point2.longitude() - point1.longitude())
+
+            val a = (sin(latDistance / 2) * sin(latDistance / 2)
+                    + (cos(Math.toRadians(point1.latitude())) * cos(Math.toRadians(point2.latitude()))
+                    * sin(lonDistance / 2) * sin(lonDistance / 2)))
+
+            val c = a * atan2(sqrt(a), sqrt(1 - a))
+
+            var distance = c * earthRadius * 1000 // distance in meters
+
+            val elevationDifference =
+                if ((point1.altitude() - point2.altitude()).isNaN()) 0.0 else point1.altitude() - point2.altitude()
+
+            distance = distance.pow(2.0) + elevationDifference.pow(2.0)
+
+            return sqrt(distance)
         }
 
 
@@ -42,23 +82,10 @@ class SearchUtils {
             }
         }
 
-     /*   @RequiresApi(Build.VERSION_CODES.N)
-        private fun foundInKeywords(keyword: String?): Boolean {
-            MockDatabase.mockSearchResults.stream().map {
-                it.first
-            }
-                .filter{ containsKeyword(it,keyword!!)}
-                .
-
-            *//*return MockDatabase.mockKeywords
-                .stream()
-                .anyMatch { StringUtils.containsIgnoreCase(it,keyword) }*//*
-        }*/
-
         @RequiresApi(Build.VERSION_CODES.N)
         private fun containsKeyword(it: Set<String>, keyword: String): Boolean {
 
-            return it.stream().anyMatch { StringUtils.containsIgnoreCase(it,keyword) }
+            return it.stream().anyMatch { StringUtils.containsIgnoreCase(it, keyword) }
         }
 
         fun performGeocodingAPICall(
