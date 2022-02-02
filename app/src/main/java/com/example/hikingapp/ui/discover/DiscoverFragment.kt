@@ -8,18 +8,26 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import android.widget.TextView
+import androidx.activity.addCallback
 import androidx.annotation.RequiresApi
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentTransaction
+import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModelProvider
+import androidx.slidingpanelayout.widget.SlidingPaneLayout
 import com.example.hikingapp.R
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
 import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.search.SearchUtils
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.geojson.Point
+import com.mapbox.navigation.ui.utils.internal.extensions.slideHeight
 import com.mapbox.search.*
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.result.SearchSuggestion
+import kotlinx.android.synthetic.main.fragment_discover.*
 import kotlinx.android.synthetic.main.fragment_discover.view.*
 
 
@@ -30,7 +38,7 @@ class DiscoverFragment : Fragment() {
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private val binding get() = _binding!!
+//    private val binding get() = _binding!!
 
     private lateinit var searchEngine: SearchEngine
     private lateinit var searchRequestTask: SearchRequestTask
@@ -80,11 +88,18 @@ class DiscoverFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
+        _binding = FragmentDiscoverBinding.inflate(inflater, container, false)
+
+        BottomSheetBehavior.from(_binding!!.filterSheet).apply {
+            this.peekHeight = 0
+            this.state = BottomSheetBehavior.STATE_COLLAPSED
+        }
+
         discoverViewModel =
             ViewModelProvider(this).get(DiscoverViewModel::class.java)
 
-        _binding = FragmentDiscoverBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+        val root: View = _binding!!.root
+
 
         val searchType = SearchType.BY_PLACE
 
@@ -98,32 +113,45 @@ class DiscoverFragment : Fragment() {
         )
         searchEngine = MapboxSearchSdk.getSearchEngine()
 
-        binding.searchPosition.setOnClickListener {
+        root.search_position.setOnClickListener {
 
-            if (binding.searchBar.visibility == View.VISIBLE) {
-                binding.searchBar.visibility = View.GONE
+            if (root.search_bar.visibility == View.VISIBLE) {
+                root.search_bar.visibility = View.GONE
                 val routesFound = SearchUtils.searchByPosition(
                     Point.fromLngLat(
-                        21.942563928989884,39.23945243147539
-//                        binding.textDiscover2.text.split(",")[1].toDouble(),binding.textDiscover2.text.split(",")[0].toDouble()
+                        21.942563928989884, 39.23945243147539
                     )
                 )
-                binding.textDiscover.text = routesFound[0].routeName
+                root.text_discover.text = routesFound[0].routeName
             } else {
-                binding.searchBar.visibility == View.VISIBLE
+                root.search_bar.visibility == View.VISIBLE
             }
         }
 
-        binding.searchPlace.setOnClickListener {
+        root.search_place.setOnClickListener {
 
-            if (binding.searchBar.visibility == View.GONE || binding.searchBar.visibility == View.INVISIBLE) {
-                binding.searchBar.visibility = View.VISIBLE
+            if (root.search_bar.visibility == View.GONE || root.search_bar.visibility == View.INVISIBLE) {
+                root.search_bar.visibility = View.VISIBLE
             } else {
-                binding.searchBar.visibility == View.VISIBLE
+                root.search_bar.visibility == View.VISIBLE
             }
         }
 
-        binding.searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        root.btn_filters_ok.setOnClickListener {
+            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
+                this.state = BottomSheetBehavior.STATE_COLLAPSED
+            }
+        }
+
+        root.search_filters.setOnClickListener {
+
+            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
+                this.state = BottomSheetBehavior.STATE_EXPANDED
+            }
+        }
+
+
+        root.search_bar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
             override fun onQueryTextSubmit(query: String?): Boolean {
 //                println("Made a geocoding API call")
@@ -163,14 +191,13 @@ class DiscoverFragment : Fragment() {
 
         })
 
-        val textView: TextView = binding.textDiscover
+        val textView: TextView = root.text_discover
         discoverViewModel.text.observe(viewLifecycleOwner, {
             textView.text = it
         })
 
         return root
     }
-
 
     override fun onDestroy() {
         searchRequestTask.cancel()
