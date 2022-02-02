@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="distance_slider_values">
+        <item>2</item>
+        <item>15</item>
+    </array>
+</resources>

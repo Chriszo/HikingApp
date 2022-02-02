@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -77,20 +76,6 @@
             android:elevation="8dp"
             />-->
 
-        <EditText
-            android:id="@+id/text_discover2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:textAlignment="center"
-            android:textSize="20sp"
-            app:layout_constraintBottom_toTopOf="@id/text_discover"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/liner_id" />
-
 
         <TextView
             android:id="@+id/text_discover"
@@ -105,7 +90,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
 
 
         <Button
@@ -131,8 +115,6 @@
             app:layout_constraintVertical_bias="0.225" />
 
 
-
-
         <!-- <androidx.fragment.app.FragmentContainerView
              android:id="@+id/detail_container"
              android:layout_width="match_parent"
@@ -146,33 +128,157 @@
     <FrameLayout
         android:id="@+id/filter_sheet"
         android:layout_width="match_parent"
-        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
-        android:layout_height="450dp"
+        android:layout_height="550dp"
+        android:paddingBottom="70dp"
         android:background="@drawable/rounded"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin
-                ="50dp"
-            android:text="This is Search Filters fragment"
-            app:layout_constraintBottom_toTopOf="@id/filters_back_button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
-            android:id="@+id/btn_filters_ok"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="100dp"
-            android:text="OK"
-            app:layout_constraintVertical_bias="0.658" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/title_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="27dp"
+                android:layout_marginVertical="10dp"
+                android:text="Trail Distance"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@+id/title_trail_type"
+                app:layout_constraintStart_toStartOf="@+id/title_trail_type"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.262" />
+
+            <com.google.android.material.slider.RangeSlider
+                android:id="@+id/distance_slider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="0.0"
+                android:valueTo="20.0"
+                app:layout_constraintBottom_toTopOf="@+id/title_trail_type"
+                app:layout_constraintTop_toBottomOf="@+id/title_distance"
+                app:values="@array/distance_slider_values" />
+
+            <TextView
+                android:id="@+id/title_trail_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:text="Trail Type"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.133"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/distance_slider" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_linear"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:layout_marginTop="10dp"
+                android:text="Linear"
+                app:layout_constraintEnd_toEndOf="@+id/title_trail_type"
+                app:layout_constraintStart_toStartOf="@+id/title_trail_type"
+                app:layout_constraintTop_toBottomOf="@+id/title_trail_type" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cyclic"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cyclic"
+                app:layout_constraintBottom_toBottomOf="@+id/btn_linear"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.465"
+                app:layout_constraintStart_toEndOf="@+id/btn_linear"
+                app:layout_constraintTop_toTopOf="@+id/btn_linear"
+                app:layout_constraintVertical_bias="0.037" />
+
+            <TextView
+                android:id="@+id/title_difficulty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="20dp"
+                android:text="Difficulty"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="@+id/btn_linear"
+                app:layout_constraintStart_toStartOf="@+id/btn_linear"
+                app:layout_constraintTop_toBottomOf="@+id/btn_linear" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_easy"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:text="Easy"
+                app:layout_constraintStart_toStartOf="@id/btn_linear"
+                app:layout_constraintTop_toBottomOf="@+id/title_difficulty" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_moderate"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:text="Moderate"
+                app:layout_constraintBottom_toBottomOf="@+id/btn_easy"
+                app:layout_constraintStart_toEndOf="@+id/btn_easy"
+                app:layout_constraintTop_toTopOf="@+id/btn_easy" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_hard"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:text="Hard"
+                app:layout_constraintBottom_toBottomOf="@+id/btn_moderate"
+                app:layout_constraintStart_toEndOf="@+id/btn_moderate"
+                app:layout_constraintTop_toTopOf="@+id/btn_moderate" />
+
+            <Button
+                android:id="@+id/btn_filters_ok"
+                android:layout_width="88dp"
+                android:layout_height="48dp"
+                android:layout_marginVertical="10dp"
+                android:text="OK"
+                app:layout_constraintEnd_toEndOf="@+id/btn_hard"
+                app:layout_constraintTop_toBottomOf="@+id/ratingBar" />
+
+            <TextView
+                android:id="@+id/title_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:text="Trail Rating"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="@+id/btn_easy"
+                app:layout_constraintTop_toBottomOf="@+id/btn_easy" />
+
+            <RatingBar
+                android:id="@+id/ratingBar"
+                android:theme="@style/RatingBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:numStars="5"
+                android:rating="2.0"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/title_rating"
+                app:layout_constraintTop_toBottomOf="@+id/title_rating"
+                app:layout_constraintVertical_bias="0.136" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </FrameLayout>
-
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
