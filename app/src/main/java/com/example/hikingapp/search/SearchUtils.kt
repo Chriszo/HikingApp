@@ -4,8 +4,13 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.hikingapp.domain.Route
 import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import com.mapbox.search.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.apache.commons.lang3.StringUtils
 import java.util.*
 import java.util.function.Predicate
@@ -20,6 +25,20 @@ class SearchUtils {
     companion object {
 
         private const val earthRadius = 6371
+
+        private val validCategories = setOf<String>(
+            "waterway",
+            "natural",
+            "tourism"
+        )
+
+        private val validTypes = setOf<String>(
+            "river",
+            "lake",
+            "attraction",
+            "mountain",
+            "mountain_range"
+        )
 
         @RequiresApi(Build.VERSION_CODES.N)
         fun searchByPlace(placeName: String): MutableList<Route> {
@@ -91,16 +110,56 @@ class SearchUtils {
             return it.stream().anyMatch { StringUtils.containsIgnoreCase(it, keyword) }
         }
 
+        @RequiresApi(Build.VERSION_CODES.N)
         fun performGeocodingAPICall(
-            searchEngine: SearchEngine,
-            newText: String,
-            searchQueryOptions: SearchOptions,
-            searchCallback: SearchSelectionCallback,
-        ): SearchRequestTask {
-            return searchEngine.search(
+            usersPoint: Point,
+            newText: String
+        ) {
+            /*return searchEngine.search(
                 newText,
                 searchQueryOptions, searchCallback
-            )
+            )*/
+
+            val client = OkHttpClient()
+
+            val placesRequest = Request.Builder()
+                .url("https://forward-reverse-geocoding.p.rapidapi.com/v1/search?q=$newText&format=geojson&limit=20&polygon_threshold=0.0")
+                .get()
+                .addHeader("x-rapidapi-host", "forward-reverse-geocoding.p.rapidapi.com")
+                .addHeader("x-rapidapi-key", "22333fdf19msh7342040f2befa30p1305b9jsn53524d7ffd0e")
+                .build()
+
+            val usersLocationRequest = Request.Builder()
+                .url("https://forward-reverse-geocoding.p.rapidapi.com/v1/reverse?lat=" + usersPoint.latitude() + "&lon=" + usersPoint.longitude() + "&accept-language=en&polygon_threshold=0.0")
+                .get()
+                .addHeader("x-rapidapi-host", "forward-reverse-geocoding.p.rapidapi.com")
+                .addHeader("x-rapidapi-key", "22333fdf19msh7342040f2befa30p1305b9jsn53524d7ffd0e")
+                .build()
+
+            val userLocationJob = GlobalScope.launch {
+                val response = client.newCall(usersLocationRequest).execute().body
+
+                println(response!!.string())
+            }
+
+            GlobalScope.launch {
+                val response = client.newCall(placesRequest).execute().body
+
+                val responseCollection = response?.let { FeatureCollection.fromJson(it.string()) }
+
+                val validResults = responseCollection?.features()!!
+                    .stream()
+                    .filter{
+                        validCategories.contains(it.getStringProperty("category")) && validTypes.contains(it.getStringProperty("type"))
+                    }
+                    .map {
+                        it.geometry()
+                    }
+                    .collect(Collectors.toList())
+                println(validResults)
+            }
+
+            println("Call made")
         }
 
         @RequiresApi(Build.VERSION_CODES.N)

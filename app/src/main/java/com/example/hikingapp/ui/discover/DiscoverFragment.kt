@@ -118,7 +118,8 @@ class DiscoverFragment : Fragment() {
                 root.search_bar.visibility = View.GONE
                 routes = SearchUtils.searchByPosition(
                     Point.fromLngLat(
-                        21.942563928989884, 39.23945243147539
+                        21.942563928989884,
+                        39.23945243147539  // TODO Replace with current location of user
                     )
                 )
                 root.text_discover.text = routes[0].routeName
@@ -182,12 +183,19 @@ class DiscoverFragment : Fragment() {
                         }
                     } else {
 
-                        // Make Geocoding API Call
-                        SearchUtils.performGeocodingAPICall(
+                        // Make Geocoding API Call (MAPBOX API)
+                        /*SearchUtils.performGeocodingAPICall(
+                            Point.fromLngLat(23.74986906294603,37.99658992267283 ),
                             searchEngine,
                             newText,
                             SearchUtils.defineSearchQueryOptions(searchType),
                             searchCallback
+                        )*/
+
+                        //OpenStreetMap API
+                        SearchUtils.performGeocodingAPICall(
+                            Point.fromLngLat(23.74986906294603, 37.99658992267283), // TODO Change with user's lccation
+                            newText
                         )
 
                     }
