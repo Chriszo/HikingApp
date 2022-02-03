@@ -8,9 +8,12 @@ import com.mapbox.geojson.Point
 import com.mapbox.search.*
 import org.apache.commons.lang3.StringUtils
 import java.util.*
+import java.util.function.Predicate
 import java.util.stream.Collectors
 import kotlin.math.*
 
+
+// TODO Change mock data with Firebase Realtime Database data
 class SearchUtils {
 
 
@@ -98,6 +101,26 @@ class SearchUtils {
                 newText,
                 searchQueryOptions, searchCallback
             )
+        }
+
+        @RequiresApi(Build.VERSION_CODES.N)
+        fun searchByFilters(searchFilters: SearchFiltersWrapper): List<Route> {
+
+            val distanceFilter = if (searchFilters.distance > 0.0) searchFilters.distance else -1.0
+            val ratingFilter = if (searchFilters.rating > 0f) searchFilters.rating else -1f
+
+            return MockDatabase.mockSearchResults
+                .stream()
+                .filter {
+                    (it.third.routeInfo?.distance!! / 1000.0 <= distanceFilter) || (distanceFilter == -1.0) // find routes with distance less than or equal to provided distance filter
+                }
+                .filter {
+                    (it.third.routeInfo?.rating!! >= ratingFilter) || (ratingFilter == -1f) // find routes with rating greater than or equal to provided rating filter
+                }
+                .filter { it.third.routeInfo?.difficultyLevel == searchFilters.difficultyLevel || searchFilters.difficultyLevel == null }
+                .filter { it.third.routeInfo?.routeType == searchFilters.type || searchFilters.type == null }
+                .map { it.third }
+                .collect(Collectors.toList())
         }
 
     }

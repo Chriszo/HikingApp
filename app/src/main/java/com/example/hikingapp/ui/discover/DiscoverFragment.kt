@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.hikingapp.R
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
 import com.example.hikingapp.domain.DifficultyLevel
+import com.example.hikingapp.domain.Route
 import com.example.hikingapp.domain.RouteType
 import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
@@ -100,11 +101,9 @@ class DiscoverFragment : Fragment() {
 
         val root: View = _binding!!.root
 
-
         val searchType = SearchType.BY_PLACE
 
-        val searchQueryOptions = SearchUtils.defineSearchQueryOptions(searchType)
-
+        var routes: List<Route>
 
         MapboxSearchSdk.initialize(
             application = requireActivity().application,
@@ -117,14 +116,14 @@ class DiscoverFragment : Fragment() {
 
             if (root.search_bar.visibility == View.VISIBLE) {
                 root.search_bar.visibility = View.GONE
-                val routesFound = SearchUtils.searchByPosition(
+                routes = SearchUtils.searchByPosition(
                     Point.fromLngLat(
                         21.942563928989884, 39.23945243147539
                     )
                 )
-                root.text_discover.text = routesFound[0].routeName
+                root.text_discover.text = routes[0].routeName
             } else {
-                root.search_bar.visibility == View.VISIBLE
+                root.search_bar.visibility = View.VISIBLE
             }
         }
 
@@ -133,15 +132,7 @@ class DiscoverFragment : Fragment() {
             if (root.search_bar.visibility == View.GONE || root.search_bar.visibility == View.INVISIBLE) {
                 root.search_bar.visibility = View.VISIBLE
             } else {
-                root.search_bar.visibility == View.VISIBLE
-            }
-        }
-
-        root.btn_filters_ok.setOnClickListener {
-            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
-                this.state = BottomSheetBehavior.STATE_COLLAPSED
-                val searchFilters = searchFiltersWrapperBuilder.build()
-                println(searchFilters)
+                root.search_bar.visibility = View.VISIBLE
             }
         }
 
@@ -153,35 +144,18 @@ class DiscoverFragment : Fragment() {
             }
         }
 
-        root.btn_linear.setOnClickListener {
+        root.btn_filters_ok.setOnClickListener {
+            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
 
-            searchFiltersWrapperBuilder.withType(RouteType.LINEAR)
+                this.state = BottomSheetBehavior.STATE_COLLAPSED
+                val searchFilters = searchFiltersWrapperBuilder.build()
+                routes = SearchUtils.searchByFilters(searchFilters)
+                println(routes)
+            }
         }
 
-        root.btn_cyclic.setOnClickListener {
-            searchFiltersWrapperBuilder.withType(RouteType.CYCLIC)
-        }
+        setFiltersScreenListeners(root)
 
-        root.btn_easy.setOnClickListener {
-            searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.EASY)
-        }
-
-        root.btn_moderate.setOnClickListener {
-            searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.MODERATE)
-        }
-
-        root.btn_hard.setOnClickListener {
-            searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.HARD)
-        }
-
-        root.ratingBar.setOnRatingBarChangeListener { _, rating, _ ->
-            searchFiltersWrapperBuilder.withRating(rating)
-        }
-
-        root.distance_slider.addOnChangeListener { slider, value, fromUser ->
-            println(value)
-            searchFiltersWrapperBuilder.withDistance(value.toDouble())
-        }
 
         root.search_bar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
@@ -212,7 +186,7 @@ class DiscoverFragment : Fragment() {
                         SearchUtils.performGeocodingAPICall(
                             searchEngine,
                             newText,
-                            searchQueryOptions,
+                            SearchUtils.defineSearchQueryOptions(searchType),
                             searchCallback
                         )
 
@@ -229,6 +203,39 @@ class DiscoverFragment : Fragment() {
         })
 
         return root
+    }
+
+    private fun setFiltersScreenListeners(view: View) {
+        view.btn_linear.setOnClickListener {
+
+            searchFiltersWrapperBuilder.withType(RouteType.LINEAR)
+        }
+
+        view.btn_cyclic.setOnClickListener {
+            searchFiltersWrapperBuilder.withType(RouteType.CYCLIC)
+        }
+
+        view.btn_easy.setOnClickListener {
+            searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.EASY)
+        }
+
+        view.btn_moderate.setOnClickListener {
+            searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.MODERATE)
+        }
+
+        view.btn_hard.setOnClickListener {
+            searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.HARD)
+        }
+
+        view.ratingBar.setOnRatingBarChangeListener { _, rating, _ ->
+            searchFiltersWrapperBuilder.withRating(rating)
+        }
+
+        view.distance_slider.addOnChangeListener { _, value, _ ->
+            println(value)
+            searchFiltersWrapperBuilder.withDistance(value.toDouble())
+        }
+
     }
 
     override fun onDestroy() {

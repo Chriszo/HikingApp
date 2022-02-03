@@ -1,6 +1,9 @@
 package com.example.hikingapp.persistence.mock.db
 
+import com.example.hikingapp.domain.DifficultyLevel
 import com.example.hikingapp.domain.Route
+import com.example.hikingapp.domain.RouteType
+import com.example.hikingapp.persistence.RouteInfo
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.geometry.LatLng
 
@@ -56,22 +59,22 @@ class MockDatabase {
             Triple(
                 setOf("philopappou", "filopappou", "filopapou", "philopapou"),
                 Point.fromLngLat(23.71683574779853, 37.97362915837593),
-                Route("Philopappou", null, null, null)
+                Route("Philopappou", RouteInfo(4.5,65.2,RouteType.LINEAR,DifficultyLevel.EASY,3.5f), null, null)
             ),
             Triple(
                 setOf("Philolaou", "filolaou"),
                 Point.fromLngLat(23.751349476821982, 37.965990579031484),
-                Route("Philolaou", null, null, null)
+                Route("Philolaou", RouteInfo(6.7,55.9,RouteType.CYCLIC,DifficultyLevel.EASY,2.5f), null, null)
             ),
             Triple(
                 setOf("pilion", "pilio", "pelion", "pelio"),
                 Point.fromLngLat(23.044974025226864, 39.4436732830854),
-                Route("Pelion", null, null, null)
+                Route("Pelion", RouteInfo(5.2,78.2,RouteType.LINEAR,DifficultyLevel.MODERATE,4.6f), null, null)
             ),
             Triple(
                 setOf("olympus", "olympos", "όλυμπος", "ολυμπος"),
                 Point.fromLngLat(22.34898859796338, 40.10140396689491),
-                Route("Olympus", null, null, null)
+                Route("Olympus", RouteInfo(5.5,91.7,RouteType.LINEAR,DifficultyLevel.HARD,4.8f), null, null)
             )
         )
 

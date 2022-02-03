@@ -152,7 +152,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.262" />
 
-            <com.google.android.material.slider.RangeSlider
+            <com.google.android.material.slider.Slider
                 android:id="@+id/distance_slider"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -161,6 +161,14 @@
                 app:layout_constraintBottom_toTopOf="@+id/title_trail_type"
                 app:layout_constraintTop_toBottomOf="@+id/title_distance"
                 app:values="@array/distance_slider_values" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#cccccc"
+                android:layout_marginTop="5dp"
+                app:layout_constraintTop_toBottomOf="@id/distance_slider"
+                />
 
             <TextView
                 android:id="@+id/title_trail_type"
@@ -199,6 +207,13 @@
                 app:layout_constraintStart_toEndOf="@+id/btn_linear"
                 app:layout_constraintTop_toTopOf="@+id/btn_linear"
                 app:layout_constraintVertical_bias="0.037" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#cccccc"
+                android:layout_marginTop="5dp"
+                app:layout_constraintTop_toBottomOf="@id/btn_linear"/>
 
             <TextView
                 android:id="@+id/title_difficulty"
@@ -244,14 +259,13 @@
                 app:layout_constraintStart_toEndOf="@+id/btn_moderate"
                 app:layout_constraintTop_toTopOf="@+id/btn_moderate" />
 
-            <Button
-                android:id="@+id/btn_filters_ok"
-                android:layout_width="88dp"
-                android:layout_height="48dp"
-                android:layout_marginVertical="10dp"
-                android:text="OK"
-                app:layout_constraintEnd_toEndOf="@+id/btn_hard"
-                app:layout_constraintTop_toBottomOf="@+id/ratingBar" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#cccccc"
+                android:layout_marginTop="5dp"
+                app:layout_constraintTop_toBottomOf="@id/btn_easy"
+                />
 
             <TextView
                 android:id="@+id/title_rating"
@@ -275,6 +289,24 @@
                 app:layout_constraintStart_toStartOf="@+id/title_rating"
                 app:layout_constraintTop_toBottomOf="@+id/title_rating"
                 app:layout_constraintVertical_bias="0.136" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#cccccc"
+                android:layout_marginTop="5dp"
+                app:layout_constraintTop_toBottomOf="@id/ratingBar"/>
+
+
+            <Button
+                android:id="@+id/btn_filters_ok"
+                android:layout_width="88dp"
+                android:layout_height="48dp"
+                android:layout_marginVertical="10dp"
+                android:text="OK"
+                app:layout_constraintEnd_toEndOf="@+id/btn_hard"
+                app:layout_constraintTop_toBottomOf="@+id/ratingBar" />
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
