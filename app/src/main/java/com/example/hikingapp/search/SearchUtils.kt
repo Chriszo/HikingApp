@@ -12,9 +12,11 @@ import com.mapbox.geojson.Point
 import com.mapbox.search.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.apache.commons.lang3.StringUtils
+import java.lang.Exception
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.math.*
@@ -27,6 +29,8 @@ class SearchUtils {
     companion object {
 
         private const val earthRadius = 6371
+
+        private var searchRequestsBuffer: MutableList<Request> = mutableListOf()
 
         private val validCategories = setOf<String>(
             "waterway",
@@ -116,7 +120,7 @@ class SearchUtils {
         suspend fun performGeocodingAPICall(
             usersPoint: Point,
             keyword: String
-        ) {
+        ): MutableList<Route> {
             /*return searchEngine.search(
                 newText,
                 searchQueryOptions, searchCallback
@@ -143,22 +147,25 @@ class SearchUtils {
             }
 
             val searchResults = GlobalScope.async {
-                val response = client.newCall(placesRequest).execute().body
 
+                val response = client.newCall(placesRequest).execute().body
                 val responseCollection = response?.let { FeatureCollection.fromJson(it.string()) }
 
-                return@async responseCollection?.features()!!
-                    .stream()
-                    .filter{
-                        validCategories.contains(it.getStringProperty("category")) && validTypes.contains(it.getStringProperty("type"))
+                return@async Optional.ofNullable(responseCollection?.features()
+                    ?.stream()
+                    ?.filter {
+                        validCategories.contains(it.getStringProperty("category")) && validTypes.contains(
+                            it.getStringProperty("type")
+                        )
                     }
-                    .map {
-                        it.geometry()
-                    }
-                    .collect(Collectors.toList())
+                    ?.collect(Collectors.toList()))
+                    .orElse(mutableListOf())
             }
 
-            val location = userLocationResult.await()?.let { SearchResult.fromJson(it) }
+            val location = userLocationResult.await()?.let {
+                if (searchRequestsBuffer.size > 0) searchRequestsBuffer.removeLast()
+                SearchResult.fromJson(it)
+            }
 
             val transliterationCountry = TransliterationRules.values()
                 .filter { it.name.equals(location?.address?.country_code?.uppercase()) }
@@ -166,18 +173,68 @@ class SearchUtils {
 
             var transliterator: Transliterator? = null
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                transliterator = Transliterator.createFromRules(transliterationCountry.name, transliterationCountry.rule,Transliterator.FORWARD)
+                transliterator = Transliterator.createFromRules(
+                    transliterationCountry.name,
+                    transliterationCountry.rule,
+                    Transliterator.FORWARD
+                )
             }
 
-           /* searchResults.await()
-                .stream()
-                .map {
+            var routes: MutableList<Route> = mutableListOf()
+            if (searchResults.isCompleted) {
+                try {
+                    searchResults.await()?.stream()
+                        ?.map {
+                            getTransliteratedText(
+                                transliterator,
+                                it.getStringProperty("display_name")
+                            )
+                        }.map {
+                            it.split(",")[0]
+                        }.forEach {
+                            routes.addAll(searchByPlace(it))
+                            println(
+                                getTransliteratedText(
+                                    transliterator,
+                                    it
+                                )
+                            )
+                        }
+                    /*forEach {
 
-                }*/
+                        val displayName = it.getStringProperty("display_name")
 
+
+                        println(
+                            getTransliteratedText(
+                                transliterator,
+                                displayName
+                            )
+                        )
+
+                        val splittedDisplayName = displayName.split(",")
+
+
+                        println("Keyword similarity(Levenstein Distance): " + StringUtils.getLevenshteinDistance(splittedDisplayName[0],keyword))
+                        println("Eucleidian Distance: " + distance(Point.fromLngLat(location?.lon!!.toDouble(),location?.lat!!.toDouble()),(it.geometry() as Point)))
+
+
+
+                        println(splittedDisplayName[splittedDisplayName.size-1].trim())
+                        println(location?.address?.country?.trim())
+                    }*/
+                } catch (e: Exception) {
+                    println(e)
+                }
+            }
+            return routes
+        }
+
+        private fun getTransliteratedText(transliterator: Transliterator?, text: String): String {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                println(transliterator?.transliterate(keyword))
+                return transliterator!!.transliterate(text)
             }
+            return text
         }
 
         @RequiresApi(Build.VERSION_CODES.N)

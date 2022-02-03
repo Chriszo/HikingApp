@@ -8,13 +8,14 @@ data class SearchResult(
     val address: Address?,
     val osm_type: String?,
     val boundingbox: List<String?>?,
+    val message: String?,
     val place_id: Long,
     val lat: String?,
     val lon: String?,
     val display_name: String?
 ){
 
-    constructor() : this(null,0,null,null,null,0,null,null,null)
+    constructor() : this(null,0,null,null,null,null,0,null,null,null)
 
     companion object{
 

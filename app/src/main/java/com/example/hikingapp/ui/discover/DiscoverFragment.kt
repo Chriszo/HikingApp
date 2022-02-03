@@ -30,6 +30,8 @@ import kotlinx.android.synthetic.main.fragment_discover.*
 import kotlinx.android.synthetic.main.fragment_discover.view.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.util.*
+import kotlin.concurrent.schedule
 
 
 class DiscoverFragment : Fragment() {
@@ -46,6 +48,8 @@ class DiscoverFragment : Fragment() {
     private lateinit var searchRequestTask: SearchRequestTask
 
     private lateinit var searchFiltersWrapperBuilder: SearchFiltersWrapper.Builder
+
+    private var timer = Timer()
 
     private val searchCallback = object : SearchSelectionCallback {
 
@@ -172,7 +176,7 @@ class DiscoverFragment : Fragment() {
             override fun onQueryTextChange(keyword: String?): Boolean {
 
                 if (keyword?.length!! < 4) {
-                    return false
+                    return true
                 }
 
                 if (searchType == SearchType.BY_PLACE) {
@@ -196,13 +200,21 @@ class DiscoverFragment : Fragment() {
                         )*/
 
                         //OpenStreetMap API
+
+                        timer.cancel()
+                        timer = Timer()
+                        timer.schedule(500) {
                             GlobalScope.launch {
 
                                 SearchUtils.performGeocodingAPICall(
-                                    Point.fromLngLat(23.74986906294603, 37.99658992267283), // TODO Change with user's lccation
+                                    Point.fromLngLat(
+                                        23.74986906294603,
+                                        37.99658992267283
+                                    ), // TODO Change with user's lccation
                                     keyword
                                 )
                             }
+                        }
 
                     }
                 }
