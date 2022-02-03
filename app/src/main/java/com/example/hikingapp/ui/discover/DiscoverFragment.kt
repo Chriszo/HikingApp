@@ -1,5 +1,6 @@
 package com.example.hikingapp.ui.discover
 
+import android.icu.text.Transliterator
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -27,6 +28,8 @@ import com.mapbox.search.result.SearchResult
 import com.mapbox.search.result.SearchSuggestion
 import kotlinx.android.synthetic.main.fragment_discover.*
 import kotlinx.android.synthetic.main.fragment_discover.view.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
 class DiscoverFragment : Fragment() {
@@ -166,15 +169,15 @@ class DiscoverFragment : Fragment() {
             }
 
             @RequiresApi(Build.VERSION_CODES.N)
-            override fun onQueryTextChange(newText: String?): Boolean {
+            override fun onQueryTextChange(keyword: String?): Boolean {
 
-                if (newText?.length!! < 4) {
+                if (keyword?.length!! < 4) {
                     return false
                 }
 
                 if (searchType == SearchType.BY_PLACE) {
 
-                    val routesFound = SearchUtils.searchByPlace(newText)
+                    val routesFound = SearchUtils.searchByPlace(keyword)
 
                     if (!routesFound.isNullOrEmpty()) {
 
@@ -193,10 +196,13 @@ class DiscoverFragment : Fragment() {
                         )*/
 
                         //OpenStreetMap API
-                        SearchUtils.performGeocodingAPICall(
-                            Point.fromLngLat(23.74986906294603, 37.99658992267283), // TODO Change with user's lccation
-                            newText
-                        )
+                            GlobalScope.launch {
+
+                                SearchUtils.performGeocodingAPICall(
+                                    Point.fromLngLat(23.74986906294603, 37.99658992267283), // TODO Change with user's lccation
+                                    keyword
+                                )
+                            }
 
                     }
                 }
