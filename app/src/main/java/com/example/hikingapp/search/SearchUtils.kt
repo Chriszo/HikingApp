@@ -12,11 +12,10 @@ import com.mapbox.geojson.Point
 import com.mapbox.search.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.apache.commons.lang3.StringUtils
-import java.lang.Exception
+import org.apache.commons.text.similarity.LevenshteinDetailedDistance
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.math.*
@@ -43,7 +42,8 @@ class SearchUtils {
             "lake",
             "attraction",
             "mountain",
-            "mountain_range"
+            "mountain_range",
+            "peak"
         )
 
         @RequiresApi(Build.VERSION_CODES.N)
@@ -121,10 +121,6 @@ class SearchUtils {
             usersPoint: Point,
             keyword: String
         ): MutableList<Route> {
-            /*return searchEngine.search(
-                newText,
-                searchQueryOptions, searchCallback
-            )*/
 
             val client = OkHttpClient()
 
@@ -180,54 +176,93 @@ class SearchUtils {
                 )
             }
 
-            var routes: MutableList<Route> = mutableListOf()
+            val routes: MutableList<Route> = mutableListOf()
             if (searchResults.isCompleted) {
                 try {
-                    searchResults.await()?.stream()
+
+                    searchResults.await()?.parallelStream()
                         ?.map {
-                            getTransliteratedText(
+                            val displayName = getTransliteratedText(
                                 transliterator,
                                 it.getStringProperty("display_name")
                             )
-                        }.map {
-                            it.split(",")[0]
-                        }.forEach {
-                            routes.addAll(searchByPlace(it))
-                            println(
-                                getTransliteratedText(
-                                    transliterator,
-                                    it
-                                )
-                            )
+                            val point = it.geometry() as Point
+                            return@map SearchUtils().FeatureDto(displayName, point, -1.0)
+                        }.forEach { dto ->
+
+                            val topResults =
+                                MockDatabase.mockSearchResults // TODO Replace with database call somewhere
+                                    .stream()
+                                    .map { route ->
+                                        val partialDisplayName = dto.displayName.split(",")[0]
+                                        val threshold =
+                                            if (partialDisplayName.length > route.third.routeName.length) route.third.routeName.length / 2 else partialDisplayName.length / 2
+                                        val levenshteinDistance =
+                                            LevenshteinDetailedDistance(threshold)
+                                        println("Threshold: " + levenshteinDistance.threshold)
+                                        println(
+                                            "Term1: " + dto.displayName.split(",")[0] + " -- Term2: " + route.third.routeName + " = " + levenshteinDistance.apply(
+                                                dto.displayName.split(",")[0],
+                                                route.third.routeName
+                                            ).distance
+                                        )
+
+                                        val searchRating = (1.0.div(
+                                            levenshteinDistance.apply(
+                                                dto.displayName.split(",")[0],
+                                                route.third.routeName
+                                            ).distance
+                                        )).times(
+                                            1.0.div(
+                                                distance(dto.point, route.second)
+                                            )
+                                        )
+                                        dto.searchRating = searchRating
+                                        return@map route
+                                    }
+                                    .filter {
+                                        dto.searchRating > 0
+                                    }
+                                    .sorted(compareBy {
+                                        dto.searchRating
+                                    })
+                                    .limit(5)
+                                    .collect(Collectors.toList())
+
+                            topResults.reverse()
+                            topResults.forEach {
+                                routes.add(it.third)
+                            }
                         }
-                    /*forEach {
-
-                        val displayName = it.getStringProperty("display_name")
-
-
-                        println(
-                            getTransliteratedText(
-                                transliterator,
-                                displayName
-                            )
-                        )
-
-                        val splittedDisplayName = displayName.split(",")
-
-
-                        println("Keyword similarity(Levenstein Distance): " + StringUtils.getLevenshteinDistance(splittedDisplayName[0],keyword))
-                        println("Eucleidian Distance: " + distance(Point.fromLngLat(location?.lon!!.toDouble(),location?.lat!!.toDouble()),(it.geometry() as Point)))
-
-
-
-                        println(splittedDisplayName[splittedDisplayName.size-1].trim())
-                        println(location?.address?.country?.trim())
-                    }*/
                 } catch (e: Exception) {
                     println(e)
                 }
             }
             return routes
+            /*forEach {
+
+                val displayName = it.getStringProperty("display_name")
+
+
+                println(
+                    getTransliteratedText(
+                        transliterator,
+                        displayName
+                    )
+                )
+
+                val splittedDisplayName = displayName.split(",")
+
+
+                println("Keyword similarity(Levenstein Distance): " + StringUtils.getLevenshteinDistance(splittedDisplayName[0],keyword))
+                println("Eucleidian Distance: " + distance(Point.fromLngLat(location?.lon!!.toDouble(),location?.lat!!.toDouble()),(it.geometry() as Point)))
+
+
+
+                println(splittedDisplayName[splittedDisplayName.size-1].trim())
+                println(location?.address?.country?.trim())
+            }*/
+
         }
 
         private fun getTransliteratedText(transliterator: Transliterator?, text: String): String {
@@ -254,9 +289,20 @@ class SearchUtils {
                 .filter { it.third.routeInfo?.difficultyLevel == searchFilters.difficultyLevel || searchFilters.difficultyLevel == null }
                 .filter { it.third.routeInfo?.routeType == searchFilters.type || searchFilters.type == null }
                 .map { it.third }
+                .sorted(compareBy {
+                    it.routeInfo!!.rating  // Sorting by rating. Maybe define a sorting for distance from user's location
+                })
                 .collect(Collectors.toList())
+                .reversed()
         }
 
+    }
+
+    inner class FeatureDto(val displayName: String, val point: Point, var searchRating: Double) {
+
+        override fun toString(): String {
+            return "FeatureDto(displayName='$displayName', point='${point.longitude()}','${point.latitude()}')"
+        }
     }
 
 

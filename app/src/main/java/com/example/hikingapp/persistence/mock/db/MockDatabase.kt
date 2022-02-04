@@ -75,6 +75,11 @@ class MockDatabase {
                 setOf("olympus", "olympos", "όλυμπος", "ολυμπος"),
                 Point.fromLngLat(22.34898859796338, 40.10140396689491),
                 Route("Olympus", RouteInfo(5.5,91.7,RouteType.LINEAR,DifficultyLevel.HARD,4.8f), null, null)
+            ),
+            Triple(
+                setOf("pindos", "pindus"),
+                Point.fromLngLat(22.34898859796338, 40.10140396689491),
+                Route("Pindus", RouteInfo(5.5,91.7,RouteType.LINEAR,DifficultyLevel.HARD,4.8f), null, null)
             )
         )
 

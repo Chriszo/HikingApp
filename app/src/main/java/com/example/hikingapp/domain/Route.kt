@@ -6,4 +6,7 @@ import com.example.hikingapp.persistence.WeatherInfo
 
 class Route(val routeName: String, val routeInfo: RouteInfo?, val weatherInfo: WeatherInfo?, val mapInfo: MapInfo?) {
 
+    override fun toString(): String {
+        return "Route(routeName='$routeName', routeInfo=$routeInfo, weatherInfo=$weatherInfo, mapInfo=${mapInfo?.origin})"
+    }
 }

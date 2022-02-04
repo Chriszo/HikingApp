@@ -1,6 +1,5 @@
 package com.example.hikingapp.ui.discover
 
-import android.icu.text.Transliterator
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -26,10 +25,10 @@ import com.mapbox.geojson.Point
 import com.mapbox.search.*
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.result.SearchSuggestion
-import kotlinx.android.synthetic.main.fragment_discover.*
 import kotlinx.android.synthetic.main.fragment_discover.view.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -48,6 +47,8 @@ class DiscoverFragment : Fragment() {
     private lateinit var searchRequestTask: SearchRequestTask
 
     private lateinit var searchFiltersWrapperBuilder: SearchFiltersWrapper.Builder
+
+    private lateinit var userLocation: Point
 
     private var timer = Timer()
 
@@ -110,6 +111,11 @@ class DiscoverFragment : Fragment() {
 
         val searchType = SearchType.BY_PLACE
 
+        userLocation = Point.fromLngLat(
+            21.942563928989884,
+            39.23945243147539  // TODO Replace with current location of user
+        )
+
         var routes: List<Route>
 
         MapboxSearchSdk.initialize(
@@ -123,12 +129,7 @@ class DiscoverFragment : Fragment() {
 
             if (root.search_bar.visibility == View.VISIBLE) {
                 root.search_bar.visibility = View.GONE
-                routes = SearchUtils.searchByPosition(
-                    Point.fromLngLat(
-                        21.942563928989884,
-                        39.23945243147539  // TODO Replace with current location of user
-                    )
-                )
+                routes = SearchUtils.searchByPosition(userLocation)
                 root.text_discover.text = routes[0].routeName
             } else {
                 root.search_bar.visibility = View.VISIBLE
@@ -158,7 +159,11 @@ class DiscoverFragment : Fragment() {
                 this.state = BottomSheetBehavior.STATE_COLLAPSED
                 val searchFilters = searchFiltersWrapperBuilder.build()
                 routes = SearchUtils.searchByFilters(searchFilters)
-                println(routes)
+                root.text_discover.text =
+                    if (!routes.isNullOrEmpty()) routes[0].routeName else "No results found..."
+                routes.forEach {
+                    println(it)
+                }
             }
         }
 
@@ -179,9 +184,10 @@ class DiscoverFragment : Fragment() {
                     return true
                 }
 
+                var routesFound: MutableList<Route>
                 if (searchType == SearchType.BY_PLACE) {
 
-                    val routesFound = SearchUtils.searchByPlace(keyword)
+                    routesFound = SearchUtils.searchByPlace(keyword)
 
                     if (!routesFound.isNullOrEmpty()) {
 
@@ -204,15 +210,21 @@ class DiscoverFragment : Fragment() {
                         timer.cancel()
                         timer = Timer()
                         timer.schedule(500) {
-                            GlobalScope.launch {
+                            val job = GlobalScope.launch {
 
-                                SearchUtils.performGeocodingAPICall(
-                                    Point.fromLngLat(
-                                        23.74986906294603,
-                                        37.99658992267283
-                                    ), // TODO Change with user's lccation
+                                routesFound = SearchUtils.performGeocodingAPICall(
+                                    userLocation,
                                     keyword
-                                )
+                                ) // TODO Change with user's lccation
+                            }
+
+                            runBlocking {
+                                job.join()
+                                if (!routesFound.isNullOrEmpty()) {
+                                    root.text_discover.text = routesFound[0].routeName
+                                } else {
+                                    root.text_discover.text = "Route not found"
+                                }
                             }
                         }
 
