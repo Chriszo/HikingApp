@@ -348,7 +348,7 @@ class SampleMapActivity : AppCompatActivity() {
                         +lineLayer(GlobalUtils.LAYER_ID, GlobalUtils.SOURCE_ID) {
                             lineCap(LineCap.ROUND)
                             lineJoin(LineJoin.ROUND)
-                            lineOpacity(0.7)
+                            lineOpacity(1.0)
                             lineWidth(8.0)
                             lineColor("#FF0000")
                         }
@@ -405,8 +405,8 @@ class SampleMapActivity : AppCompatActivity() {
             CameraOptions.Builder()
                 .center(point)
                 .bearing(bearing)
-                .pitch(45.0)
-                .zoom(16.0)
+                .pitch(0.0)
+                .zoom(14.0)
                 .padding(EdgeInsets(1000.0, 0.0, 0.0, 0.0))
                 .build(),
             mapAnimationOptionsBuilder.build()

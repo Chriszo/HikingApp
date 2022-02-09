@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.ar.ArActivity">
+
+
+    <!-- AR First way with AR.js and WebViews-->
+    <!--  <WebView
+          android:id="@+id/ar_webview"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+
+          />-->
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context=".ui.ar.ArActivity">
+        <fragment
+            android:id="@+id/ar_fragment"
+            android:name="com.example.hikingapp.ui.ar.CustomArFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="7"/>
+
+        <fragment
+            android:id="@+id/map_fragment"
+            android:name="com.mapbox.mapboxsdk.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="3"/>
+
+    </LinearLayout>
+
+
+
+    <!--<fragment
+        android:id="@+id/ar_fragment"
+        android:name="com.example.hikingapp.ui.ar.CustomArFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="7"
+        />-->
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -118,12 +118,15 @@ class DiscoverFragment : Fragment() {
 
         var routes: List<Route>
 
-        MapboxSearchSdk.initialize(
+
+
+        /*MapboxSearchSdk.initialize(
             application = requireActivity().application,
             accessToken = getString(R.string.mapbox_access_token),
             locationEngine = LocationEngineProvider.getBestLocationEngine(requireContext())
         )
-        searchEngine = MapboxSearchSdk.getSearchEngine()
+
+        searchEngine = MapboxSearchSdk.getSearchEngine()*/
 
         root.search_position.setOnClickListener {
 
@@ -225,6 +228,7 @@ class DiscoverFragment : Fragment() {
                                 } else {
                                     root.text_discover.text = "Route not found"
                                 }
+
                             }
                         }
 
@@ -277,7 +281,7 @@ class DiscoverFragment : Fragment() {
     }
 
     override fun onDestroy() {
-        searchRequestTask.cancel()
+//        if (searchRequestTask != null) searchRequestTask.cancel()
         super.onDestroy()
     }
 }
