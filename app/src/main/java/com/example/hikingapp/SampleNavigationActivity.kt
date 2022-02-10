@@ -9,7 +9,6 @@ import android.content.res.Resources
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -17,6 +16,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
+import com.example.hikingapp.domain.RoutePointsWrapper
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.ui.ar.ArActivity
@@ -65,7 +65,6 @@ import com.mapbox.navigation.ui.maneuver.view.MapboxManeuverView
 import com.mapbox.navigation.ui.maps.camera.NavigationCamera
 import com.mapbox.navigation.ui.maps.camera.data.MapboxNavigationViewportDataSource
 import com.mapbox.navigation.ui.maps.camera.lifecycle.NavigationBasicGesturesHandler
-import com.mapbox.navigation.ui.maps.camera.state.NavigationCameraState
 import com.mapbox.navigation.ui.maps.camera.transition.NavigationCameraTransitionOptions
 import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
 import com.mapbox.navigation.ui.maps.route.arrow.api.MapboxRouteArrowApi
@@ -627,7 +626,12 @@ class SampleNavigationActivity : AppCompatActivity() {
             val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             startActivityForResult(cameraIntent, cameraRequest)*/
 
+            // define checkpoints list
+            val checkPoints = filterRoutePoints(mapInfo!!.jsonRoute.coordinates()[0]).toMutableList()
+
+
             val intent = Intent(this, ArActivity::class.java)
+            intent.putExtra("routePoints", RoutePointsWrapper(checkPoints))
             startActivity(intent)
         }
 
@@ -641,7 +645,7 @@ class SampleNavigationActivity : AppCompatActivity() {
 
     private fun filterRoutePoints(coordinates: List<Point>): List<Point> {
         var counter = 0
-        return coordinates.filterIndexed { index, _ -> index % 10 == 0 && ++counter < 25 }
+        return coordinates.filterIndexed { index, _ -> index % 50 == 0 && ++counter < 25 }
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
@@ -777,6 +781,7 @@ class SampleNavigationActivity : AppCompatActivity() {
                 .applyDefaultNavigationOptions()
                 .applyLanguageAndVoiceUnitOptions(this)
                 .coordinatesList(coordinates)
+                .waypointIndicesList(listOf(0,50,100,150,200,250,coordinates.size-1))
                 // provide the bearing for the origin of the request to ensure
                 // that the returned route faces in the direction of the current user movement
                 .bearingsList(

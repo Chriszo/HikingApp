@@ -17,8 +17,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
 import com.example.hikingapp.R
+import com.example.hikingapp.domain.RoutePointsWrapper
+import com.google.ar.core.Pose
 import com.google.ar.sceneform.AnchorNode
-import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
@@ -39,8 +40,7 @@ class ArActivity : AppCompatActivity(), SensorEventListener {
 
     // MAPBOX CODE
 
-    //    private lateinit var searchEngine: SearchEngine
-    private lateinit var reverseGeocodingEngine: ReverseGeocodingSearchEngine
+    //    private lateinit var reverseGeocodingEngine: ReverseGeocodingSearchEngine
     private lateinit var anchorNode: AnchorNode
     private lateinit var navigationCamera: NavigationCamera
 
@@ -59,6 +59,8 @@ class ArActivity : AppCompatActivity(), SensorEventListener {
     private var places = mutableListOf<Place>()
 
     private lateinit var sensorManager: SensorManager
+
+    private lateinit var checkPoints: RoutePointsWrapper
 
 
     /**
@@ -122,10 +124,10 @@ class ArActivity : AppCompatActivity(), SensorEventListener {
             } else {
                 Log.i("SearchApiExample", "Reverse geocoding results: $results")
 
-                results.forEach {
+                /*results.forEach {
                     val place = Place(it.id, "marker", it.name, it.coordinate!!)
                     places.add(place)
-                }
+                }*/
             }
         }
     }
@@ -140,18 +142,22 @@ class ArActivity : AppCompatActivity(), SensorEventListener {
 
         setContentView(R.layout.activity_ar)
 
+
+
+        checkPoints = intent.extras?.get("routePoints") as RoutePointsWrapper
+
         arFragment = supportFragmentManager.findFragmentById(R.id.ar_fragment) as CustomArFragment
         mapFragment =
             supportFragmentManager.findFragmentById(R.id.map_fragment) as SupportMapFragment
 
-         sensorManager = getSystemService()!!
+        sensorManager = getSystemService()!!
 
-        MapboxSearchSdk.initialize(
+/*        MapboxSearchSdk.initialize(
             application = this.application,
             accessToken = getString(R.string.mapbox_access_token),
             locationEngine = LocationEngineProvider.getBestLocationEngine(this)
         )
-        reverseGeocodingEngine = MapboxSearchSdk.getReverseGeocodingSearchEngine()
+        reverseGeocodingEngine = MapboxSearchSdk.getReverseGeocodingSearchEngine()*/
 
         /*placesService = PlacesService.create()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)*/
@@ -162,8 +168,7 @@ class ArActivity : AppCompatActivity(), SensorEventListener {
              viewportDataSource
          )*/
         setUpAr()
-        setUpMaps()
-
+//        setUpMaps()
     }
 
     override fun onResume() {
@@ -229,29 +234,41 @@ class ArActivity : AppCompatActivity(), SensorEventListener {
                 map.locationComponent.activateLocationComponent(locationComponentOptions)
                 map.locationComponent.isLocationComponentEnabled = true
 
-                val reverseOptions =
-                    ReverseGeoOptions(Point.fromLngLat(23.771381150489923, 38.00469530315156))
+                addPlaces(anchorNode!!)
+                /* val reverseOptions =
+                     ReverseGeoOptions(Point.fromLngLat(23.771381150489923, 38.00469530315156))  // TODO replace with last location
 
 
-                reverseGeocodingEngine.search(reverseOptions, searchCallback)
+                 reverseGeocodingEngine.search(reverseOptions, searchCallback)*/
+
             }
         }
     }
 
     private fun setUpAr() {
-        arFragment.setOnTapArPlaneListener { hitResult, _, _ ->
+
+        /*val position = floatArrayOf(0f, 0f, -2.2f) //  { x, y, z } position
+
+        val rotation = floatArrayOf(0f, 0f, 0f, 1f) //  { x, y, z, w } quaternion rotation*/
+
+        arFragment.setOnSessionInitializationListener {
+//            val anchor =  it.createAnchor(Pose(position,rotation))
+            anchorNode = AnchorNode()
+            anchorNode?.setParent(arFragment.arSceneView.scene)
+            setUpMaps()
+        }
+
+        /*arFragment.setOnTapArPlaneListener { hitResult, _, _ ->
             // TODO Create anchor here
             val anchor = hitResult.createAnchor()
             anchorNode = AnchorNode(anchor)
             anchorNode?.setParent(arFragment.arSceneView.scene)
             addPlaces(anchorNode!!)
-        }
+        }*/
     }
 
     private fun addPlaces(anchorNode: AnchorNode) {
 
-
-//        val currentLocation = currentLocation
         val currentLocation = map.locationComponent.lastKnownLocation
         if (currentLocation == null) {
             Log.w("Method - addPlaces: ", "Location has not been determined yet")
@@ -264,9 +281,10 @@ class ArActivity : AppCompatActivity(), SensorEventListener {
             return
         }
 
-        for (place in places) {
+        // TODO maybe use ExtendedMapPoint to show more info
+        for (point in checkPoints.routePoints!!) {
             // Add the place in AR
-            // TODO set localPosition
+            var place = Place("test", "marker", "name", point)
             val placeNode = PlaceNode(this, place)
             placeNode.setParent(anchorNode)
             placeNode.localPosition = place.getPositionVector(
