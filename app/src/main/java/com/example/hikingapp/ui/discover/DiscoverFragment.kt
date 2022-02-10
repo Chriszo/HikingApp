@@ -1,17 +1,21 @@
 package com.example.hikingapp.ui.discover
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.SearchView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.hikingapp.R
+import com.example.hikingapp.SampleMapActivity
+import com.example.hikingapp.SampleNavigationActivity
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
 import com.example.hikingapp.domain.DifficultyLevel
 import com.example.hikingapp.domain.Route
@@ -243,6 +247,23 @@ class DiscoverFragment : Fragment() {
         discoverViewModel.text.observe(viewLifecycleOwner, {
             textView.text = it
         })
+
+        val showMapButton: Button = root.show_map
+        showMapButton.setOnClickListener {
+            activity?.let {
+                val intent = Intent(it, SampleMapActivity::class.java)
+                it.startActivity(intent)
+            }
+        }
+
+        val showNavButton: Button = root.navigate
+        showNavButton.setOnClickListener {
+            activity?.let {
+                val intent = Intent(it, SampleNavigationActivity::class.java)
+                it.startActivity(intent)
+            }
+        }
+
 
         return root
     }

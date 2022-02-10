@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.example.hikingapp.ui.ar.ArActivity
 import com.mapbox.api.directions.v5.models.Bearing
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
@@ -622,9 +623,12 @@ class SampleNavigationActivity : AppCompatActivity() {
             if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
                 requestPermissions( arrayOf(Manifest.permission.CAMERA), cameraRequest)
 
-
+/*
             val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            startActivityForResult(cameraIntent, cameraRequest)
+            startActivityForResult(cameraIntent, cameraRequest)*/
+
+            val intent = Intent(this, ArActivity::class.java)
+            startActivity(intent)
         }
 
         // set initial sounds button state

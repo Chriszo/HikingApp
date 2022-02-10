@@ -1,12 +1,18 @@
 package com.example.hikingapp.ui.ar
 
 import android.Manifest
+import android.app.ActivityManager
+import android.content.Context
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.webkit.*
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
@@ -28,7 +34,7 @@ import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
 import com.mapbox.search.*
 import com.mapbox.search.result.SearchResult
 
-class ArActivity : AppCompatActivity() {
+class ArActivity : AppCompatActivity(), SensorEventListener {
 
 
     // MAPBOX CODE
@@ -51,6 +57,8 @@ class ArActivity : AppCompatActivity() {
     private val orientationAngles = FloatArray(3)
 
     private var places = mutableListOf<Place>()
+
+    private lateinit var sensorManager: SensorManager
 
 
     /**
@@ -125,7 +133,9 @@ class ArActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        if (!isSupportedDevice()) {
+            return
+        }
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
 
         setContentView(R.layout.activity_ar)
@@ -134,15 +144,13 @@ class ArActivity : AppCompatActivity() {
         mapFragment =
             supportFragmentManager.findFragmentById(R.id.map_fragment) as SupportMapFragment
 
-        val sensorManager: SensorManager = getSystemService()!!
+         sensorManager = getSystemService()!!
 
         MapboxSearchSdk.initialize(
             application = this.application,
             accessToken = getString(R.string.mapbox_access_token),
             locationEngine = LocationEngineProvider.getBestLocationEngine(this)
         )
-
-//        searchEngine = MapboxSearchSdk.getSearchEngine()
         reverseGeocodingEngine = MapboxSearchSdk.getReverseGeocodingSearchEngine()
 
         /*placesService = PlacesService.create()
@@ -155,6 +163,37 @@ class ArActivity : AppCompatActivity() {
          )*/
         setUpAr()
         setUpMaps()
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.also {
+            sensorManager.registerListener(
+                this,
+                it,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
+        }
+        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also {
+            sensorManager.registerListener(
+                this,
+                it,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
+        }
+    }
+
+    private fun isSupportedDevice(): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val openGlVersionString = activityManager.deviceConfigurationInfo.glEsVersion
+        if (openGlVersionString.toDouble() < 3.0) {
+            Toast.makeText(this, "Sceneform requires OpenGL ES 3.0 or later", Toast.LENGTH_LONG)
+                .show()
+            finish()
+            return false
+        }
+        return true
 
     }
 
@@ -230,43 +269,26 @@ class ArActivity : AppCompatActivity() {
             // TODO set localPosition
             val placeNode = PlaceNode(this, place)
             placeNode.setParent(anchorNode)
-            placeNode.localPosition = place.getPositionVector(orientationAngles[0], Point.fromLngLat(currentLocation.longitude,currentLocation.latitude))
+            placeNode.localPosition = place.getPositionVector(
+                orientationAngles[0],
+                Point.fromLngLat(currentLocation.longitude, currentLocation.latitude)
+            )
 
             placeNode.setOnTapListener { _, _ ->
                 showInfoWindow(place)
             }
 
             // Add the place in maps
-           /* map?.let {
-                val marker = it.addMarker(
-                    MarkerOptions()
-                        .position(place.geometry.location.latLng)
-                        .title(place.name)
-                )
-                marker.tag = place
-                markers.add(marker)
-            }*/
+            /* map?.let {
+                 val marker = it.addMarker(
+                     MarkerOptions()
+                         .position(place.geometry.location.latLng)
+                         .title(place.name)
+                 )
+                 marker.tag = place
+                 markers.add(marker)
+             }*/
         }
-
-//        val reverseOptions = ReverseGeoOptions.Builder(Point.fromLngLat(map.locationComponent.lastKnownLocation!!.longitude,map.locationComponent.lastKnownLocation!!.latitude)).limit(10).build()
-
-
-        /*println("Made a geocoding API call")
-        searchEngine.search(
-            newText,
-            SearchOptions.Builder().limit(10).build(), searchCallback
-        )*/
-
-
-        /*map.locationComponent.lastKnownLocation.
-        val placeNode = PlaceNode(this, place)
-        placeNode.setParent(anchorNode)
-        placeNode.localPosition = place.getPositionVector(orientationAngles[0], currentLocation.latLng)
-
-        placeNode.setOnTapListener { _, _ ->
-            showInfoWindow(place)
-        }*/
-
     }
 
     private fun showInfoWindow(place: Place) {
@@ -280,11 +302,35 @@ class ArActivity : AppCompatActivity() {
         matchingPlaceNode?.showInfoWindow()
 
         // Show as marker
-       /* val matchingMarker = markers.firstOrNull {
-            val placeTag = (it.tag as? Place) ?: return@firstOrNull false
-            return@firstOrNull placeTag == place
+        /* val matchingMarker = markers.firstOrNull {
+             val placeTag = (it.tag as? Place) ?: return@firstOrNull false
+             return@firstOrNull placeTag == place
+         }
+         matchingMarker?.showInfoWindow()*/
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event == null) {
+            return
         }
-        matchingMarker?.showInfoWindow()*/
+        if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+            System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
+        } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
+            System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
+        }
+
+        // Update rotation matrix, which is needed to update orientation angles.
+        SensorManager.getRotationMatrix(
+            rotationMatrix,
+            null,
+            accelerometerReading,
+            magnetometerReading
+        )
+        SensorManager.getOrientation(rotationMatrix, orientationAngles)
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        //TODO("Not yet implemented")
     }
 
 }
