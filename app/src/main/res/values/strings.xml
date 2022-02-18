@@ -6,4 +6,5 @@
     <string name="sample_map">Show map</string>
     <string name="sample_navigation">Navigate</string>
     <string name="camera_action_button">Camera action button</string>
+    <string name="nav_completed_success">You have completed the route!</string>
 </resources>

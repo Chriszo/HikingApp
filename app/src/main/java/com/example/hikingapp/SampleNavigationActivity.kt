@@ -2,6 +2,7 @@ package com.example.hikingapp
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -47,9 +48,11 @@ import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
 import com.mapbox.navigation.base.formatter.UnitType
 import com.mapbox.navigation.base.options.NavigationOptions
 import com.mapbox.navigation.base.trip.model.RouteLegProgress
+import com.mapbox.navigation.base.trip.model.RouteProgress
 import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.core.MapboxNavigationProvider
 import com.mapbox.navigation.core.arrival.ArrivalController
+import com.mapbox.navigation.core.arrival.ArrivalObserver
 import com.mapbox.navigation.core.directions.session.RoutesObserver
 import com.mapbox.navigation.core.formatter.MapboxDistanceFormatter
 import com.mapbox.navigation.core.replay.MapboxReplayer
@@ -86,6 +89,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.stream.Collectors
+import kotlin.math.roundToInt
 
 /**
  * This example demonstrates a basic turn-by-turn navigation experience by putting together some UI elements to showcase
@@ -157,6 +163,28 @@ class SampleNavigationActivity : AppCompatActivity() {
             }
             return true
         }
+    }
+
+    private val checkpointCounter: AtomicInteger = AtomicInteger()
+
+    private val arrivalObserver = object : ArrivalObserver {
+
+        override fun onFinalDestinationArrival(routeProgress: RouteProgress) {
+            println("FINAL DESTINATION REACHED!")
+            val mainIntent = Intent(this@SampleNavigationActivity, EndOfNavigationActivity::class.java)
+            startActivity(mainIntent)
+        }
+
+        override fun onNextRouteLegStart(routeLegProgress: RouteLegProgress) {
+            checkpointCounter.getAndIncrement()
+            println("Next checkpoint: ${checkpointCounter.get()}")
+        }
+
+        override fun onWaypointArrival(routeProgress: RouteProgress) {
+            println("CHECKPOINT ${checkpointCounter.get()} reached")
+            Toast.makeText(this@SampleNavigationActivity,"You have arrived at ${checkpointCounter.get()}",Toast.LENGTH_LONG).show()
+        }
+
     }
 
     private companion object {
@@ -725,7 +753,25 @@ class SampleNavigationActivity : AppCompatActivity() {
         // Action which starts the Navigation
         binding.play.setOnClickListener {
             if (mapboxNavigation.getRoutes().isEmpty()) {
-                findRoute(mapInfo!!.jsonRoute.coordinates()[0])
+
+                val routePoints = mapInfo!!.jsonRoute.coordinates()[0]
+
+              /*  val totalRouteDistance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    computeTotalDistance(routePoints)
+                } else {
+                    TODO("VERSION.SDK_INT < N")
+                }
+
+                val modulo = (totalRouteDistance / 300).roundToInt()
+                val checkPoints = routePoints.withIndex()
+                    .filter { it.index % modulo == 0 && it.index != 0 && it.index != routePoints.size - 1 }
+                    .map { it.index }*/
+
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    defineRoute(routePoints)
+                }
+
             } else {
                 resumeNavigation()
             }
@@ -773,6 +819,29 @@ class SampleNavigationActivity : AppCompatActivity() {
         mapboxNavigation.startTripSession()
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun computeTotalDistance(list: List<Point>): Double {
+
+        var totalDistance = 0.0
+
+        val locations = list.stream().map {
+            val location = Location(Context.LOCATION_SERVICE)
+            location.latitude = it.latitude()
+            location.longitude = -it.longitude()
+            location
+        }.collect(Collectors.toList())
+
+        locations.withIndex().forEach { location ->
+            if (location.index <= locations.size - 1 && location.index >= 1) {
+                val distance = locations[location.index - 1].distanceTo(location.value)
+                totalDistance += distance
+            }
+        }
+
+        println("Total distance: $totalDistance")
+        return totalDistance
+    }
+
     private fun filterRoutePoints(coordinates: List<Point>, modulo: Int): MutableList<Point> {
         var counter = 0
         return coordinates.filterIndexed { index, _ -> index % modulo == 0 && ++counter < 25 }
@@ -813,6 +882,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         mapboxNavigation.registerVoiceInstructionsObserver(voiceInstructionsObserver)
         mapboxNavigation.registerRouteProgressObserver(replayProgressObserver)
         mapboxNavigation.setArrivalController(arrivalController)
+        mapboxNavigation.registerArrivalObserver(arrivalObserver)
 
         if (mapboxNavigation.getRoutes().isEmpty()) {
             // if simulation is enabled (ReplayLocationEngine set to NavigationOptions)
@@ -840,6 +910,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         mapboxNavigation.unregisterLocationObserver(locationObserver)
         mapboxNavigation.unregisterVoiceInstructionsObserver(voiceInstructionsObserver)
         mapboxNavigation.unregisterRouteProgressObserver(replayProgressObserver)
+        mapboxNavigation.unregisterArrivalObserver(arrivalObserver)
     }
 
     override fun onDestroy() {
@@ -850,13 +921,24 @@ class SampleNavigationActivity : AppCompatActivity() {
         voiceInstructionsPlayer.shutdown()
     }
 
-    private fun findRoute(coordinates: List<Point>) {
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun defineRoute(routePoints: List<Point>) {
         val originLocation = navigationLocationProvider.lastLocation
         val originPoint = originLocation?.let {
             Point.fromLngLat(it.longitude, it.latitude)
         } ?: return
 
-        requestCustomRoute(coordinates)
+        val modulo = 10
+
+        val coordinates = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            defineRoutePoints(routePoints, modulo)
+        } else {
+            TODO("VERSION.SDK_INT < N")
+        }
+
+        val checkPoints = defineCheckPoints(coordinates, modulo)
+
+        requestCustomRoute(coordinates, checkPoints)
 
         // execute a route request
         // it's recommended to use the
@@ -893,7 +975,64 @@ class SampleNavigationActivity : AppCompatActivity() {
 //        )
     }
 
-    private fun requestCustomRoute(coordinates: List<Point>) {
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun defineCheckPoints(coordinates: List<Point>, modulo: Int): List<Int> {
+
+        var mod = modulo
+        var finalCheckPoints: MutableList<IndexedValue<Point>>?
+        do {
+            finalCheckPoints = mutableListOf()
+            finalCheckPoints.add(IndexedValue(0, coordinates[0]))
+            coordinates.withIndex().forEach {
+                if (it.index != 0 && it.index != coordinates.size - 1) {
+                    if (it.index % mod == 0) {
+                        finalCheckPoints.add(IndexedValue(it.index, it.value))
+                    }
+                }
+            }
+            finalCheckPoints.add(
+                IndexedValue(
+                    coordinates.size - 1,
+                    coordinates[coordinates.size - 1]
+                )
+            )
+            if (finalCheckPoints.size < 3) {
+                mod--
+            }
+        } while (finalCheckPoints?.size!! < 3)
+        return finalCheckPoints.stream().map { it.index }.collect(Collectors.toList())
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun defineRoutePoints(routePoints: List<Point>, modulo: Int): List<Point> {
+
+        var finalRoutePoints: MutableList<IndexedValue<Point>>?
+        var mod = modulo
+        do {
+            finalRoutePoints = mutableListOf()
+            finalRoutePoints.add(IndexedValue(0, routePoints[0]))
+            routePoints.withIndex().forEach {
+                if (it.index != 0 && it.index != routePoints.size - 1) {
+                    if (it.index % mod == 0) {
+                        finalRoutePoints.add(IndexedValue(it.index, it.value))
+                    }
+                }
+            }
+            finalRoutePoints.add(
+                IndexedValue(
+                    routePoints.size - 1,
+                    routePoints[routePoints.size - 1]
+                )
+            )
+            if (finalRoutePoints.size > 25) {
+                mod++
+            }
+        } while (finalRoutePoints?.size!! > 25)
+
+        return finalRoutePoints.stream().map { it.value }.collect(Collectors.toList())
+    }
+
+    private fun requestCustomRoute(coordinates: List<Point>, checkPoints: List<Int>) {
 
         val mapboxMapMatchingRequest = MapboxMapMatching.builder()
             .accessToken(getString(R.string.mapbox_access_token))
@@ -902,37 +1041,9 @@ class SampleNavigationActivity : AppCompatActivity() {
             .steps(true)
             .bannerInstructions(true)
             .voiceInstructions(true)
-            //TODO Find a more eficient way to compute route points for the obtaining of instructions. This is fully customed to current route at fillopapou.
-            .coordinates(
-                listOf(
-                    coordinates[0],
-                    coordinates[12],
-                    coordinates[24],
-                    coordinates[36],
-                    coordinates[48],
-                    coordinates[60],
-                    coordinates[72],
-                    coordinates[84],
-                    coordinates[96],
-                    coordinates[108],
-                    coordinates[120],
-                    coordinates[132],
-                    coordinates[144],
-                    coordinates[156],
-                    coordinates[168],
-                    coordinates[180],
-                    coordinates[192],
-                    coordinates[204],
-                    coordinates[216],
-                    coordinates[228],
-                    coordinates[240],
-                    coordinates[252],
-                    coordinates[264],
-                    coordinates[276],
-                    coordinates[coordinates.size - 1]
-                )
-            )
-            .waypointIndices(0, 24)
+            //TODO Find a more efficient way to compute route points for the obtaining of instructions. This is fully customized to current route at fillopapou.
+            .coordinates(coordinates)
+            .waypointIndices(*checkPoints.toTypedArray())
 
             //DEFAULT
 
@@ -969,6 +1080,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         // set routes, where the first route in the list is the primary route that
         // will be used for active guidance
         mapboxNavigation.setRoutes(routes)
+        println("Total route distance: " + mapboxNavigation.getRoutes()[0].distance())
 
         // start location simulation along the primary route
         startSimulation(routes.first())
