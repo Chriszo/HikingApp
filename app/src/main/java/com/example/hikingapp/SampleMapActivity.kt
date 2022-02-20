@@ -16,6 +16,7 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.example.hikingapp.services.culture.CultureUtils
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -339,6 +340,11 @@ class SampleMapActivity : AppCompatActivity() {
             setRouteElevationData(route.mapInfo!!, true, graph)
         }*/
 
+        GlobalScope.launch {
+            route.cultureInfo = CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+        }
+
+
         // For debugging and monitoring only
         mapboxMap.addOnMapClickListener {
             println(route)
@@ -391,7 +397,7 @@ class SampleMapActivity : AppCompatActivity() {
             } else { // Data have not been loaded so need Tilequery async API calls to populate data.
                 GlobalScope.launch {
 
-                    collectionElevData(mapInfo).collect {
+                    collectElevationData(mapInfo).collect {
 
                         println("Drawing graph")
                         it.stream().forEach { ep ->
@@ -410,7 +416,7 @@ class SampleMapActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun collectionElevData(
+    fun collectElevationData(
         mapInfo: MapInfo
     ): Flow<MutableList<ExtendedMapPoint>> = flow {
 
