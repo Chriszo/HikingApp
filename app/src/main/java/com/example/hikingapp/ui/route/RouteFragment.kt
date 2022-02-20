@@ -1,4 +1,4 @@
-package com.example.hikingapp.ui
+package com.example.hikingapp.ui.route
 
 import android.content.Intent
 import android.os.Build
@@ -7,10 +7,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.NavHostFragment.findNavController
+import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.GlobalUtils
 import com.example.hikingapp.R
 import com.example.hikingapp.SampleMapActivity
@@ -20,7 +22,7 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
-import com.example.hikingapp.ui.discover.DiscoverFragment
+import com.example.hikingapp.services.culture.CultureUtils
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -29,7 +31,7 @@ import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.route_fragment.*
+import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -56,11 +58,23 @@ class RouteFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.route_fragment, container, false)
 
-        val backButton = view.to_home.setOnClickListener {
+        val navHostFragment =  childFragmentManager.findFragmentById(R.id.route_nav_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+
+
+
+        val navView = view.info_nav_view
+        navView.menu.clear()
+        navView.inflateMenu(R.menu.route_nav_menu)
+
+//        navView.setupWithNavController(navController)
+
+
+        /*val backButton = view.to_home.setOnClickListener {
             val homeFragment = DiscoverFragment()
             val transaction = fragmentManager?.beginTransaction()
             transaction?.replace(nav_host_fragment_activity_main.id, homeFragment)?.commit()
-        }
+        }*/
 
         val showMapButton = view.show_map
         showMapButton.setOnClickListener {
@@ -86,6 +100,10 @@ class RouteFragment : Fragment() {
 
         val mapInfo = retrieveMapInformation(routeName)
         route.mapInfo = mapInfo
+
+        GlobalScope.launch {
+            route.cultureInfo = CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             setRouteElevationData(route.mapInfo!!, getString(R.string.prodMode).toBooleanStrict(), view.graph )

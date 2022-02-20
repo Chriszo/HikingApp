@@ -1,4 +1,4 @@
-package com.example.hikingapp.ui
+package com.example.hikingapp.ui.route
 
 import androidx.lifecycle.ViewModel
 

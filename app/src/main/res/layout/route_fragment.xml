@@ -9,7 +9,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".ui.RouteFragment">
+        tools:context=".ui.route.RouteFragment">
 
         <ImageView
             android:id="@+id/olympus_image_view"
@@ -67,10 +67,6 @@
 
 
         </RelativeLayout>
-
-
-
-
         <LinearLayout
             android:id="@+id/actions_layout_id"
             android:layout_width="match_parent"
@@ -80,12 +76,34 @@
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent">
 
-            <Button
+           <!-- <Button
                 android:id="@+id/to_home"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
-                android:text="@string/to_home" />
+                android:text="@string/to_home" />-->
+
+
+            <com.google.android.material.bottomnavigation.BottomNavigationView
+                android:id="@+id/info_nav_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:menu="@menu/route_nav_menu"/>
+
+
+            <fragment
+                android:id="@+id/route_nav_fragment"
+                android:name="androidx.navigation.fragment.NavHostFragment"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                app:defaultNavHost="true"
+                app:layout_constraintBottom_toBottomOf="@+id/text_info"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.498"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:navGraph="@navigation/route_nav_graph" />
+
 
         </LinearLayout>
 
@@ -133,6 +151,8 @@
             android:background="@color/white"
             android:layout_marginBottom="20dp"
             app:layout_constraintBottom_toBottomOf="parent" />
+
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

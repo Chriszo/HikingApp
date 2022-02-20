@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/route_info"
+        android:title="Route Information"
+        android:icon="@drawable/info_icon_foreground"
+        android:visible="true" />
+    <item
+        android:id="@+id/culture_info"
+        android:title="Sights" />
+    <item
+        android:id="@+id/photos"
+        android:title="Photos" />
+</menu>

@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
-import com.example.hikingapp.ui.RouteFragment
+import com.example.hikingapp.ui.route.RouteFragment
 import kotlinx.android.synthetic.main.activity_main.*
 
 class DiscoverFragment : Fragment() {

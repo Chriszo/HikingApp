@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/route_nav_graph"
+    app:startDestination="@id/routeInfoFragment">
+
+    <fragment
+        android:id="@+id/routeInfoFragment"
+        android:name="com.example.hikingapp.ui.route.RouteInfoFragment"
+        android:label="fragment_route_info"
+        tools:layout="@layout/fragment_route_info" >
+        <action
+            android:id="@+id/action_routeInfoFragment_to_cultureInfoFragment"
+            app:destination="@id/cultureInfoFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/cultureInfoFragment"
+        android:name="com.example.hikingapp.ui.route.CultureInfoFragment"
+        android:label="fragment_culture_info"
+        tools:layout="@layout/fragment_culture_info" >
+        <action
+            android:id="@+id/action_cultureInfoFragment_to_routeInfoFragment"
+            app:destination="@id/routeInfoFragment" />
+    </fragment>
+</navigation>
