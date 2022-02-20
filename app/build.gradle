@@ -51,8 +51,10 @@ dependencies {
     implementation('com.mapbox.navigation:android:2.1.1') {
         exclude group: 'com.mapbox.mapboxsdk', module: 'mapbox-android-telemetry'
     }
-    implementation 'com.mapbox.mapboxsdk:mapbox-sdk-turf:5.8.0'
+    implementation 'com.mapbox.mapboxsdk:mapbox-sdk-turf:6.2.0'
     implementation('com.jjoe64:graphview:4.2.2')
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.0.1'
+
 
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
