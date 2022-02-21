@@ -162,7 +162,9 @@ class RouteFragment : Fragment() {
                 ?.collect(Collectors.toList())?.toMutableList()
                 ?: emptyList<Int>()) as MutableList<Int>
             route.routeInfo?.elevationData = elevationData
-        } else { // Data have not been loaded so need Tilequery async API calls to populate data.
+        } else {
+            // TODO Make a query to DB when implemented
+            // Data have not been loaded so need Tilequery async API calls to populate data.
             GlobalScope.launch {
 
                 collectionElevData(route.mapInfo!!).collect { elevationDataList ->
