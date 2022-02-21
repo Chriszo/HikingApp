@@ -8,14 +8,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Observer
 import com.example.hikingapp.GlobalUtils
 import com.example.hikingapp.R
-import com.example.hikingapp.domain.Route
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
-import com.example.hikingapp.services.culture.CultureUtils
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -25,9 +25,9 @@ import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import kotlinx.android.synthetic.main.fragment_route_info.view.*
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -36,6 +36,8 @@ import retrofit2.Response
 import java.util.stream.Collectors
 
 class RouteInfoFragment : Fragment() {
+
+    private val viewModel: RouteViewModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,31 +48,35 @@ class RouteInfoFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-       /* val view = inflater.inflate(R.layout.route_fragment, container, false)
+        val view = inflater.inflate(R.layout.fragment_route_info, container, false)
 
         //TODO Retrieve current Route Map information
         var routeName = savedInstanceState?.get("RouteName")
+        val route = viewModel.route.value
+        println(route)
 
-        val route = Route()
-        routeName = routeName?.let { it as String }
+//        drawGraph(route?.routeInfo?.elevationData,view.graph)
 
-        val mapInfo = retrieveMapInformation(routeName)
-        route.mapInfo = mapInfo
+        viewModel.route.observe(viewLifecycleOwner, Observer {
+            println(it)
+            println("ViewModel observes...")
+        })
 
-        GlobalScope.launch {
-            route.cultureInfo = CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+        viewModel.elevationData.observe(viewLifecycleOwner, Observer {
+            drawGraph(it as MutableList<Int>?,view.graph)
+        })
+
+        return view
+//        return inflater.inflate(R.layout.fragment_route_info, container, false)
+    }
+
+    private fun drawGraph(elevationData: MutableList<Int>?, graph: GraphView?) {
+        val series = LineGraphSeries<DataPoint>()
+
+        elevationData?.withIndex()?.forEach {
+            series.appendData(DataPoint(it.index.toDouble(),it.value.toDouble()),false,elevationData.size)
         }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            setRouteElevationData(
-                route.mapInfo!!,
-                getString(R.string.prodMode).toBooleanStrict(),
-                view.graph
-            )
-        }
-
-        return view*/
-        return inflater.inflate(R.layout.fragment_route_info, container, false)
+        graph?.addSeries(series)
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
@@ -105,7 +111,8 @@ class RouteInfoFragment : Fragment() {
 
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
+
+    /*@RequiresApi(Build.VERSION_CODES.N)
     private fun setRouteElevationData(
         mapInfo: MapInfo,
         isExecutable: Boolean,// TODO Remove it when you must. It is used in order to bypass execution during test., graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}
@@ -151,7 +158,7 @@ class RouteInfoFragment : Fragment() {
                 }
             }
         }
-    }
+    }*/
 
     @RequiresApi(Build.VERSION_CODES.N)
     fun collectionElevData(

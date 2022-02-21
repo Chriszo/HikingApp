@@ -9,18 +9,15 @@
         android:id="@+id/routeInfoFragment"
         android:name="com.example.hikingapp.ui.route.RouteInfoFragment"
         android:label="fragment_route_info"
-        tools:layout="@layout/fragment_route_info" >
-        <action
-            android:id="@+id/action_routeInfoFragment_to_cultureInfoFragment"
-            app:destination="@id/cultureInfoFragment" />
-    </fragment>
+        tools:layout="@layout/fragment_route_info" />
     <fragment
         android:id="@+id/cultureInfoFragment"
         android:name="com.example.hikingapp.ui.route.CultureInfoFragment"
         android:label="fragment_culture_info"
-        tools:layout="@layout/fragment_culture_info" >
-        <action
-            android:id="@+id/action_cultureInfoFragment_to_routeInfoFragment"
-            app:destination="@id/routeInfoFragment" />
-    </fragment>
+        tools:layout="@layout/fragment_culture_info" />
+    <fragment
+        android:id="@+id/photosFragment"
+        android:name="com.example.hikingapp.PhotosFragment"
+        android:label="fragment_photos"
+        tools:layout="@layout/fragment_photos" />
 </navigation>

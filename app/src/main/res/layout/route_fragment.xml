@@ -46,7 +46,6 @@
                     android:layout_marginStart="280dp"
                     android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
-                    android:background="@color/white"
                     android:paddingEnd="20dp"
                     android:rotationX="4"
                     app:backgroundTint="#FFFFFF"
@@ -59,19 +58,17 @@
                     android:layout_marginStart="280dp"
                     android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
-                    android:background="@color/white"
                     app:backgroundTint="#FFFFFF"
                     app:srcCompat="@drawable/navigate_icon_foreground" />
             </LinearLayout>
-
-
-
         </RelativeLayout>
+
         <LinearLayout
             android:id="@+id/actions_layout_id"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@+id/text_info"
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@+id/olympus_image_view"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent">
@@ -86,72 +83,25 @@
 
             <com.google.android.material.bottomnavigation.BottomNavigationView
                 android:id="@+id/info_nav_view"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:menu="@menu/route_nav_menu"/>
 
-
-            <fragment
-                android:id="@+id/route_nav_fragment"
-                android:name="androidx.navigation.fragment.NavHostFragment"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                app:defaultNavHost="true"
-                app:layout_constraintBottom_toBottomOf="@+id/text_info"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.498"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:navGraph="@navigation/route_nav_graph" />
-
-
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/text_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@+id/graph"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragmentContainerView"
+            android:name="androidx.navigation.fragment.NavHostFragment"
+            android:layout_width="409dp"
+            android:layout_height="273dp"
+            app:defaultNavHost="false"
+            app:layout_constraintTop_toBottomOf="@id/actions_layout_id"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            android:orientation="vertical"
-            >
-        <TextView
-            android:id="@+id/content_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:text="Route Fragment"
-            android:textSize="20dp"
-            android:textStyle="bold"
-            android:background="@android:color/darker_gray"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/actions_layout_id" />
-
-
-            <TextView
-                android:id="@+id/route_id"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="15dp"
-                android:text="This is some test text"
-                android:textSize="15dp"
-                app:layout_constraintTop_toBottomOf="@id/content_title" />
-
-        </LinearLayout>
-
-
-
-        <com.jjoe64.graphview.GraphView
-            android:id="@+id/graph"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:background="@color/white"
-            android:layout_marginBottom="20dp"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
+            app:navGraph="@navigation/route_nav_graph"
+            tools:layout_editor_absoluteX="1dp"
+            tools:layout_editor_absoluteY="457dp" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
