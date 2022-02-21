@@ -1,6 +1,8 @@
-package com.example.hikingapp.persistence
+package com.example.hikingapp.domain.map
 
 import com.example.hikingapp.domain.map.MapPoint
+import com.example.hikingapp.domain.weather.WeatherForecast
+import com.example.hikingapp.domain.weather.WeatherInfo
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.BoundingBox
 import com.mapbox.geojson.MultiLineString

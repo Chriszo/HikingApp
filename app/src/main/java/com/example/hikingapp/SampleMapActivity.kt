@@ -11,18 +11,27 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivitySampleMapBinding
+import com.example.hikingapp.domain.map.MapInfo
+import com.example.hikingapp.domain.map.service.MapService
+import com.example.hikingapp.domain.map.service.MapServiceImpl
+import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.route.RouteInfo
+import com.example.hikingapp.domain.weather.WeatherForecast
+import com.example.hikingapp.domain.weather.service.WeatherService
+import com.example.hikingapp.domain.weather.service.WeatherServiceImpl
 import com.example.hikingapp.domain.Route
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapPoint
-import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.culture.CultureUtils
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
+import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.*
+import com.mapbox.geojson.Point
 import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
 import com.mapbox.maps.extension.style.image.image
@@ -68,6 +77,13 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.stream.Collectors
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import kotlinx.coroutines.*
+import java.io.File
+import java.io.FileOutputStream
 
 /**
  * This example demonstrates the usage of the route line and route arrow API's and UI elements.
@@ -98,6 +114,14 @@ import java.util.stream.Collectors
  * - You should now be able to navigate to the destination with the route line and route arrows drawn.
  */
 class SampleMapActivity : AppCompatActivity() {
+
+    private val weatherService: WeatherService by lazy {
+        WeatherServiceImpl()
+    }
+
+    private val mapService: MapService by lazy {
+        MapServiceImpl()
+    }
 
     /**
      * Debug tool used to play, pause and seek route progress events that can be used to produce mocked location updates along the route.
@@ -352,6 +376,22 @@ class SampleMapActivity : AppCompatActivity() {
         }
 
 
+        //TODO Replace philopappou with routeName variable
+        val mapInfo = mapService.getMapInformation(getJson("Philopapou"))
+
+        GlobalScope.async {
+            val weatherForecast = WeatherForecast()
+            weatherForecast.weatherForecast = weatherService.getForecastForDays(
+                mapInfo.origin,
+                4,
+                true
+            ) //TODO remove this test flag when in PROD
+
+            Route(RouteInfo(), mapInfo)?.let {
+                it.weatherInformation = weatherForecast
+            }
+        }
+
         init(mapInfo)
     }
 
@@ -538,6 +578,11 @@ class SampleMapActivity : AppCompatActivity() {
             MockDatabase.routesMap["Philopapou"]?.second!!,
             false
         )
+    }
+
+    private fun getJson(routeName: String?): String {
+        return assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
+            .toString(Charsets.UTF_8)
     }
 
     private fun getMapPoints(json: MultiLineString): List<MapPoint> {

@@ -1,8 +1,7 @@
 package com.example.hikingapp.persistence
 
 import com.example.hikingapp.domain.DifficultyLevel
-import com.example.hikingapp.domain.RouteType
-import com.example.hikingapp.domain.culture.Sight
+import com.example.hikingapp.domain.route.enums.RouteType
 import java.io.Serializable
 
 

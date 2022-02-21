@@ -1,4 +1,4 @@
-package com.example.hikingapp.persistence
+package com.example.hikingapp.domain.map
 
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.mapboxsdk.geometry.LatLng
