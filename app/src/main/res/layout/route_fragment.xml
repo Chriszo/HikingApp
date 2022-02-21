@@ -26,12 +26,46 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="136dp"
-            android:layout_marginLeft="50dp"
+            android:layout_marginLeft="0dp"
             android:layout_marginTop="200dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             >
+
+            <TextView
+                android:id="@+id/routeName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="50dp"
+                android:layout_marginStart="10dp"
+                android:text="RouteName"
+                android:textColor="@color/white"
+                android:textSize="25dp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/stateName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="80dp"
+                android:layout_marginStart="10dp"
+                android:text="StateName"
+                android:textColor="@color/white"
+                android:textSize="15dp"
+                android:textStyle="italic"/>
+
+            <RatingBar
+                android:id="@+id/routeRating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="110dp"
+                android:numStars="5"
+                android:rating="3"
+                android:scaleX="0.5"
+                android:scaleY="0.5"
+                android:theme="@style/MiniRatingBar" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -43,7 +77,7 @@
                     android:id="@+id/show_map"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="280dp"
+                    android:layout_marginStart="330dp"
                     android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
                     android:paddingEnd="20dp"
@@ -55,7 +89,7 @@
                     android:id="@+id/navigate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="280dp"
+                    android:layout_marginStart="330dp"
                     android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
                     app:backgroundTint="#FFFFFF"

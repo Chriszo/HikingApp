@@ -12,29 +12,28 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.R
 import com.example.hikingapp.SampleMapActivity
 import com.example.hikingapp.SampleNavigationActivity
-import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.map.ExtendedMapPoint
+import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.map.service.MapService
 import com.example.hikingapp.domain.map.service.MapServiceImpl
+import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.route.RouteInfo
 import com.example.hikingapp.domain.weather.WeatherForecast
-import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.weather.service.WeatherService
 import com.example.hikingapp.domain.weather.service.WeatherServiceImpl
-import com.example.hikingapp.domain.route.RouteInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.culture.CultureUtils
+import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import kotlinx.android.synthetic.main.route_fragment.view.*
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
@@ -67,12 +66,8 @@ class RouteFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.route_fragment, container, false)
 
-        initializeNavigationComponents(view)
-
-        initializeButtonListeners(view)
-
         //TODO Retrieve current Route Map information
-        val routeName = if (Objects.isNull(savedInstanceState?.get("RouteName"))){
+        val routeName = if (Objects.isNull(savedInstanceState?.get("RouteName"))) {
             "Philopappou"
         } else {
             savedInstanceState?.get("RouteName") as String
@@ -83,7 +78,17 @@ class RouteFragment : Fragment() {
         weatherService = WeatherServiceImpl()
 
         route.mapInfo = mapService.getMapInformation(getJson(routeName))
-        route.routeInfo = RouteInfo()
+
+        // TODO Populate from DB
+        MockDatabase.mockSearchResults
+            .stream()
+            .map { it.third }
+            .filter {it.routeName.equals(routeName)}
+            .findFirst()
+            .ifPresent {
+                route.routeInfo = it.routeInfo
+            }
+
 
         if (viewModel.elevationData.value.isNullOrEmpty()) {
             route.routeInfo!!.elevationData = setRouteElevationData(route)
@@ -105,6 +110,15 @@ class RouteFragment : Fragment() {
             ) //TODO remove this test flag when in PROD
             route.weatherForecast = weatherForecast
         }
+
+
+        initializeNavigationComponents(view)
+
+        initializeButtonListeners(view)
+
+        view.routeName.text = routeName
+        // State Name????
+        view.routeRating.rating = route.routeInfo!!.rating!!
 
         return view
     }
