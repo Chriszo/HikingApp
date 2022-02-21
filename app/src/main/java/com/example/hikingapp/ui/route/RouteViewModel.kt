@@ -1,9 +1,8 @@
 package com.example.hikingapp.ui.route
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.hikingapp.domain.Route
+import com.example.hikingapp.domain.route.Route
 
 class RouteViewModel : ViewModel() {
 

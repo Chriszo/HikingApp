@@ -11,27 +11,18 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivitySampleMapBinding
+import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
+import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.map.service.MapService
 import com.example.hikingapp.domain.map.service.MapServiceImpl
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.domain.route.RouteInfo
-import com.example.hikingapp.domain.weather.WeatherForecast
 import com.example.hikingapp.domain.weather.service.WeatherService
 import com.example.hikingapp.domain.weather.service.WeatherServiceImpl
-import com.example.hikingapp.domain.Route
-import com.example.hikingapp.domain.map.ExtendedMapPoint
-import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.persistence.mock.db.MockDatabase
-import com.example.hikingapp.services.culture.CultureUtils
-import com.jjoe64.graphview.GraphView
-import com.jjoe64.graphview.series.DataPoint
-import com.jjoe64.graphview.series.LineGraphSeries
 import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.directions.v5.models.DirectionsRoute
-import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.*
-import com.mapbox.geojson.Point
 import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
 import com.mapbox.maps.extension.style.image.image
@@ -70,20 +61,6 @@ import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
 import kotlinx.android.synthetic.main.activity_sample_map.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import java.util.stream.Collectors
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import kotlinx.coroutines.*
-import java.io.File
-import java.io.FileOutputStream
 
 /**
  * This example demonstrates the usage of the route line and route arrow API's and UI elements.
@@ -357,41 +334,19 @@ class SampleMapActivity : AppCompatActivity() {
         val route = Route()
         routeName = routeName?.let { it as String }
 
-        val mapInfo = retrieveMapInformation(routeName)
+        val mapInfo = mapService.getMapInformation(getJson("Philopapou"))
         route.mapInfo = mapInfo
 
-       /* mapboxMap.addOnMapLoadedListener {
-            setRouteElevationData(route.mapInfo!!, true, graph)
-        }*/
-
-        GlobalScope.launch {
-            route.cultureInfo = CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
-        }
-
+        /* mapboxMap.addOnMapLoadedListener {
+             setRouteElevationData(route.mapInfo!!, true, graph)
+         }*/
 
         // For debugging and monitoring only
         mapboxMap.addOnMapClickListener {
             println(route)
             true
         }
-
-
         //TODO Replace philopappou with routeName variable
-        val mapInfo = mapService.getMapInformation(getJson("Philopapou"))
-
-        GlobalScope.async {
-            val weatherForecast = WeatherForecast()
-            weatherForecast.weatherForecast = weatherService.getForecastForDays(
-                mapInfo.origin,
-                4,
-                true
-            ) //TODO remove this test flag when in PROD
-
-            Route(RouteInfo(), mapInfo)?.let {
-                it.weatherInformation = weatherForecast
-            }
-        }
-
         init(mapInfo)
     }
 
@@ -407,189 +362,9 @@ class SampleMapActivity : AppCompatActivity() {
             .toMutableList()
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun setRouteElevationData(
-        mapInfo: MapInfo,
-        isExecutable: Boolean,// TODO Remove it when you must. It is used in order to bypass execution during test., graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}
-        graph: GraphView
-    ) {
-        if (isExecutable) {
-
-            val series = LineGraphSeries<DataPoint>()
-
-            if (mapInfo.elevationDataLoaded) { // Means that these data may be stored in db and can be retrieved from there
-
-                mapInfo.mapPoints
-                    ?.stream()
-                    ?.filter { point -> point.elevation != null }
-                    ?.forEach {
-                        series.appendData(
-                            DataPoint(
-                                mapInfo.mapPoints.indexOf(it).toDouble(),
-                                it.elevation!!.toDouble()
-                            ),
-                            false,
-                            mapInfo.mapPoints.size
-                        )
-                    }
-                graph.addSeries(series)
-
-            } else { // Data have not been loaded so need Tilequery async API calls to populate data.
-                GlobalScope.launch {
-
-                    collectElevationData(mapInfo).collect {
-
-                        println("Drawing graph")
-                        it.stream().forEach { ep ->
-                            series.appendData(
-                                DataPoint(ep.index.toDouble(), ep.elevation!!.toDouble()),
-                                false,
-                                it.size
-                            )
-                        }
-                        graph.addSeries(series)
-                    }
-
-                }
-            }
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun collectElevationData(
-        mapInfo: MapInfo
-    ): Flow<MutableList<ExtendedMapPoint>> = flow {
-
-        val pointIndexMap = HashMap<String, Int>()
-        var elevationData = mutableListOf<ExtendedMapPoint>()
-        val extendedMapPoints = filterRoutePoints(mapInfo.mapPoints!!, 3)
-
-
-        extendedMapPoints.stream().forEach {
-
-            GlobalScope.launch {
-                pointIndexMap[it.point.longitude().toString()+","+it.point.latitude().toString()] =
-                    it.index
-                callElevationDataAPI(it, mapInfo, pointIndexMap, elevationData)
-            }
-
-        }
-        while (elevationData.size != extendedMapPoints.size) {
-            // wait
-        }
-        elevationData = elevationData
-            .stream()
-            .filter { it.elevation != -10000 }
-            .sorted(Comparator.comparing(ExtendedMapPoint::index))
-            .collect(Collectors.toList()).toMutableList()
-
-        emit(elevationData)
-    }
-
-
-    private suspend fun callElevationDataAPI(
-        extendedPoint: ExtendedMapPoint,
-        mapInfo: MapInfo,
-        pointIndexMap: HashMap<String, Int>,
-        elevationData: MutableList<ExtendedMapPoint>
-    ) {
-
-        if (extendedPoint.index % 50 == 0) {
-            delay(3000)
-            println("WAITING")
-        }
-
-        val elevationQuery = formElevationRequestQuery(extendedPoint)
-
-        elevationQuery.enqueueCall(object : Callback<FeatureCollection> {
-
-            override fun onResponse(
-                call: Call<FeatureCollection>,
-                response: Response<FeatureCollection>
-            ) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-
-                    if (response.isSuccessful) {
-                        val point =
-                            (response.body()?.features()?.get(0)?.geometry() as Point)
-                        val pointsMapKey =
-                            point.longitude().toString() + "," + point.latitude().toString()
-
-
-                        response.body()?.features()
-                            ?.stream()
-                            ?.mapToInt { feature ->
-                                feature.properties()?.get("ele")?.asInt!!
-                            }
-                            ?.max()
-                            ?.ifPresent { max ->
-                                val index = pointIndexMap[pointsMapKey]
-                                mapInfo.mapPoints?.get(index!!)?.elevation = max
-                                extendedPoint.elevation = max
-                                elevationData.add(extendedPoint)
-                            }
-                        Log.d(
-                            "R",
-                            "" + elevationData.indexOf(extendedPoint) + ", " + extendedPoint.elevation
-                        )
-                        call.cancel()
-                    }
-                } else {
-                    //TODO add implementation for backwards compatibility
-                }
-            }
-
-            override fun onFailure(call: Call<FeatureCollection>, t: Throwable) {
-                Log.e(Log.ERROR.toString(), "An error occured " + t.message)
-                elevationQuery.cancelCall()
-                return
-            }
-        })
-    }
-
-    private fun formElevationRequestQuery(extendedPoint: ExtendedMapPoint): MapboxTilequery {
-        return MapboxTilequery.builder()
-            .accessToken(getString(R.string.mapbox_access_token))
-            .tilesetIds(GlobalUtils.TERRAIN_ID)
-            .limit(50)
-            .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
-            .query(extendedPoint.point)
-            .build()
-    }
-
-    private fun retrieveMapInformation(routeName: String?): MapInfo {
-
-        val jsonSource = assets.open(MockDatabase.routesMap["Philopapou"]?.second!!).readBytes()
-            .toString(Charsets.UTF_8)
-        val routeJson: MultiLineString =
-            FeatureCollection.fromJson(jsonSource).features()?.get(0)?.geometry() as MultiLineString
-
-        val origin: Point = routeJson.coordinates()[0][0]
-        val destination: Point = routeJson.coordinates()[0][routeJson.coordinates()[0].size - 1]
-
-        val mapPoints = getMapPoints(routeJson)
-
-        return MapInfo(
-            origin,
-            destination,
-            routeJson.bbox()!!,
-            routeJson,
-            mapPoints,
-            MockDatabase.routesMap["Philopapou"]?.second!!,
-            false
-        )
-    }
-
     private fun getJson(routeName: String?): String {
         return assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
             .toString(Charsets.UTF_8)
-    }
-
-    private fun getMapPoints(json: MultiLineString): List<MapPoint> {
-        return json.coordinates()[0].map {
-            MapPoint(it)
-        }
-
     }
 
     private fun init(mapInfo: MapInfo) {

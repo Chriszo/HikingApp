@@ -1,6 +1,7 @@
 package com.example.hikingapp.domain.map.service
 
 import com.example.hikingapp.domain.map.MapInfo
+import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.MultiLineString
@@ -16,12 +17,23 @@ class MapServiceImpl: MapService {
         val origin: Point = routeJson.coordinates()[0][0]
         val destination: Point = routeJson.coordinates()[0][routeJson.coordinates()[0].size - 1]
 
+        val mapPoints = getMapPoints(routeJson)
+
         return MapInfo(
             origin,
             destination,
             routeJson.bbox()!!,
             routeJson,
-            MockDatabase.routesMap["Philopapou"]?.second!!
+            mapPoints,
+            MockDatabase.routesMap["Philopappou"]?.second!!,
+            false
         )
+    }
+
+    private fun getMapPoints(json: MultiLineString): List<MapPoint> {
+        return json.coordinates()[0].map {
+            MapPoint(it)
+        }
+
     }
 }

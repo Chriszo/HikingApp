@@ -21,12 +21,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
 import com.example.hikingapp.domain.DistanceUnitType
-import com.example.hikingapp.persistence.MapInfo
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
-import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.example.hikingapp.utils.GlobalUtils
-import com.mapbox.api.directions.v5.models.Bearing
+import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.api.matching.v5.MapboxMapMatching
@@ -94,7 +92,6 @@ import retrofit2.Response
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
-import kotlin.math.roundToInt
 
 /**
  * This example demonstrates a basic turn-by-turn navigation experience by putting together some UI elements to showcase
@@ -174,7 +171,8 @@ class SampleNavigationActivity : AppCompatActivity() {
 
         override fun onFinalDestinationArrival(routeProgress: RouteProgress) {
             println("FINAL DESTINATION REACHED!")
-            val mainIntent = Intent(this@SampleNavigationActivity, EndOfNavigationActivity::class.java)
+            val mainIntent =
+                Intent(this@SampleNavigationActivity, EndOfNavigationActivity::class.java)
             startActivity(mainIntent)
         }
 
@@ -185,7 +183,11 @@ class SampleNavigationActivity : AppCompatActivity() {
 
         override fun onWaypointArrival(routeProgress: RouteProgress) {
             println("CHECKPOINT ${checkpointCounter.get()} reached")
-            Toast.makeText(this@SampleNavigationActivity,"You have arrived at ${checkpointCounter.get()}",Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this@SampleNavigationActivity,
+                "You have arrived at ${checkpointCounter.get()}",
+                Toast.LENGTH_LONG
+            ).show()
         }
 
     }
@@ -759,16 +761,16 @@ class SampleNavigationActivity : AppCompatActivity() {
 
                 val routePoints = mapInfo!!.jsonRoute.coordinates()[0]
 
-              /*  val totalRouteDistance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    computeTotalDistance(routePoints)
-                } else {
-                    TODO("VERSION.SDK_INT < N")
-                }
+                /*  val totalRouteDistance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                      computeTotalDistance(routePoints)
+                  } else {
+                      TODO("VERSION.SDK_INT < N")
+                  }
 
-                val modulo = (totalRouteDistance / 300).roundToInt()
-                val checkPoints = routePoints.withIndex()
-                    .filter { it.index % modulo == 0 && it.index != 0 && it.index != routePoints.size - 1 }
-                    .map { it.index }*/
+                  val modulo = (totalRouteDistance / 300).roundToInt()
+                  val checkPoints = routePoints.withIndex()
+                      .filter { it.index % modulo == 0 && it.index != 0 && it.index != routePoints.size - 1 }
+                      .map { it.index }*/
 
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

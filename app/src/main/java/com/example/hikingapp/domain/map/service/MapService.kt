@@ -4,6 +4,6 @@ import com.example.hikingapp.domain.map.MapInfo
 
 interface MapService {
 
-    fun getMapInformation(routeName: String): MapInfo
+    fun getMapInformation(jsonContent: String): MapInfo
 
 }

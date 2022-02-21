@@ -12,15 +12,20 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.example.hikingapp.GlobalUtils
+import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.R
 import com.example.hikingapp.SampleMapActivity
 import com.example.hikingapp.SampleNavigationActivity
-import com.example.hikingapp.domain.Route
+import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapPoint
-import com.example.hikingapp.persistence.MapInfo
-import com.example.hikingapp.persistence.RouteInfo
+import com.example.hikingapp.domain.map.service.MapService
+import com.example.hikingapp.domain.map.service.MapServiceImpl
+import com.example.hikingapp.domain.weather.WeatherForecast
+import com.example.hikingapp.domain.map.MapInfo
+import com.example.hikingapp.domain.weather.service.WeatherService
+import com.example.hikingapp.domain.weather.service.WeatherServiceImpl
+import com.example.hikingapp.domain.route.RouteInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.culture.CultureUtils
 import com.mapbox.api.tilequery.MapboxTilequery
@@ -38,11 +43,19 @@ import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.*
 import java.util.stream.Collectors
+import kotlin.Comparator
+import kotlin.collections.HashMap
 
 class RouteFragment : Fragment() {
 
     private val viewModel: RouteViewModel by activityViewModels()
+
+    private lateinit var mapService: MapService
+
+    private lateinit var weatherService: WeatherService
+
     private val route: Route by lazy {
         Route()
     }
@@ -54,36 +67,22 @@ class RouteFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.route_fragment, container, false)
 
-        val navHostFragment =
-            childFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
-        val navController = navHostFragment.navController
+        initializeNavigationComponents(view)
 
-        val navView = view.info_nav_view
-        navView.setupWithNavController(navController)
-
-        val showMapButton = view.show_map
-        showMapButton.setOnClickListener {
-            activity?.let {
-                val intent = Intent(it, SampleMapActivity::class.java)
-                it.startActivity(intent)
-            }
-        }
-
-        val showNavButton = view.navigate
-        showNavButton.setOnClickListener {
-            activity?.let {
-                val intent = Intent(it, SampleNavigationActivity::class.java)
-                it.startActivity(intent)
-            }
-        }
+        initializeButtonListeners(view)
 
         //TODO Retrieve current Route Map information
-        var routeName = savedInstanceState?.get("RouteName")
+        val routeName = if (Objects.isNull(savedInstanceState?.get("RouteName"))){
+            "Philopappou"
+        } else {
+            savedInstanceState?.get("RouteName") as String
+        }
 
-        routeName = routeName?.let { it as String }
+//        val mapInfo = retrieveMapInformation(routeName)
+        mapService = MapServiceImpl()
+        weatherService = WeatherServiceImpl()
 
-        val mapInfo = retrieveMapInformation(routeName)
-        route.mapInfo = mapInfo
+        route.mapInfo = mapService.getMapInformation(getJson(routeName))
         route.routeInfo = RouteInfo()
 
         if (viewModel.elevationData.value.isNullOrEmpty()) {
@@ -95,7 +94,51 @@ class RouteFragment : Fragment() {
             route.cultureInfo = CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
         }
 
+
+        // Weather Data
+        GlobalScope.launch {
+            val weatherForecast = WeatherForecast()
+            weatherForecast.weatherForecast = weatherService.getForecastForDays(
+                route.mapInfo!!.origin,
+                4,
+                true
+            ) //TODO remove this test flag when in PROD
+            route.weatherForecast = weatherForecast
+        }
+
         return view
+    }
+
+    private fun initializeButtonListeners(view: View?) {
+        val showMapButton = view?.show_map
+        showMapButton?.setOnClickListener {
+            activity?.let {
+                val intent = Intent(it, SampleMapActivity::class.java)
+                it.startActivity(intent)
+            }
+        }
+
+        val showNavButton = view?.navigate
+        showNavButton?.setOnClickListener {
+            activity?.let {
+                val intent = Intent(it, SampleNavigationActivity::class.java)
+                it.startActivity(intent)
+            }
+        }
+    }
+
+    private fun initializeNavigationComponents(view: View) {
+        val navHostFragment =
+            childFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
+        val navController = navHostFragment.navController
+
+        val navView = view.info_nav_view
+        navView?.setupWithNavController(navController)
+    }
+
+    private fun getJson(routeName: String?): String {
+        return requireContext().assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
+            .toString(Charsets.UTF_8)
     }
 
     private fun retrieveMapInformation(routeName: String?): MapInfo {
