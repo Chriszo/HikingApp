@@ -1,5 +1,6 @@
 package com.example.hikingapp.domain.route.enums
 
-enum class RouteType {
-    LINEAR,CYCLIC
+enum class RouteType(val type: String) {
+    LINEAR("Linear"),
+    CYCLIC("Cyclic")
 }

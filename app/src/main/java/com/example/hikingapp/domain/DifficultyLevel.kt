@@ -1,8 +1,8 @@
 package com.example.hikingapp.domain
 
-enum class DifficultyLevel {
+enum class DifficultyLevel(val difficultyLevel: String) {
 
-    EASY,
-    MODERATE,
-    HARD
+    EASY("Easy"),
+    MODERATE("Moderate"),
+    HARD("Hard")
 }
