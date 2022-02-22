@@ -86,6 +86,7 @@ class RouteFragment : Fragment() {
             .findFirst()
             .ifPresent {
                 route.routeInfo = it.routeInfo
+                viewModel.route.postValue(route)
             }
 
 
@@ -105,11 +106,11 @@ class RouteFragment : Fragment() {
             weatherForecast.weatherForecast = weatherService.getForecastForDays(
                 route.mapInfo!!.origin,
                 4,
-                true
+                false
             ) //TODO remove this test flag when in PROD
             route.weatherForecast = weatherForecast
+            viewModel.route.postValue(route)
         }
-
 
         initializeNavigationComponents(view)
 
@@ -213,22 +214,24 @@ class RouteFragment : Fragment() {
     ): MutableList<Int>? {
         var elevationData = mutableListOf<Int>()
 
-        if (route.mapInfo!!.elevationDataLoaded) { // Means that these data may be stored in db and can be retrieved from there
-            elevationData = (route.mapInfo!!.mapPoints?.stream()?.map { it.elevation }
-                ?.collect(Collectors.toList())?.toMutableList()
-                ?: emptyList<Int>()) as MutableList<Int>
-            route.routeInfo?.elevationData = elevationData
-        } else {
-            // TODO Make a query to DB when implemented
-            // Data have not been loaded so need Tilequery async API calls to populate data.
-            GlobalScope.launch {
+        if(getString(R.string.prodMode).toBooleanStrict()) { // TODO Remove. Only for test
+            if (route.mapInfo!!.elevationDataLoaded) { // Means that these data may be stored in db and can be retrieved from there
+                elevationData = (route.mapInfo!!.mapPoints?.stream()?.map { it.elevation }
+                    ?.collect(Collectors.toList())?.toMutableList()
+                    ?: emptyList<Int>()) as MutableList<Int>
+                route.routeInfo?.elevationData = elevationData
+            } else {
+                // TODO Make a query to DB when implemented
+                // Data have not been loaded so need Tilequery async API calls to populate data.
+                GlobalScope.launch {
 
-                collectionElevData(route.mapInfo!!).collect { elevationDataList ->
-                    elevationData =
-                        elevationDataList.stream().map { it.elevation }.collect(Collectors.toList())
-                    route.routeInfo?.elevationData = elevationData
+                    collectionElevData(route.mapInfo!!).collect { elevationDataList ->
+                        elevationData =
+                            elevationDataList.stream().map { it.elevation }.collect(Collectors.toList())
+                        route.routeInfo?.elevationData = elevationData
+                    }
+                    viewModel.elevationData.postValue(elevationData)
                 }
-                viewModel.elevationData.postValue(elevationData)
             }
         }
         return elevationData

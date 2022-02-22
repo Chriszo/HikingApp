@@ -3,8 +3,7 @@
 
     <item
         android:id="@+id/routeInfoFragment"
-        android:title="Route Information"
-        android:icon="@drawable/info_icon_foreground"
+        android:title="Information"
         android:visible="true" />
     <item
         android:id="@+id/cultureInfoFragment"
