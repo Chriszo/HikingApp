@@ -18,13 +18,12 @@ import com.example.hikingapp.SampleNavigationActivity
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
-import com.example.hikingapp.domain.map.service.MapService
-import com.example.hikingapp.domain.map.service.MapServiceImpl
+import com.example.hikingapp.services.map.MapService
+import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.domain.route.RouteInfo
 import com.example.hikingapp.domain.weather.WeatherForecast
-import com.example.hikingapp.domain.weather.service.WeatherService
-import com.example.hikingapp.domain.weather.service.WeatherServiceImpl
+import com.example.hikingapp.services.weather.WeatherService
+import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.culture.CultureUtils
 import com.example.hikingapp.utils.GlobalUtils

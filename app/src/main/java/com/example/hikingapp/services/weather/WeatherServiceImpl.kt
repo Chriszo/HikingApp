@@ -1,4 +1,4 @@
-package com.example.hikingapp.domain.weather.service
+package com.example.hikingapp.services.weather
 
 import com.example.hikingapp.domain.weather.WeatherInfo
 import com.example.hikingapp.domain.weather.WeatherInfoDto

@@ -14,11 +14,11 @@ import com.example.hikingapp.databinding.ActivitySampleMapBinding
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
-import com.example.hikingapp.domain.map.service.MapService
-import com.example.hikingapp.domain.map.service.MapServiceImpl
+import com.example.hikingapp.services.map.MapService
+import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.domain.weather.service.WeatherService
-import com.example.hikingapp.domain.weather.service.WeatherServiceImpl
+import com.example.hikingapp.services.weather.WeatherService
+import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.directions.v5.models.DirectionsRoute

@@ -1,4 +1,4 @@
-package com.example.hikingapp.domain.map.service
+package com.example.hikingapp.services.map
 
 import com.example.hikingapp.domain.map.MapInfo
 
