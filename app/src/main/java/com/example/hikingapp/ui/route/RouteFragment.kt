@@ -107,7 +107,7 @@ class RouteFragment : Fragment() {
             weatherForecast.weatherForecast = weatherService.getForecastForDays(
                 route.mapInfo!!.origin,
                 4,
-                false
+                getString(R.string.prodMode).toBooleanStrict()
             ) //TODO remove this test flag when in PROD
             route.weatherForecast = weatherForecast
             viewModel.route.postValue(route)
