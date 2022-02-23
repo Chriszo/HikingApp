@@ -85,6 +85,7 @@ class RouteFragment : Fragment() {
             .filter {it.routeName.equals(routeName)}
             .findFirst()
             .ifPresent {
+                route.stateName = it.stateName // TODO Maybe make an API call to populate with adminstrative level?
                 route.routeInfo = it.routeInfo
                 viewModel.route.postValue(route)
             }
@@ -117,7 +118,7 @@ class RouteFragment : Fragment() {
         initializeButtonListeners(view)
 
         view.routeName.text = routeName
-        // State Name????
+        view.stateName.text = route.stateName
         view.routeRating.rating = route.routeInfo!!.rating!!
 
         return view

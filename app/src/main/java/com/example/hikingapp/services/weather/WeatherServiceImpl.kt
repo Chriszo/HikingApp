@@ -16,12 +16,11 @@ class WeatherServiceImpl : WeatherService {
     override suspend fun getForecastForDays(
         point: Point,
         days: Int,
-        onTestMode: Boolean
+        onProdMode: Boolean
     ): List<WeatherInfo> {
-        val weatherDataResponse: String
 
-        if (onTestMode) {
-            weatherDataResponse = SampleData.rawWeatherData
+        val weatherDataResponse: String = if (!onProdMode) {
+            SampleData.rawWeatherData
         } else {
 
             val client = HttpClient()
@@ -32,7 +31,7 @@ class WeatherServiceImpl : WeatherService {
                 header("x-rapidapi-host", "dark-sky.p.rapidapi.com")
                 header("x-rapidapi-key", "22333fdf19msh7342040f2befa30p1305b9jsn53524d7ffd0e")
             }
-            weatherDataResponse = response.receive()
+            response.receive()
         }
         return WeatherInfoMapper.mapList(WeatherInfoDto.fromJsonForDays(weatherDataResponse, days))
     }

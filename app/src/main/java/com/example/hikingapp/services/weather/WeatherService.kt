@@ -5,7 +5,7 @@ import com.mapbox.geojson.Point
 
 interface WeatherService {
 
-    suspend fun getForecastForDays(point: Point, days: Int, onTestMode: Boolean): List<WeatherInfo>
+    suspend fun getForecastForDays(point: Point, days: Int, onProdMode: Boolean): List<WeatherInfo>
 
     fun getForecast(point: Point)
 
