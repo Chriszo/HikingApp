@@ -24,7 +24,7 @@
             android:layout_margin="10dp"
             android:background="@android:color/darker_gray"
             android:text="Basic Information"
-            android:textSize="20dp"
+            android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -196,7 +196,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
             android:text="This is a more detailed description of the route containing a description of the main points of interest, what to be careful about the route and what to give credits.Whatever....just a dummy description."
-            android:textSize="14dp"
+            android:textSize="14sp"
             app:layout_constraintTop_toBottomOf="@id/content_title" />
 
         <!-- WEATHER INFORMATION SECTION -->
@@ -208,7 +208,7 @@
             android:layout_margin="10dp"
             android:background="@android:color/darker_gray"
             android:text="Weather Information"
-            android:textSize="20dp"
+            android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

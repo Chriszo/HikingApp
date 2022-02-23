@@ -1,4 +1,4 @@
-package com.example.hikingapp.ui.route
+package com.example.hikingapp.ui.route.cultureInfo
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.hikingapp.R
 
-class CultureInfoFragment : Fragment() {
+class SightDetailsFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,7 +18,7 @@ class CultureInfoFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_culture_info, container, false)
+        return inflater.inflate(R.layout.fragment_sight, container, false)
     }
 
 }

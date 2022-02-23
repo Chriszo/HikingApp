@@ -5,7 +5,7 @@
     android:id="@+id/cultureInfoFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.route.CultureInfoFragment">
+    tools:context=".ui.route.cultureInfo.SightsListFragment">
 
     <LinearLayout
         android:id="@+id/text_info"
@@ -24,21 +24,17 @@
             android:layout_margin="10dp"
             android:background="@android:color/darker_gray"
             android:text="Culture Information"
-            android:textSize="20dp"
+            android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/actions_layout_id" />
 
-
-        <TextView
-            android:id="@+id/route_id"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/sights_listview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="15dp"
-            android:text="Sights attached to this route."
-            android:textSize="15dp"
-            app:layout_constraintTop_toBottomOf="@id/content_title" />
+            />
 
     </LinearLayout>
 

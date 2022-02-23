@@ -12,7 +12,7 @@
         tools:layout="@layout/fragment_route_info" />
     <fragment
         android:id="@+id/cultureInfoFragment"
-        android:name="com.example.hikingapp.ui.route.CultureInfoFragment"
+        android:name="com.example.hikingapp.ui.route.cultureInfo.SightsListFragment"
         android:label="fragment_culture_info"
         tools:layout="@layout/fragment_culture_info" />
     <fragment
