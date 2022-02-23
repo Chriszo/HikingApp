@@ -155,31 +155,6 @@ class RouteFragment : Fragment() {
             .toString(Charsets.UTF_8)
     }
 
-    private fun retrieveMapInformation(routeName: String?): MapInfo {
-
-        val jsonSource =
-            context?.assets?.open(MockDatabase.routesMap["Philopapou"]?.second!!)?.readBytes()
-                ?.toString(Charsets.UTF_8)
-        val routeJson: MultiLineString =
-            FeatureCollection.fromJson(jsonSource!!).features()?.get(0)
-                ?.geometry() as MultiLineString
-
-        val origin: Point = routeJson.coordinates()[0][0]
-        val destination: Point = routeJson.coordinates()[0][routeJson.coordinates()[0].size - 1]
-
-        val mapPoints = getMapPoints(routeJson)
-
-        return MapInfo(
-            origin,
-            destination,
-            routeJson.bbox()!!,
-            routeJson,
-            mapPoints,
-            MockDatabase.routesMap["Philopapou"]?.second!!,
-            false
-        )
-    }
-
     private fun getMapPoints(json: MultiLineString): List<MapPoint> {
         return json.coordinates()[0].map {
             MapPoint(it)
