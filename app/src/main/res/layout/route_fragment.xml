@@ -37,7 +37,7 @@
                 android:id="@+id/routeName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="50dp"
+                android:layout_marginTop="70dp"
                 android:layout_marginStart="10dp"
                 android:text="RouteName"
                 android:textColor="@color/white"
@@ -48,7 +48,7 @@
                 android:id="@+id/stateName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="80dp"
+                android:layout_marginTop="100dp"
                 android:layout_marginStart="10dp"
                 android:text="StateName"
                 android:textColor="@color/white"
@@ -60,12 +60,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="0dp"
-                android:layout_marginTop="110dp"
+                android:layout_marginTop="120dp"
                 android:numStars="5"
                 android:rating="3"
                 android:scaleX="0.5"
                 android:scaleY="0.5"
-                android:theme="@style/MiniRatingBar" />
+                android:theme="@style/MiniRatingBar"
+                android:transformPivotX="10dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
