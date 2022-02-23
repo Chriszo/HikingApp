@@ -18,14 +18,14 @@ import com.example.hikingapp.SampleNavigationActivity
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
-import com.example.hikingapp.services.map.MapService
-import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
-import com.example.hikingapp.services.weather.WeatherService
-import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.culture.CultureUtils
+import com.example.hikingapp.services.map.MapService
+import com.example.hikingapp.services.map.MapServiceImpl
+import com.example.hikingapp.services.weather.WeatherService
+import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
@@ -82,36 +82,72 @@ class RouteFragment : Fragment() {
         MockDatabase.mockSearchResults
             .stream()
             .map { it.third }
-            .filter {it.routeName.equals(routeName)}
+            .filter { it.routeName.equals(routeName) }
             .findFirst()
             .ifPresent {
-                route.stateName = it.stateName // TODO Maybe make an API call to populate with adminstrative level?
+                route.stateName =
+                    it.stateName // TODO Maybe make an API call to populate with adminstrative level?
                 route.routeInfo = it.routeInfo
-                viewModel.route.postValue(route)
             }
 
 
-        if (viewModel.elevationData.value.isNullOrEmpty()) {
-            route.routeInfo!!.elevationData = setRouteElevationData(route)
-        }
-
-
         GlobalScope.launch {
-            route.cultureInfo = CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+
+            if (viewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
+                route.routeInfo!!.elevationData = setRouteElevationData(route)
+            }
+
+            val cultureInfoJob = if (viewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
+                GlobalScope.launch {
+                    route.cultureInfo =
+                        CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+                }
+            } else {
+                null
+            }
+
+            val weatherInfoJob =
+                if (viewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
+                    GlobalScope.launch {
+                        val weatherForecast = WeatherForecast()
+                        weatherForecast.weatherForecast = weatherService.getForecastForDays(
+                            route.mapInfo!!.origin,
+                            4,
+                            getString(R.string.prodMode).toBooleanStrict()
+                        ) //TODO remove this test flag when in PROD
+                        route.weatherForecast = weatherForecast
+                    }
+                } else {
+                    null
+                }
+
+            cultureInfoJob?.join()
+            weatherInfoJob?.join()
+
+            viewModel.route.postValue(route)
         }
+
+//        if (viewModel.elevationData.value.isNullOrEmpty()) {
+//            route.routeInfo!!.elevationData = setRouteElevationData(route)
+//        }
+
+
+//        GlobalScope.launch {
+//            route.cultureInfo = CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+//        }
 
 
         // Weather Data
-        GlobalScope.launch {
-            val weatherForecast = WeatherForecast()
-            weatherForecast.weatherForecast = weatherService.getForecastForDays(
-                route.mapInfo!!.origin,
-                4,
-                getString(R.string.prodMode).toBooleanStrict()
-            ) //TODO remove this test flag when in PROD
-            route.weatherForecast = weatherForecast
-            viewModel.route.postValue(route)
-        }
+//        GlobalScope.launch {
+//            val weatherForecast = WeatherForecast()
+//            weatherForecast.weatherForecast = weatherService.getForecastForDays(
+//                route.mapInfo!!.origin,
+//                4,
+//                getString(R.string.prodMode).toBooleanStrict()
+//            ) //TODO remove this test flag when in PROD
+//            route.weatherForecast = weatherForecast
+//            viewModel.route.postValue(route)
+//        }
 
         initializeNavigationComponents(view)
 
@@ -190,7 +226,7 @@ class RouteFragment : Fragment() {
     ): MutableList<Int>? {
         var elevationData = mutableListOf<Int>()
 
-        if(getString(R.string.prodMode).toBooleanStrict()) { // TODO Remove. Only for test
+        if (getString(R.string.prodMode).toBooleanStrict()) { // TODO Remove. Only for test
             if (route.mapInfo!!.elevationDataLoaded) { // Means that these data may be stored in db and can be retrieved from there
                 elevationData = (route.mapInfo!!.mapPoints?.stream()?.map { it.elevation }
                     ?.collect(Collectors.toList())?.toMutableList()
@@ -203,7 +239,8 @@ class RouteFragment : Fragment() {
 
                     collectionElevData(route.mapInfo!!).collect { elevationDataList ->
                         elevationData =
-                            elevationDataList.stream().map { it.elevation }.collect(Collectors.toList())
+                            elevationDataList.stream().map { it.elevation }
+                                .collect(Collectors.toList())
                         route.routeInfo?.elevationData = elevationData
                     }
                     viewModel.elevationData.postValue(elevationData)
