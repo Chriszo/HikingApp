@@ -26,7 +26,7 @@ import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
-import com.example.hikingapp.ui.route.viewModels.RouteViewModel
+import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
@@ -131,6 +131,17 @@ class RouteFragment : Fragment() {
 
             viewModel.route.postValue(route)
         }
+
+        val photos = mutableListOf<Int>()
+
+        if (viewModel.photos.value.isNullOrEmpty()) {
+
+            photos.add(R.drawable.thiseion)
+            photos.add(R.drawable.philopappou)
+            photos.add(R.mipmap.olympus_foreground)
+            viewModel.photos.postValue(photos)
+        }
+
 
 //        if (viewModel.elevationData.value.isNullOrEmpty()) {
 //            route.routeInfo!!.elevationData = setRouteElevationData(route)

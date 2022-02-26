@@ -8,12 +8,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.culture.CultureInfo
-import com.example.hikingapp.ui.route.viewModels.RouteViewModel
+import com.example.hikingapp.ui.adapters.OnItemClickedListener
+import com.example.hikingapp.ui.adapters.SightsAdapter
+import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.ui.viewModels.SightsViewModel
 
 class SightsListFragment : Fragment(), OnItemClickedListener {
 

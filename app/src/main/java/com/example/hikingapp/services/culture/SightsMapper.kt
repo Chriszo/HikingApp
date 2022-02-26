@@ -33,7 +33,7 @@ class SightsMapper {
             )
             sight.name = responseElement.name
             sight.description = responseElement.address
-            sight.photos = emptyList<Drawable>().toMutableList()
+            sight.photos = emptyList<Int>().toMutableList()
 
             return sight
         }

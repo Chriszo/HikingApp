@@ -16,6 +16,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HikingApp">
         <activity
+            android:name=".ui.route.photos.PhotoActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.route.cultureInfo.SightDetailsActivity"
             android:exported="false" />
         <activity

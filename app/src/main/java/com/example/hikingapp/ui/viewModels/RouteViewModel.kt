@@ -1,4 +1,4 @@
-package com.example.hikingapp.ui.route.viewModels
+package com.example.hikingapp.ui.viewModels
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,7 +13,9 @@ class RouteViewModel : ViewModel() {
 
     val cultureInfo = MutableLiveData<CultureInfo>()
 
-    fun defineRoute(r: Route) {
+    val photos = MutableLiveData<List<Int>>()
+
+   /* fun defineRoute(r: Route) {
         route.value = r
     }
 
@@ -26,5 +28,10 @@ class RouteViewModel : ViewModel() {
         route.value?.cultureInfo = updatedCultureInfo
         cultureInfo.value = updatedCultureInfo
     }
+
+    fun setPhotos(updatedPhotosList: MutableList<Int>) {
+        route.value?.photos = updatedPhotosList
+        photos.value = updatedPhotosList
+    }*/
 
 }

@@ -1,4 +1,4 @@
-package com.example.hikingapp.ui.route.cultureInfo
+package com.example.hikingapp.ui.adapters
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,8 +10,6 @@ import com.example.hikingapp.R
 import com.example.hikingapp.domain.culture.Sight
 
 class SightsAdapter(var sights: List<Sight>, var itemClicked: OnItemClickedListener?): RecyclerView.Adapter<SightsAdapter.ViewHolder>() {
-
-    constructor(): this(emptyList(), null)
 
     class ViewHolder(view: View, itemClicked: OnItemClickedListener): RecyclerView.ViewHolder(view), View.OnClickListener {
 
