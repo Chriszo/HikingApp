@@ -26,6 +26,7 @@ import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
+import com.example.hikingapp.ui.route.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
@@ -99,8 +100,12 @@ class RouteFragment : Fragment() {
 
             val cultureInfoJob = if (viewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
                 GlobalScope.launch {
-                    route.cultureInfo =
-                        CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+
+                    if (Objects.isNull(viewModel.cultureInfo.value)) {
+                        route.cultureInfo =
+                            CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+                        viewModel.cultureInfo.postValue(route.cultureInfo)
+                    }
                 }
             } else {
                 null

@@ -1,6 +1,7 @@
 package com.example.hikingapp.ui.route.cultureInfo
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -12,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.culture.CultureInfo
-import com.example.hikingapp.ui.route.RouteViewModel
+import com.example.hikingapp.ui.route.viewModels.RouteViewModel
 
 class SightsListFragment : Fragment(), OnItemClickedListener {
 
@@ -44,7 +45,7 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Inflate the layout for this fragment
         cultureInfoView = inflater.inflate(R.layout.fragment_culture_info, container, false)
         linearLayoutManager = LinearLayoutManager(context)
@@ -52,8 +53,8 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
         recyclerView.layoutManager = linearLayoutManager
 
 
-        viewModel.route.observe(viewLifecycleOwner, Observer {
-            cultureInfo = it.cultureInfo!!
+        viewModel.cultureInfo.observe(viewLifecycleOwner, { updatedCultureInfo ->
+            cultureInfo = updatedCultureInfo
 
             sightsAdapter = SightsAdapter(cultureInfo.sights!!, itemClickedListener)
             recyclerView.adapter = sightsAdapter
@@ -63,10 +64,11 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
     }
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
-        val sightFragment = SightDetailsFragment()
-        val transaction = parentFragmentManager.beginTransaction()
-        transaction.replace(R.id.cultureInfoFragment,sightFragment)
-        transaction.commit()
+        val intent = Intent(context,SightDetailsActivity::class.java)
+        val sight = cultureInfo.sights?.get(position)
+        sight?.mainPhoto = R.drawable.thiseion
+        intent.putExtra("sightInfo",sight)
+        startActivity(intent)
     }
 
 }

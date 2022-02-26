@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import com.example.hikingapp.R
+import com.example.hikingapp.ui.route.viewModels.RouteViewModel
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -38,29 +39,29 @@ class RouteInfoFragment : Fragment() {
         val route = viewModel.route.value
         println(route)
 
-        var routeType = view.type_content
-        var difficultyLevel = view.difficulty_content
-        var rating = view.rating_content
+        val routeType = view.type_content
+        val difficultyLevel = view.difficulty_content
+        val rating = view.rating_content
 
-        var distance = view.distance_content
-        var elevation = view.elevation_content
-        var estimatedTime = view.time_est_content
+        val distance = view.distance_content
+        val elevation = view.elevation_content
+        val estimatedTime = view.time_est_content
 
-        var temperatureDay1 = view.temp_1
-        var temperatureDay2 = view.temp_2
-        var temperatureDay3 = view.temp_3
+        val temperatureDay1 = view.temp_1
+        val temperatureDay2 = view.temp_2
+        val temperatureDay3 = view.temp_3
 
-        var conditionsDay1 = view.conditions_1
-        var conditionsDay2 = view.conditions_2
-        var conditionsDay3 = view.conditions_3
+        val conditionsDay1 = view.conditions_1
+        val conditionsDay2 = view.conditions_2
+        val conditionsDay3 = view.conditions_3
 
-        var dayOfWeek1 = view.dom_1
-        var dayOfWeek2 = view.dom_2
-        var dayOfWeek3 = view.dom_3
+        val dayOfWeek1 = view.dom_1
+        val dayOfWeek2 = view.dom_2
+        val dayOfWeek3 = view.dom_3
 
 
 
-        viewModel.route.observe(viewLifecycleOwner, Observer { it ->
+        viewModel.route.observe(viewLifecycleOwner, { it ->
 
             println("ViewModel observes...")
 
@@ -76,30 +77,29 @@ class RouteInfoFragment : Fragment() {
                     0 -> {
 //                        println(Date(it.value.time!! * 1000))
                         dayOfWeek1.text = setDayName(weatherData.value.time!!)
-                        temperatureDay1.text =
-                            weatherData.value.temperatureHigh.toString() + " \u2103" // TODO check when condition for Fahrenheit is applied
-                        setImage(conditionsDay1, weatherData.value.icon)
+                        temperatureDay1.text = getString(R.string.celsius_symbol, weatherData.value.temperatureHigh.toString())
+//                            weatherData.value.temperatureHigh.toString() + " \u2103" // TODO check when condition for Fahrenheit is applied
+                        setImage(conditionsDay1, weatherData.value.icon!!)
                     }
                     1 -> {
 //                        println(Date(it.value.time!! * 1000))
                         dayOfWeek2.text = setDayName(weatherData.value.time!!)
-                        temperatureDay2.text =
-                            weatherData.value.temperatureHigh.toString() + " \u2103"
-                        setImage(conditionsDay2, weatherData.value.icon)
+                        temperatureDay2.text = getString(R.string.celsius_symbol, weatherData.value.temperatureHigh.toString())
+//                            weatherData.value.temperatureHigh.toString() + " \u2103"
+                        setImage(conditionsDay2, weatherData.value.icon!!)
                     }
                     2 -> {
 //                        println(Date(it.value.time!! * 1000))
                         dayOfWeek3.text = setDayName(weatherData.value.time!!)
-                        temperatureDay3.text =
-                            weatherData.value.temperatureHigh.toString() + " \u2103"
-                        setImage(conditionsDay3, weatherData.value.icon)
+                        temperatureDay3.text = getString(R.string.celsius_symbol, weatherData.value.temperatureHigh.toString())
+//                            weatherData.value.temperatureHigh.toString() + getString(R.string.celsius_symbol)
+                        setImage(conditionsDay3, weatherData.value.icon!!)
                     }
                 }
             }
         })
 
-        viewModel.elevationData.observe(viewLifecycleOwner, Observer
-        {
+        viewModel.elevationData.observe(viewLifecycleOwner, {
             drawGraph(it as MutableList<Int>?, view.elevation_graph)
         })
 
@@ -118,18 +118,18 @@ class RouteInfoFragment : Fragment() {
             .replaceFirstChar { firstChar -> firstChar.uppercase() }
     }
 
-    private fun setImage(conditionsImage: ImageView?, icon: String?) {
+    private fun setImage(conditionsImage: ImageView?, icon: String) {
 
-        if (icon!!.contains("rain")) {
+        if (icon.contains("rain")) {
             conditionsImage?.setImageResource(R.drawable.rainy)
         }
-        if (icon!! == "clear-day") {
+        if (icon == "clear-day") {
             conditionsImage?.setImageResource(R.drawable.sunny)
         }
-        if (icon!!.contains("snow")) {
+        if (icon.contains("snow")) {
             conditionsImage?.setImageResource(R.drawable.snowy)
         }
-        if (icon!!.contains("cloud")) {
+        if (icon.contains("cloud")) {
             conditionsImage?.setImageResource(R.drawable.cloudy)
         }
     }
