@@ -1,6 +1,7 @@
 package com.example.hikingapp
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
+import com.example.hikingapp.ui.route.photos.PhotoActivity
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 
 class PhotosFragment : Fragment(), OnItemClickedListener {
@@ -57,7 +59,8 @@ class PhotosFragment : Fragment(), OnItemClickedListener {
     }
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
-
+        val intent = Intent(context, PhotoActivity::class.java)
+        startActivity(intent)
     }
 
 }
