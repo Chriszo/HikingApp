@@ -3,13 +3,12 @@ package com.example.hikingapp.ui.route.photos
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
@@ -19,7 +18,7 @@ import com.example.hikingapp.ui.viewModels.RouteViewModel
 class PhotosListFragment : Fragment(), OnItemClickedListener {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var linearLayoutManager: LinearLayoutManager
+    private lateinit var linearLayoutManager: GridLayoutManager
     private lateinit var itemClickedListener: OnItemClickedListener
     private lateinit var photosAdapter: PhotoAdapter
     private val routeViewModel: RouteViewModel by activityViewModels()
@@ -40,17 +39,17 @@ class PhotosListFragment : Fragment(), OnItemClickedListener {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        val view = inflater.inflate(R.layout.fragment_photos_list, container, false)
-        
-        linearLayoutManager = LinearLayoutManager(context)
+        val view = inflater.inflate(R.layout.fragment_photos, container, false)
+
+        linearLayoutManager = GridLayoutManager(context, 5)
         recyclerView = view.findViewById(R.id.sight_photos_recycler_view)
         recyclerView.layoutManager = linearLayoutManager
-        
 
-        routeViewModel.photos.observe(viewLifecycleOwner, Observer {
+
+        routeViewModel.photos.observe(viewLifecycleOwner, {
             photos = it
 
-            photosAdapter = PhotoAdapter(photos,itemClickedListener)
+            photosAdapter = PhotoAdapter(photos, itemClickedListener)
             recyclerView.adapter = photosAdapter
         })
 
@@ -58,7 +57,7 @@ class PhotosListFragment : Fragment(), OnItemClickedListener {
     }
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
-        val intent = Intent(context,PhotoActivity::class.java)
+        val intent = Intent(context, PhotoActivity::class.java)
         startActivity(intent)
     }
 

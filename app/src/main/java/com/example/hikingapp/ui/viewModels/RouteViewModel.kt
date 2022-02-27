@@ -4,8 +4,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.route.Route
+import java.io.Serializable
 
-class RouteViewModel : ViewModel() {
+class RouteViewModel : ViewModel(), Serializable {
 
     val route = MutableLiveData<Route>()
 

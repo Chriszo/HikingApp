@@ -1,4 +1,4 @@
-package com.example.hikingapp
+package com.example.hikingapp.ui.route.photos
 
 import android.content.Context
 import android.content.Intent
@@ -8,19 +8,18 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.hikingapp.R
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
-import com.example.hikingapp.ui.route.photos.PhotoActivity
+import com.example.hikingapp.ui.utils.PhotoItemDecorator
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 
-class PhotosFragment : Fragment(), OnItemClickedListener {
+class RoutePhotosFragment : Fragment(), OnItemClickedListener {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var linearLayoutManager: GridLayoutManager
+    private lateinit var linearLayoutManager: LinearLayoutManager
     private lateinit var itemClickedListener: OnItemClickedListener
     private lateinit var photosAdapter: PhotoAdapter
     private val routeViewModel: RouteViewModel by activityViewModels()
@@ -44,12 +43,16 @@ class PhotosFragment : Fragment(), OnItemClickedListener {
 
         val view = inflater.inflate(R.layout.fragment_photos, container, false)
 
-        linearLayoutManager = GridLayoutManager(context,5)
+        linearLayoutManager = LinearLayoutManager(context)
+        linearLayoutManager.orientation = LinearLayoutManager.HORIZONTAL
         recyclerView = view.findViewById(R.id.sight_photos_recycler_view)
         recyclerView.layoutManager = linearLayoutManager
 
+        val photoItemSpacing = PhotoItemDecorator(5)
+        recyclerView.addItemDecoration(photoItemSpacing)
 
-        routeViewModel.photos.observe(viewLifecycleOwner, Observer {
+
+        routeViewModel.photos.observe(viewLifecycleOwner, {
             photos = it
 
             photosAdapter = PhotoAdapter(photos, itemClickedListener)
@@ -60,6 +63,7 @@ class PhotosFragment : Fragment(), OnItemClickedListener {
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
         val intent = Intent(context, PhotoActivity::class.java)
+        intent.putExtra("photo_item", photos[position])
         startActivity(intent)
     }
 

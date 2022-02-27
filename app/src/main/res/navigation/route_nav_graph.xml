@@ -17,7 +17,7 @@
         tools:layout="@layout/fragment_culture_info" />
     <fragment
         android:id="@+id/photosFragment"
-        android:name="com.example.hikingapp.PhotosFragment"
+        android:name="com.example.hikingapp.ui.route.photos.RoutePhotosFragment"
         android:label="fragment_photos"
         tools:layout="@layout/fragment_photos" />
 </navigation>

@@ -74,6 +74,7 @@ class RouteFragment : Fragment() {
         }
 
 //        val mapInfo = retrieveMapInformation(routeName)
+        route.routeName = routeName
         mapService = MapServiceImpl()
         weatherService = WeatherServiceImpl()
 
@@ -89,6 +90,10 @@ class RouteFragment : Fragment() {
                 route.stateName =
                     it.stateName // TODO Maybe make an API call to populate with adminstrative level?
                 route.routeInfo = it.routeInfo
+                route.photos = it.photos
+                if (viewModel.photos.value.isNullOrEmpty()) {
+                    viewModel.photos.postValue(route.photos)
+                }
             }
 
 
@@ -132,39 +137,6 @@ class RouteFragment : Fragment() {
             viewModel.route.postValue(route)
         }
 
-        val photos = mutableListOf<Int>()
-
-        if (viewModel.photos.value.isNullOrEmpty()) {
-
-            photos.add(R.drawable.thiseion)
-            photos.add(R.drawable.philopappou)
-            photos.add(R.mipmap.olympus_foreground)
-            viewModel.photos.postValue(photos)
-        }
-
-
-//        if (viewModel.elevationData.value.isNullOrEmpty()) {
-//            route.routeInfo!!.elevationData = setRouteElevationData(route)
-//        }
-
-
-//        GlobalScope.launch {
-//            route.cultureInfo = CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
-//        }
-
-
-        // Weather Data
-//        GlobalScope.launch {
-//            val weatherForecast = WeatherForecast()
-//            weatherForecast.weatherForecast = weatherService.getForecastForDays(
-//                route.mapInfo!!.origin,
-//                4,
-//                getString(R.string.prodMode).toBooleanStrict()
-//            ) //TODO remove this test flag when in PROD
-//            route.weatherForecast = weatherForecast
-//            viewModel.route.postValue(route)
-//        }
-
         initializeNavigationComponents(view)
 
         initializeButtonListeners(view)
@@ -181,6 +153,7 @@ class RouteFragment : Fragment() {
         showMapButton?.setOnClickListener {
             activity?.let {
                 val intent = Intent(it, SampleMapActivity::class.java)
+                intent.putExtra("routeName",route.routeName)
                 it.startActivity(intent)
             }
         }

@@ -14,12 +14,12 @@ import com.example.hikingapp.databinding.ActivitySampleMapBinding
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
+import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
-import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
-import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.*
@@ -329,12 +329,11 @@ class SampleMapActivity : AppCompatActivity() {
         setContentView(viewBinding.root)
 
         //TODO Retrieve current Route Map information
-        var routeName = savedInstanceState?.get("RouteName")
-
         val route = Route()
-        routeName = routeName?.let { it as String }
+        val routeName =
+            if (intent.extras?.get("routeName") != null) intent.extras!!["routeName"] as String else ""
 
-        val mapInfo = mapService.getMapInformation(getJson("Philopapou"))
+        val mapInfo = mapService.getMapInformation(getJson(routeName))
         route.mapInfo = mapInfo
 
         /* mapboxMap.addOnMapLoadedListener {
@@ -468,7 +467,8 @@ private fun initNavigation() {
         val triangleCoordinates = listOf(
             listOf(
                 Point.fromLngLat(
-                    mapInfo.boundingBox.northeast().longitude(),
+                    mapInfo.boundingBox?.northeast()
+                        ?.longitude()!!, // TODO Handle the setting of bounding box for routes of type LineString
                     mapInfo.boundingBox.northeast().latitude()
                 ),
                 Point.fromLngLat(

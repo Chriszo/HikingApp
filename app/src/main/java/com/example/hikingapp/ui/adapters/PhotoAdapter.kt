@@ -22,7 +22,7 @@ class PhotoAdapter(var photos: List<Int>, private val itemClickedListener: OnIte
         init {
             bundle = Bundle()
             view.setOnClickListener(this)
-            imageView = view.findViewById(R.id.photo_id)
+            imageView = view.findViewById(R.id.photo_item_id)
         }
 
         override fun onClick(v: View?) {

@@ -5,8 +5,17 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.weather.WeatherForecast
 import java.io.Serializable
 
-class Route(var routeName: String?,var stateName: String?, var routeInfo: RouteInfo?, var  weatherForecast: WeatherForecast?, var mapInfo: MapInfo?, var cultureInfo: CultureInfo?, var photos: List<Int>?): Serializable {
+class Route(
+    var routeName: String?,
+    var stateName: String?,
+    mainPhoto: Int?,
+    var routeInfo: RouteInfo?,
+    var weatherForecast: WeatherForecast?,
+    var mapInfo: MapInfo?,
+    var cultureInfo: CultureInfo?,
+    var photos: List<Int>?
+) : Serializable {
 
-    constructor() : this(null, null,null,null, null, null, null)
+    constructor() : this(null, null, null, null, null, null, null, null)
 
 }

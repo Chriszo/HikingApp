@@ -453,27 +453,24 @@ class SampleNavigationActivity : AppCompatActivity() {
 
         // update bottom trip progress summary
 
-        binding.textDistanceRemaining.text = "Remaining:" +
-                getTwoDigitsDistance(
-                    routeProgress.distanceRemaining.toDouble(),
-                    DistanceUnitType.KILOMETERS
-                )
-
-        binding.textDistanceCovered.text =
-            "Covered:" + getTwoDigitsDistance(
+        binding.textDistanceRemaining.text = getString(
+            R.string.distance_remaining_content, getTwoDigitsDistance(
+                routeProgress.distanceRemaining.toDouble(),
+                DistanceUnitType.KILOMETERS
+            )
+        )
+        binding.textDistanceCovered.text = getString(
+            R.string.distance_covered_content, getTwoDigitsDistance(
                 routeProgress.distanceTraveled.toDouble(),
                 DistanceUnitType.KILOMETERS
             )
-
-        binding.textTimeEstimated.text = "Estimated:" + String.format(
-            "%.2f",
-            getTimeInMinutes(routeProgress.durationRemaining)
-        ) + " min"
-
-//        binding.textTimeCovered.text = "Time: " + routeProgress. + " m"
-//        binding.tripProgressView.render(
-//            tripProgressApi.getTripProgress(routeProgress)
-//        )
+        )
+        binding.textTimeEstimated.text = getString(
+            R.string.estimated_time_content, String.format(
+                "%.2f",
+                getTimeInMinutes(routeProgress.durationRemaining)
+            )
+        )
     }
 
     private fun getTwoDigitsDistance(
@@ -563,11 +560,12 @@ class SampleNavigationActivity : AppCompatActivity() {
             retrieveMapInformation(null)
         }
 
-        binding.textDistanceRemaining.text = "Remaining: -"
 
-        binding.textDistanceCovered.text = "Covered: -"
+        binding.textDistanceRemaining.text = getString(R.string.distance_remaining_empty)
 
-        binding.textTimeEstimated.text = "Estimated: -"
+        binding.textDistanceCovered.text = getString(R.string.distance_covered_empty)
+
+        binding.textTimeEstimated.text = getString(R.string.estimated_time_empty)
 
 //        binding.textTimeCovered.text = "Time: -"
 
@@ -759,7 +757,11 @@ class SampleNavigationActivity : AppCompatActivity() {
         binding.play.setOnClickListener {
             if (mapboxNavigation.getRoutes().isEmpty()) {
 
-                val routePoints = mapInfo!!.jsonRoute.coordinates()[0]
+                val routePoints = if (mapInfo!!.jsonRoute is MultiLineString) {
+                    (mapInfo!!.jsonRoute as MultiLineString).coordinates()[0]
+                } else {
+                    (mapInfo!!.jsonRoute as LineString).coordinates()
+                }
 
                 /*  val totalRouteDistance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                       computeTotalDistance(routePoints)
