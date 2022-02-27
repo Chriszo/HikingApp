@@ -14,5 +14,11 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="celsius_symbol">%s ℃</string>
     <string name="sight_sample_content">This is some sample text from the sight description of the sight details page of a route</string>
+    <string name="estimated_time_empty">Estimated: -</string>
+    <string name="distance_covered_empty">Covered: -</string>
+    <string name="distance_remaining_empty">Remaining: -</string>
+    <string name="estimated_time_content">Estimated:%s min</string>
+    <string name="distance_covered_content">Covered: %s</string>
+    <string name="distance_remaining_content">Remaining: %s</string>
 
 </resources>

@@ -23,6 +23,8 @@ import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
 import com.example.hikingapp.domain.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.example.hikingapp.services.map.MapService
+import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
@@ -121,6 +123,10 @@ import java.util.stream.Collectors
 class SampleNavigationActivity : AppCompatActivity() {
 
     private var mapInfo: MapInfo? = null
+
+    private val mapService: MapService by lazy {
+        MapServiceImpl()
+    }
 
     private val hikingRouteOptionsBuilder: RouteOptions.Builder by lazy {
         RouteOptions.builder()
@@ -550,15 +556,18 @@ class SampleNavigationActivity : AppCompatActivity() {
 
         mapboxMap = binding.mapView.getMapboxMap()
 
-        val obj = intent.getSerializableExtra("mapInfo")
+        val routeName =
+            if (intent.extras?.get("routeName") != null) intent.extras!!["routeName"] as String else ""
 
-        mapInfo = if (obj != null) {
+        mapInfo = mapService.getMapInformation(getJson(routeName))
+
+       /* mapInfo = if (obj != null) {
             println("Getting mapInfo from Intent")
             obj as MapInfo
         } else {
             println("Getting mapInfo from retrieveMapInformation() method")
             retrieveMapInformation(null)
-        }
+        }*/
 
 
         binding.textDistanceRemaining.text = getString(R.string.distance_remaining_empty)
@@ -826,56 +835,10 @@ class SampleNavigationActivity : AppCompatActivity() {
         mapboxNavigation.startTripSession()
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun computeTotalDistance(list: List<Point>): Double {
-
-        var totalDistance = 0.0
-
-        val locations = list.stream().map {
-            val location = Location(Context.LOCATION_SERVICE)
-            location.latitude = it.latitude()
-            location.longitude = -it.longitude()
-            location
-        }.collect(Collectors.toList())
-
-        locations.withIndex().forEach { location ->
-            if (location.index <= locations.size - 1 && location.index >= 1) {
-                val distance = locations[location.index - 1].distanceTo(location.value)
-                totalDistance += distance
-            }
-        }
-
-        println("Total distance: $totalDistance")
-        return totalDistance
-    }
-
-    private fun filterRoutePoints(coordinates: List<Point>, modulo: Int): MutableList<Point> {
-        var counter = 0
-        return coordinates.filterIndexed { index, _ -> index % modulo == 0 && ++counter < 25 }
-            .toMutableList()
-    }
-
-    private fun retrieveMapInformation(routeName: String?): MapInfo {
-
-        val jsonSource = assets.open(MockDatabase.routesMap["Philopapou"]?.second!!).readBytes()
+    private fun getJson(routeName: String?): String {
+        return assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
             .toString(Charsets.UTF_8)
-        val routeJson: MultiLineString =
-            FeatureCollection.fromJson(jsonSource).features()?.get(0)?.geometry() as MultiLineString
-
-        val origin: Point = routeJson.coordinates()[0][0]
-        val destination: Point = routeJson.coordinates()[0][routeJson.coordinates()[0].size - 1]
-
-        return MapInfo(
-            origin,
-            destination,
-            routeJson.bbox()!!,
-            routeJson,
-            null,
-            MockDatabase.routesMap["Philopapou"]?.second!!,
-            false
-        )
     }
-
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onStart() {
