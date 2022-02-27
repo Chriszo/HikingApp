@@ -16,6 +16,8 @@
             android:layout_width="match_parent"
             android:layout_height="400dp"
             android:src="@drawable/philopappou"
+            android:scaleType="fitXY"
+            android:layout_marginTop="0dp"
             app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -26,7 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="0dp"
-            android:layout_marginTop="130dp"
+            android:layout_marginTop="190dp"
             android:layout_marginBottom="136dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -41,7 +43,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:layout_marginTop="130dp"
+                    android:layout_marginTop="120dp"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     android:text="RouteName"
@@ -136,25 +138,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/olympus_image_view">
 
-            <!-- <Button
-                 android:id="@+id/to_home"
-                 android:layout_width="wrap_content"
-                 android:layout_height="wrap_content"
-                 android:layout_margin="10dp"
-                 android:text="@string/to_home" />-->
-
-
             <com.google.android.material.bottomnavigation.BottomNavigationView
                 android:id="@+id/info_nav_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@color/white"
-                android:textAlignment="center"
+                app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
+                app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
                 app:menu="@menu/route_nav_menu" />
 
         </LinearLayout>
 
         <View
+            android:id="@+id/inner_nav_divider"
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@android:color/darker_gray"
@@ -169,7 +164,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/actions_layout_id"
+            app:layout_constraintTop_toBottomOf="@id/inner_nav_divider"
             app:navGraph="@navigation/route_nav_graph"
             tools:layout_editor_absoluteX="1dp"
             tools:layout_editor_absoluteY="457dp" />

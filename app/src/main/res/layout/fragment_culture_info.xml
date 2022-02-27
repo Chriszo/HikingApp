@@ -27,12 +27,14 @@
             <TextView
                 android:id="@+id/content_title"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:background="@android:color/darker_gray"
+                android:layout_height="40dp"
+                android:background="#aaaa"
+                android:gravity="center_vertical"
                 android:text="Culture Information"
+                android:paddingStart="10dp"
                 android:textSize="20sp"
                 android:textStyle="bold"
+                android:textColor="@android:color/white"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/actions_layout_id" />
