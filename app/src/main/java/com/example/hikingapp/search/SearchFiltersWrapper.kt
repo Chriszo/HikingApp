@@ -1,7 +1,7 @@
 package com.example.hikingapp.search
 
-import com.example.hikingapp.domain.DifficultyLevel
-import com.example.hikingapp.domain.route.enums.RouteType
+import com.example.hikingapp.domain.enums.DifficultyLevel
+import com.example.hikingapp.domain.enums.RouteType
 
 class SearchFiltersWrapper private constructor(
     val distance: Double,

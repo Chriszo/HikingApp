@@ -1,7 +1,7 @@
 package com.example.hikingapp.domain.route
 
-import com.example.hikingapp.domain.DifficultyLevel
-import com.example.hikingapp.domain.route.enums.RouteType
+import com.example.hikingapp.domain.enums.DifficultyLevel
+import com.example.hikingapp.domain.enums.RouteType
 import java.io.Serializable
 
 

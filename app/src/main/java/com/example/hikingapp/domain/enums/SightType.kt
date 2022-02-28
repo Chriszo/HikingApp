@@ -1,4 +1,4 @@
-package com.example.hikingapp.domain.culture
+package com.example.hikingapp.domain.enums
 
 enum class SightType(val type: String) {
 

@@ -13,9 +13,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.hikingapp.R
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
-import com.example.hikingapp.domain.DifficultyLevel
+import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.domain.route.enums.RouteType
+import com.example.hikingapp.domain.enums.RouteType
 import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.search.SearchUtils

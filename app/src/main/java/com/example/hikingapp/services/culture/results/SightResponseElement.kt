@@ -1,7 +1,5 @@
 package com.example.hikingapp.services.culture.results
 
-import com.example.hikingapp.domain.culture.SightType
-
 data class SightResponseElement(
     val id: String?,
     val name: String?,

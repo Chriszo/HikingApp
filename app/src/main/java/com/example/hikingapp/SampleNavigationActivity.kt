@@ -2,7 +2,6 @@ package com.example.hikingapp
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -20,7 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
-import com.example.hikingapp.domain.DistanceUnitType
+import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.map.MapService

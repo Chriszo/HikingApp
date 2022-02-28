@@ -1,8 +1,7 @@
 package com.example.hikingapp.services.culture
 
 import com.example.hikingapp.domain.culture.CultureInfo
-import com.example.hikingapp.domain.culture.Sight
-import com.example.hikingapp.domain.culture.SightType
+import com.example.hikingapp.domain.enums.SightType
 import com.example.hikingapp.services.culture.results.SightResponseWrapper
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.mapbox.geojson.Point

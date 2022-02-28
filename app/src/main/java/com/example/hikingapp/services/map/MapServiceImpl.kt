@@ -2,7 +2,7 @@ package com.example.hikingapp.services.map
 
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
-import com.example.hikingapp.domain.map.enums.MapType
+import com.example.hikingapp.domain.enums.MapType
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.geojson.*
 

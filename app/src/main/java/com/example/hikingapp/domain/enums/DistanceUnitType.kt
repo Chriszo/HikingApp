@@ -1,4 +1,4 @@
-package com.example.hikingapp.domain
+package com.example.hikingapp.domain.enums
 
 enum class DistanceUnitType(val distanceUnit: String) {
 
