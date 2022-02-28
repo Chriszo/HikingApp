@@ -4,7 +4,7 @@ import android.icu.text.Transliterator
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.hikingapp.TransliterationRules
-import com.example.hikingapp.domain.Route
+import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.search.searchResults.SearchResult
 import com.mapbox.geojson.FeatureCollection
@@ -180,8 +180,8 @@ class SearchUtils {
             if (searchResults.isCompleted) {
                 try {
 
-                    searchResults.await()?.parallelStream()
-                        ?.map {
+                    searchResults.await().parallelStream()
+                        .map {
                             val displayName = getTransliteratedText(
                                 transliterator,
                                 it.getStringProperty("display_name")
@@ -196,7 +196,7 @@ class SearchUtils {
                                     .map { route ->
                                         val partialDisplayName = dto.displayName.split(",")[0]
                                         val threshold =
-                                            if (partialDisplayName.length > route.third.routeName.length) route.third.routeName.length / 2 else partialDisplayName.length / 2
+                                            if (partialDisplayName.length > route.third.routeName!!.length) route.third.routeName!!.length / 2 else partialDisplayName.length / 2
                                         val levenshteinDistance =
                                             LevenshteinDetailedDistance(threshold)
                                         println("Threshold: " + levenshteinDistance.threshold)

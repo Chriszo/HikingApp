@@ -75,7 +75,7 @@
                     android:rating="3"
                     android:scaleX="0.5"
                     android:scaleY="0.5"
-                    android:theme="@style/MiniRatingBar"
+                    android:theme="@style/RatingBar"
                     android:transformPivotX="10dp" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 

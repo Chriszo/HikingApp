@@ -14,8 +14,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.hikingapp.R
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
 import com.example.hikingapp.domain.DifficultyLevel
-import com.example.hikingapp.domain.Route
-import com.example.hikingapp.domain.RouteType
+import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.route.enums.RouteType
 import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.search.SearchUtils
@@ -223,7 +223,7 @@ class DiscoverFragment : Fragment() {
                                 if (!routesFound.isNullOrEmpty()) {
                                     root.text_discover.text = routesFound[0].routeName
                                 } else {
-                                    root.text_discover.text = "Route not found"
+                                    root.text_discover.text = getString(R.string.route_not_found)
                                 }
                             }
                         }

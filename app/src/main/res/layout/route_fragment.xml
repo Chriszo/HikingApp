@@ -15,9 +15,9 @@
             android:id="@+id/olympus_image_view"
             android:layout_width="match_parent"
             android:layout_height="400dp"
-            android:src="@drawable/philopappou"
-            android:scaleType="fitXY"
             android:layout_marginTop="0dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/philopappou"
             app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -44,38 +44,38 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:layout_marginTop="120dp"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
                     android:text="RouteName"
                     android:textColor="@color/white"
                     android:textSize="20dp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
                     android:id="@+id/stateName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
-                    app:layout_constraintTop_toBottomOf="@+id/routeName"
-                    app:layout_constraintStart_toStartOf="@+id/routeName"
                     android:text="StateName"
                     android:textColor="@color/white"
                     android:textSize="15dp"
-                    android:textStyle="italic" />
+                    android:textStyle="italic"
+                    app:layout_constraintStart_toStartOf="@+id/routeName"
+                    app:layout_constraintTop_toBottomOf="@+id/routeName" />
 
                 <RatingBar
                     android:id="@+id/routeRating"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
-                    app:layout_constraintStart_toStartOf="@+id/stateName"
-                    app:layout_constraintTop_toBottomOf="@id/stateName"
                     android:numStars="5"
                     android:rating="3"
                     android:scaleX="0.5"
                     android:scaleY="0.5"
-                    android:theme="@style/MiniRatingBar"
-                    android:transformPivotX="10dp" />
+                    android:theme="@style/RatingBar"
+                    android:transformPivotX="10dp"
+                    app:layout_constraintStart_toStartOf="@+id/stateName"
+                    app:layout_constraintTop_toBottomOf="@id/stateName" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -142,8 +142,8 @@
                 android:id="@+id/info_nav_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
                 app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
+                app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
                 app:menu="@menu/route_nav_menu" />
 
         </LinearLayout>
