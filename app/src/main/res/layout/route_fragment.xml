@@ -2,173 +2,179 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/routeFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".ui.route.RouteFragment">
+        android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/olympus_image_view"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="400dp"
-            android:layout_marginTop="0dp"
-            android:scaleType="fitXY"
-            android:src="@drawable/philopappou"
-            app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_height="match_parent"
+            tools:context=".ui.route.RouteFragment">
 
-        <RelativeLayout
-            android:id="@+id/relative_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="0dp"
-            android:layout_marginTop="190dp"
-            android:layout_marginBottom="136dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            <ImageView
+                android:id="@+id/route_info_image"
+                android:layout_width="match_parent"
+                android:layout_height="400dp"
+                android:layout_marginTop="0dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/philopappou"
+                app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="300dp"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:id="@+id/routeName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginTop="120dp"
-                    android:text="RouteName"
-                    android:textColor="@color/white"
-                    android:textSize="20dp"
-                    android:textStyle="bold"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <TextView
-                    android:id="@+id/stateName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:text="StateName"
-                    android:textColor="@color/white"
-                    android:textSize="15dp"
-                    android:textStyle="italic"
-                    app:layout_constraintStart_toStartOf="@+id/routeName"
-                    app:layout_constraintTop_toBottomOf="@+id/routeName" />
-
-                <RatingBar
-                    android:id="@+id/routeRating"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:numStars="5"
-                    android:rating="3"
-                    android:scaleX="0.5"
-                    android:scaleY="0.5"
-                    android:theme="@style/RatingBar"
-                    android:transformPivotX="10dp"
-                    app:layout_constraintStart_toStartOf="@+id/stateName"
-                    app:layout_constraintTop_toBottomOf="@id/stateName" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-            <LinearLayout
+            <RelativeLayout
+                android:id="@+id/relative_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_marginLeft="0dp"
+                android:layout_marginTop="190dp"
+                android:layout_marginBottom="136dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/route_bookmark"
-                    android:layout_width="wrap_content"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/routeName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="120dp"
+                        android:text="RouteName"
+                        android:textColor="@color/white"
+                        android:textSize="20dp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/stateName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:text="StateName"
+                        android:textColor="@color/white"
+                        android:textSize="15dp"
+                        android:textStyle="italic"
+                        app:layout_constraintStart_toStartOf="@+id/routeName"
+                        app:layout_constraintTop_toBottomOf="@+id/routeName" />
+
+                    <RatingBar
+                        android:id="@+id/routeRating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:numStars="5"
+                        android:rating="3"
+                        android:scaleX="0.5"
+                        android:scaleY="0.5"
+                        android:theme="@style/RatingBar"
+                        android:transformPivotX="10dp"
+                        app:layout_constraintStart_toStartOf="@+id/stateName"
+                        app:layout_constraintTop_toBottomOf="@id/stateName" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="330dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
-                    android:paddingEnd="20dp"
-                    android:rotationX="4"
-                    app:backgroundTint="#FFFFFF"
-                    app:srcCompat="@drawable/bookmark_icon_foreground" />
+                    android:orientation="vertical">
+
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/route_bookmark"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="330dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
+                        android:paddingEnd="20dp"
+                        android:rotationX="4"
+                        app:backgroundTint="#FFFFFF"
+                        app:srcCompat="@drawable/bookmark_icon_foreground" />
 
 
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/show_map"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="330dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
-                    android:paddingEnd="20dp"
-                    android:rotationX="4"
-                    app:backgroundTint="#FFFFFF"
-                    app:srcCompat="@drawable/map_icon_foreground" />
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/show_map"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="330dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
+                        android:paddingEnd="20dp"
+                        android:rotationX="4"
+                        app:backgroundTint="#FFFFFF"
+                        app:srcCompat="@drawable/map_icon_foreground" />
 
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/navigate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="330dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
-                    app:backgroundTint="#FFFFFF"
-                    app:srcCompat="@drawable/navigate_icon_foreground" />
-            </LinearLayout>
-        </RelativeLayout>
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/navigate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="330dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
+                        app:backgroundTint="#FFFFFF"
+                        app:srcCompat="@drawable/navigate_icon_foreground" />
+                </LinearLayout>
+            </RelativeLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            app:layout_constraintBottom_toTopOf="@id/actions_layout_id" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                app:layout_constraintBottom_toTopOf="@id/actions_layout_id" />
 
-        <LinearLayout
-            android:id="@+id/actions_layout_id"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/olympus_image_view">
-
-            <com.google.android.material.bottomnavigation.BottomNavigationView
-                android:id="@+id/info_nav_view"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/actions_layout_id"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
-                app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
-                app:menu="@menu/route_nav_menu" />
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/route_info_image">
 
-        </LinearLayout>
+                <com.google.android.material.bottomnavigation.BottomNavigationView
+                    android:id="@+id/info_nav_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
+                    app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
+                    app:menu="@menu/route_nav_menu" />
 
-        <View
-            android:id="@+id/inner_nav_divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            app:layout_constraintTop_toBottomOf="@id/actions_layout_id" />
+            </LinearLayout>
 
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/fragmentContainerView"
-            android:name="androidx.navigation.fragment.NavHostFragment"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:defaultNavHost="false"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/inner_nav_divider"
-            app:navGraph="@navigation/route_nav_graph"
-            tools:layout_editor_absoluteX="1dp"
-            tools:layout_editor_absoluteY="457dp" />
+            <View
+                android:id="@+id/inner_nav_divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                app:layout_constraintTop_toBottomOf="@id/actions_layout_id" />
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/fragmentContainerView"
+                android:name="androidx.navigation.fragment.NavHostFragment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:defaultNavHost="false"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/inner_nav_divider"
+                app:navGraph="@navigation/route_nav_graph"
+                tools:layout_editor_absoluteX="1dp"
+                tools:layout_editor_absoluteY="457dp" />
 
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
 </ScrollView>

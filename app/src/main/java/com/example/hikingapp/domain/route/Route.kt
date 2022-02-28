@@ -8,7 +8,7 @@ import java.io.Serializable
 class Route(
     var routeName: String?,
     var stateName: String?,
-    mainPhoto: Int?,
+    var mainPhoto: Int?,
     var routeInfo: RouteInfo?,
     var weatherForecast: WeatherForecast?,
     var mapInfo: MapInfo?,

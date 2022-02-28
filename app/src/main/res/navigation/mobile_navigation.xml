@@ -22,4 +22,8 @@
         android:name="com.example.hikingapp.ui.profile.ProfileFragment"
         android:label="@string/title_profile"
         tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/routeFragment2"
+        android:name="com.example.hikingapp.ui.route.RouteFragment"
+        android:label="RouteFragment" />
 </navigation>

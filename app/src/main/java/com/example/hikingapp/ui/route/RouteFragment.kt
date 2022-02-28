@@ -55,9 +55,7 @@ class RouteFragment : Fragment() {
 
     private lateinit var weatherService: WeatherService
 
-    private val route: Route by lazy {
-        Route()
-    }
+    private lateinit var route: Route
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
@@ -67,35 +65,17 @@ class RouteFragment : Fragment() {
         val view = inflater.inflate(R.layout.route_fragment, container, false)
 
         //TODO Retrieve current Route Map information
-        val routeName = if (Objects.isNull(savedInstanceState?.get("RouteName"))) {
-            "Philopappou"
-        } else {
-            savedInstanceState?.get("RouteName") as String
+//        val mapInfo = retrieveMapInformation(routeName)
+        route = arguments?.get("route") as Route
+
+        if (viewModel.photos.value.isNullOrEmpty()) {
+            viewModel.photos.postValue(route.photos)
         }
 
-//        val mapInfo = retrieveMapInformation(routeName)
-        route.routeName = routeName
         mapService = MapServiceImpl()
         weatherService = WeatherServiceImpl()
 
-        route.mapInfo = mapService.getMapInformation(getJson(routeName))
-
-        // TODO Populate from DB
-        MockDatabase.mockSearchResults
-            .stream()
-            .map { it.third }
-            .filter { it.routeName.equals(routeName) }
-            .findFirst()
-            .ifPresent {
-                route.stateName =
-                    it.stateName // TODO Maybe make an API call to populate with adminstrative level?
-                route.routeInfo = it.routeInfo
-                route.photos = it.photos
-                if (viewModel.photos.value.isNullOrEmpty()) {
-                    viewModel.photos.postValue(route.photos)
-                }
-            }
-
+        route.mapInfo = mapService.getMapInformation(getJson(route.routeName))
 
         GlobalScope.launch {
 
@@ -141,7 +121,8 @@ class RouteFragment : Fragment() {
 
         initializeButtonListeners(view)
 
-        view.routeName.text = routeName
+        view.route_info_image.setImageResource(route.mainPhoto!!)
+        view.routeName.text = route.routeName
         view.stateName.text = route.stateName
         view.routeRating.rating = route.routeInfo!!.rating!!
 

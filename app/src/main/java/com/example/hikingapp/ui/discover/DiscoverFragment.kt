@@ -1,5 +1,7 @@
 package com.example.hikingapp.ui.discover
 
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -7,18 +9,24 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
-import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
+import com.example.hikingapp.RouteActivity
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
 import com.example.hikingapp.domain.enums.DifficultyLevel
-import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.enums.RouteType
+import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.search.SearchUtils
+import com.example.hikingapp.ui.adapters.OnItemClickedListener
+import com.example.hikingapp.ui.adapters.RouteAdapter
+import com.example.hikingapp.ui.route.RouteFragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.geojson.Point
@@ -30,10 +38,11 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
+import java.util.stream.Collectors
 import kotlin.concurrent.schedule
 
 
-class DiscoverFragment : Fragment() {
+class DiscoverFragment : Fragment(), OnItemClickedListener {
 
     private lateinit var discoverViewModel: DiscoverViewModel
     private var _binding: FragmentDiscoverBinding? = null
@@ -51,6 +60,14 @@ class DiscoverFragment : Fragment() {
     private lateinit var userLocation: Point
 
     private var timer = Timer()
+
+    private lateinit var routesRecyclerView: RecyclerView
+    private lateinit var routesAdapter: RouteAdapter
+    private lateinit var layoutManager: LinearLayoutManager
+
+    private lateinit var routes: MutableList<Route>
+
+    private lateinit var itemClickedListener: OnItemClickedListener
 
     private val searchCallback = object : SearchSelectionCallback {
 
@@ -90,6 +107,11 @@ class DiscoverFragment : Fragment() {
         }
     }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        itemClickedListener = this
+    }
+
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -104,8 +126,20 @@ class DiscoverFragment : Fragment() {
             this.state = BottomSheetBehavior.STATE_COLLAPSED
         }
 
+        routes = mutableListOf()
+
+        layoutManager = LinearLayoutManager(context)
+        routesRecyclerView = _binding!!.searchResultsList
+        routesRecyclerView.layoutManager = layoutManager
+
+        routes =
+            MockDatabase.mockSearchResults.stream().map { it.third }.collect(Collectors.toList())
+
+        routesAdapter = RouteAdapter(routes, itemClickedListener)
+        routesRecyclerView.adapter = routesAdapter
+
         discoverViewModel =
-            ViewModelProvider(this).get(DiscoverViewModel::class.java)
+            ViewModelProvider(this)[DiscoverViewModel::class.java]
 
         val root: View = _binding!!.root
 
@@ -116,7 +150,6 @@ class DiscoverFragment : Fragment() {
             39.23945243147539  // TODO Replace with current location of user
         )
 
-        var routes: List<Route>
 
         MapboxSearchSdk.initialize(
             application = requireActivity().application,
@@ -125,47 +158,7 @@ class DiscoverFragment : Fragment() {
         )
         searchEngine = MapboxSearchSdk.getSearchEngine()
 
-        root.search_position.setOnClickListener {
-
-            if (root.search_bar.visibility == View.VISIBLE) {
-                root.search_bar.visibility = View.GONE
-                routes = SearchUtils.searchByPosition(userLocation)
-                root.text_discover.text = routes[0].routeName
-            } else {
-                root.search_bar.visibility = View.VISIBLE
-            }
-        }
-
-        root.search_place.setOnClickListener {
-
-            if (root.search_bar.visibility == View.GONE || root.search_bar.visibility == View.INVISIBLE) {
-                root.search_bar.visibility = View.VISIBLE
-            } else {
-                root.search_bar.visibility = View.VISIBLE
-            }
-        }
-
-        root.search_filters.setOnClickListener {
-
-            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
-                this.state = BottomSheetBehavior.STATE_EXPANDED
-                searchFiltersWrapperBuilder = SearchFiltersWrapper.Builder()
-            }
-        }
-
-        root.btn_filters_ok.setOnClickListener {
-            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
-
-                this.state = BottomSheetBehavior.STATE_COLLAPSED
-                val searchFilters = searchFiltersWrapperBuilder.build()
-                routes = SearchUtils.searchByFilters(searchFilters)
-                root.text_discover.text =
-                    if (!routes.isNullOrEmpty()) routes[0].routeName else "No results found..."
-                routes.forEach {
-                    println(it)
-                }
-            }
-        }
+        setButtonListeners(root)
 
         setFiltersScreenListeners(root)
 
@@ -192,7 +185,7 @@ class DiscoverFragment : Fragment() {
                     if (!routesFound.isNullOrEmpty()) {
 
                         routesFound.forEach { route ->
-                            root.text_discover.text = route.routeName
+                            // TODO Populate route with search results
                         }
                     } else {
 
@@ -221,9 +214,9 @@ class DiscoverFragment : Fragment() {
                             runBlocking {
                                 job.join()
                                 if (!routesFound.isNullOrEmpty()) {
-                                    root.text_discover.text = routesFound[0].routeName
+                                    // TODO populate view with search results
                                 } else {
-                                    root.text_discover.text = getString(R.string.route_not_found)
+                                    // root.text_discover.text = getString(R.string.route_not_found)
                                 }
                             }
                         }
@@ -235,12 +228,55 @@ class DiscoverFragment : Fragment() {
 
         })
 
-        val textView: TextView = root.text_discover
         discoverViewModel.text.observe(viewLifecycleOwner, {
-            textView.text = it
         })
 
         return root
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun setButtonListeners(root: View) {
+
+        root.search_position.setOnClickListener {
+
+            if (root.search_bar.visibility == View.VISIBLE) {
+                root.search_bar.visibility = View.GONE
+                routes = SearchUtils.searchByPosition(userLocation)
+                // TODO populate view with search results
+            } else {
+                root.search_bar.visibility = View.VISIBLE
+            }
+        }
+
+        root.search_place.setOnClickListener {
+
+            if (root.search_bar.visibility == View.GONE || root.search_bar.visibility == View.INVISIBLE) {
+                root.search_bar.visibility = View.VISIBLE
+            } else {
+                root.search_bar.visibility = View.VISIBLE
+            }
+        }
+
+        root.search_filters.setOnClickListener {
+
+            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
+                this.state = BottomSheetBehavior.STATE_EXPANDED
+                searchFiltersWrapperBuilder = SearchFiltersWrapper.Builder()
+            }
+        }
+
+        root.btn_filters_ok.setOnClickListener {
+            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
+
+                this.state = BottomSheetBehavior.STATE_COLLAPSED
+                val searchFilters = searchFiltersWrapperBuilder.build()
+                routes = SearchUtils.searchByFilters(searchFilters).toMutableList()
+                //TODO populate view with seach results
+                routes.forEach {
+                    println(it)
+                }
+            }
+        }
     }
 
     private fun setFiltersScreenListeners(view: View) {
@@ -277,7 +313,14 @@ class DiscoverFragment : Fragment() {
     }
 
     override fun onDestroy() {
-        searchRequestTask.cancel()
+//        searchRequestTask.cancel()
         super.onDestroy()
+    }
+
+    override fun onItemClicked(position: Int, bundle: Bundle) {
+
+        val intent = Intent(context,RouteActivity::class.java)
+        intent.putExtra("route", routes[position])
+        startActivity(intent)
     }
 }
