@@ -1,34 +1,316 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ui.discover.DiscoverFragment">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/text_discover"
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="match_parent"
+        tools:context=".ui.discover.DiscoverFragment">
 
-    <Button
-        android:id="@+id/show_route"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/route"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_discover" />
+        <!--TODO change border radius-->
+        <SearchView
+            android:id="@+id/search_bar"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="25dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="25dp"
+            android:background="@drawable/background"
+            android:focusable="true"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:layout_editor_absoluteX="30dp" />
+
+        <LinearLayout
+            android:id="@+id/liner_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@+id/text_discover"
+            app:layout_constraintTop_toBottomOf="@+id/search_bar">
+
+            <Button
+                android:id="@+id/search_place"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp"
+                android:text="Place"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/text_discover" />
+
+            <Button
+                android:id="@+id/search_position"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp"
+                android:text="Position"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="@+id/show_map"
+                app:layout_constraintTop_toBottomOf="@+id/show_map"
+                app:layout_constraintVertical_bias="0.225" />
+
+            <Button
+                android:id="@+id/search_filters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp"
+                android:text="By Filters"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="@+id/show_map"
+                app:layout_constraintTop_toBottomOf="@+id/show_map"
+                app:layout_constraintVertical_bias="0.225" />
+        </LinearLayout>
+
+        <!--<com.mapbox.search.ui.view.SearchBottomSheetView
+            android:id="@+id/search_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:elevation="8dp"
+            />-->
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/text_discover"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <Button
+            android:id="@+id/show_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sample_map"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_discover" />
+
+        <Button
+            android:id="@+id/navigate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sample_navigation"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/show_map"
+            app:layout_constraintTop_toBottomOf="@+id/show_map"
+            app:layout_constraintVertical_bias="0.225" />
+
+
+        <!-- <androidx.fragment.app.FragmentContainerView
+             android:id="@+id/detail_container"
+             android:layout_width="match_parent"
+             android:background="@android:color/darker_gray"
+             android:layout_height="wrap_content"
+             android:name="com.example.hikingapp.ui.discover.SearchFiltersFragment" />-->
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <FrameLayout
+        android:id="@+id/filter_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="550dp"
+        android:paddingBottom="70dp"
+        android:background="@drawable/rounded"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/title_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="27dp"
+                android:layout_marginVertical="10dp"
+                android:text="Trail Distance"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@+id/title_trail_type"
+                app:layout_constraintStart_toStartOf="@+id/title_trail_type"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.262" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/distance_slider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:valueFrom="0.0"
+                android:valueTo="20.0"
+                app:layout_constraintBottom_toTopOf="@+id/title_trail_type"
+                app:layout_constraintTop_toBottomOf="@+id/title_distance"
+                app:values="@array/distance_slider_values" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#cccccc"
+                android:layout_marginTop="5dp"
+                app:layout_constraintTop_toBottomOf="@id/distance_slider"
+                />
+
+            <TextView
+                android:id="@+id/title_trail_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:text="Trail Type"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.133"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/distance_slider" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_linear"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:layout_marginTop="10dp"
+                android:text="Linear"
+                app:layout_constraintEnd_toEndOf="@+id/title_trail_type"
+                app:layout_constraintStart_toStartOf="@+id/title_trail_type"
+                app:layout_constraintTop_toBottomOf="@+id/title_trail_type" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cyclic"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cyclic"
+                app:layout_constraintBottom_toBottomOf="@+id/btn_linear"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.465"
+                app:layout_constraintStart_toEndOf="@+id/btn_linear"
+                app:layout_constraintTop_toTopOf="@+id/btn_linear"
+                app:layout_constraintVertical_bias="0.037" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#cccccc"
+                android:layout_marginTop="5dp"
+                app:layout_constraintTop_toBottomOf="@id/btn_linear"/>
+
+            <TextView
+                android:id="@+id/title_difficulty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="20dp"
+                android:text="Difficulty"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="@+id/btn_linear"
+                app:layout_constraintStart_toStartOf="@+id/btn_linear"
+                app:layout_constraintTop_toBottomOf="@+id/btn_linear" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_easy"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:text="Easy"
+                app:layout_constraintStart_toStartOf="@id/btn_linear"
+                app:layout_constraintTop_toBottomOf="@+id/title_difficulty" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_moderate"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:text="Moderate"
+                app:layout_constraintBottom_toBottomOf="@+id/btn_easy"
+                app:layout_constraintStart_toEndOf="@+id/btn_easy"
+                app:layout_constraintTop_toTopOf="@+id/btn_easy" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_hard"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:text="Hard"
+                app:layout_constraintBottom_toBottomOf="@+id/btn_moderate"
+                app:layout_constraintStart_toEndOf="@+id/btn_moderate"
+                app:layout_constraintTop_toTopOf="@+id/btn_moderate" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#cccccc"
+                android:layout_marginTop="5dp"
+                app:layout_constraintTop_toBottomOf="@id/btn_easy"
+                />
+
+            <TextView
+                android:id="@+id/title_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:text="Trail Rating"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="@+id/btn_easy"
+                app:layout_constraintTop_toBottomOf="@+id/btn_easy" />
+
+            <RatingBar
+                android:id="@+id/ratingBar"
+                android:theme="@style/RatingBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:numStars="5"
+                android:rating="0.0"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/title_rating"
+                app:layout_constraintTop_toBottomOf="@+id/title_rating"
+                app:layout_constraintVertical_bias="0.136" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#cccccc"
+                android:layout_marginTop="5dp"
+                app:layout_constraintTop_toBottomOf="@id/ratingBar"/>
+
+
+            <Button
+                android:id="@+id/btn_filters_ok"
+                android:layout_width="88dp"
+                android:layout_height="48dp"
+                android:layout_marginVertical="10dp"
+                android:text="OK"
+                app:layout_constraintEnd_toEndOf="@+id/btn_hard"
+                app:layout_constraintTop_toBottomOf="@+id/ratingBar" />
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </FrameLayout>
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

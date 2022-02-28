@@ -1,5 +1,10 @@
 package com.example.hikingapp.persistence.mock.db
 
+import com.example.hikingapp.domain.DifficultyLevel
+import com.example.hikingapp.domain.Route
+import com.example.hikingapp.domain.RouteType
+import com.example.hikingapp.persistence.RouteInfo
+import com.mapbox.geojson.Point
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.DifficultyLevel
 import com.example.hikingapp.domain.route.Route
