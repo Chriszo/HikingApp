@@ -9,12 +9,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.ui.utils.PhotoItemDecorator
 
 class RouteListAdapter(
     var categories: List<String>,
     var routes: List<Route>,
     val context: Context,
-    val itemClickedListener: OnItemClickedListener
+    private val itemClickedListener: OnItemClickedListener
 ) : RecyclerView.Adapter<RouteListAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnClickListener {
@@ -65,6 +66,9 @@ class RouteListAdapter(
         holder.category.text = selectedCategory
         holder.recyclerView.layoutManager = layoutManager
         holder.recyclerView.adapter = routeAdapter
+
+        val itemDeocration = PhotoItemDecorator(5)
+        holder.recyclerView.addItemDecoration(itemDeocration)
     }
 
     override fun getItemCount() = categories.count()

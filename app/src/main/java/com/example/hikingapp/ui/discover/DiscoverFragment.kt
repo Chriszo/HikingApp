@@ -141,6 +141,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
         routeListAdapter =
             RouteListAdapter(categories, routes, requireContext(), itemClickedListener)
         routesRecyclerView.adapter = routeListAdapter
+        routesRecyclerView.setHasFixedSize(true)
 
         discoverViewModel =
             ViewModelProvider(this)[DiscoverViewModel::class.java]

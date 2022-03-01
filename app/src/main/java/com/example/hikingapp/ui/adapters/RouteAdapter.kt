@@ -1,14 +1,22 @@
 package com.example.hikingapp.ui.adapters
 
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.DisplayMetrics
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.RatingBar
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
+import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.route.Route
 
 class RouteAdapter(
@@ -53,7 +61,16 @@ class RouteAdapter(
         holder.nameView.text = routes[position].routeName
         holder.stateView.text = routes[position].stateName
         holder.ratingView.rating = routes[position].routeInfo!!.rating!!
-        holder.difficultyLevelView.text = routes[position].routeInfo!!.difficultyLevel!!.difficultyLevel
+
+        val difficultyLevelText = routes[position].routeInfo!!.difficultyLevel!!.difficultyLevel
+
+
+        holder.difficultyLevelView.text = difficultyLevelText
+        when (routes[position].routeInfo!!.difficultyLevel!!) {
+            DifficultyLevel.EASY -> holder.difficultyLevelView.background = ContextCompat.getDrawable(holder.view.context,R.drawable.rounded_green)
+            DifficultyLevel.MODERATE -> holder.difficultyLevelView.background = ContextCompat.getDrawable(holder.view.context,R.drawable.rounded_yellow)
+            DifficultyLevel.HARD -> holder.difficultyLevelView.background = ContextCompat.getDrawable(holder.view.context,R.drawable.rounded_red)
+        }
     }
 
     override fun getItemCount() = routes.count()
