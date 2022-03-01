@@ -26,6 +26,7 @@ import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.search.SearchUtils
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteListAdapter
+import com.example.hikingapp.ui.search.results.SearchResultsActivity
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.geojson.Point
@@ -36,6 +37,7 @@ import kotlinx.android.synthetic.main.fragment_discover.view.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.io.Serializable
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.concurrent.schedule
@@ -65,6 +67,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
     private lateinit var layoutManager: LinearLayoutManager
 
     private lateinit var routes: MutableList<Route>
+    private lateinit var routeSearchResults: MutableList<Route>
     private lateinit var categories: MutableList<String>
 
     private lateinit var itemClickedListener: OnItemClickedListener
@@ -171,7 +174,11 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
         root.search_bar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
             override fun onQueryTextSubmit(query: String?): Boolean {
-//                println("Made a geocoding API call")
+                val intent = Intent(context,SearchResultsActivity::class.java)
+                val bundle = Bundle()
+                bundle.putSerializable("routes",routeSearchResults as Serializable)
+                intent.putExtra("routesBundle",bundle)
+                startActivity(intent)
                 return true
             }
 
@@ -182,16 +189,14 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
                     return true
                 }
 
-                var routesFound: MutableList<Route>
                 if (searchType == SearchType.BY_PLACE) {
 
-                    routesFound = SearchUtils.searchByPlace(keyword)
+                    routeSearchResults = SearchUtils.searchByPlace(keyword)
 
-                    if (!routesFound.isNullOrEmpty()) {
-
-                        routesFound.forEach { route ->
+                    if (!routeSearchResults.isNullOrEmpty()) {
+                        /*routesFound.forEach { route ->
                             // TODO Populate route with search results
-                        }
+                        }*/
                     } else {
 
                         // Make Geocoding API Call (MAPBOX API)
@@ -210,7 +215,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
                         timer.schedule(500) {
                             val job = GlobalScope.launch {
 
-                                routesFound = SearchUtils.performGeocodingAPICall(
+                                routeSearchResults = SearchUtils.performGeocodingAPICall(
                                     userLocation,
                                     keyword
                                 ) // TODO Change with user's lccation
@@ -218,7 +223,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
 
                             runBlocking {
                                 job.join()
-                                if (!routesFound.isNullOrEmpty()) {
+                                if (!routeSearchResults.isNullOrEmpty()) {
                                     // TODO populate view with search results
                                 } else {
                                     // root.text_discover.text = getString(R.string.route_not_found)

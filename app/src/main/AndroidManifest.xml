@@ -16,6 +16,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HikingApp">
         <activity
+            android:name=".ui.search.results.SearchResultsActivity"
+            android:exported="false" />
+        <activity
             android:name=".RouteActivity"
             android:exported="false" />
         <activity
