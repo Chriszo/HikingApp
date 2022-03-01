@@ -25,8 +25,7 @@ import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.search.SearchUtils
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
-import com.example.hikingapp.ui.adapters.RouteAdapter
-import com.example.hikingapp.ui.route.RouteFragment
+import com.example.hikingapp.ui.adapters.RouteListAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.geojson.Point
@@ -62,10 +61,11 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
     private var timer = Timer()
 
     private lateinit var routesRecyclerView: RecyclerView
-    private lateinit var routesAdapter: RouteAdapter
+    private lateinit var routeListAdapter: RouteListAdapter
     private lateinit var layoutManager: LinearLayoutManager
 
     private lateinit var routes: MutableList<Route>
+    private lateinit var categories: MutableList<String>
 
     private lateinit var itemClickedListener: OnItemClickedListener
 
@@ -129,14 +129,18 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
         routes = mutableListOf()
 
         layoutManager = LinearLayoutManager(context)
+
         routesRecyclerView = _binding!!.searchResultsList
         routesRecyclerView.layoutManager = layoutManager
 
         routes =
             MockDatabase.mockSearchResults.stream().map { it.third }.collect(Collectors.toList())
 
-        routesAdapter = RouteAdapter(routes, itemClickedListener)
-        routesRecyclerView.adapter = routesAdapter
+        categories = mutableListOf("Top Rated", "Popular", "Easy")
+
+        routeListAdapter =
+            RouteListAdapter(categories, routes, requireContext(), itemClickedListener)
+        routesRecyclerView.adapter = routeListAdapter
 
         discoverViewModel =
             ViewModelProvider(this)[DiscoverViewModel::class.java]
@@ -319,7 +323,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
 
-        val intent = Intent(context,RouteActivity::class.java)
+        val intent = Intent(context, RouteActivity::class.java)
         intent.putExtra("route", routes[position])
         startActivity(intent)
     }
