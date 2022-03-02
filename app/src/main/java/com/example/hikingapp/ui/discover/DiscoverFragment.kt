@@ -10,12 +10,10 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.KeyEvent
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.widget.addTextChangedListener
@@ -217,9 +215,26 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         }
 
         root.search_icon.setOnTouchListener { v, event ->
-            v.performClick()
-            if (StringUtils.isNotBlank(searchTerm)) {
-                searchRoutes(searchTerm)
+
+            if (event.action == MotionEvent.ACTION_UP) {
+                v.performClick()
+                if (StringUtils.isNotBlank(searchTerm)) {
+                    searchRoutes(searchTerm)
+                }
+            }
+            true
+        }
+
+        root.search_menu_icon.setOnTouchListener { v, event ->
+
+            if (event.action == MotionEvent.ACTION_UP) {
+                v.performClick()
+                val searchOptionsFrame = root.findViewById(R.id.search_options_frame) as FrameLayout
+                if (searchOptionsFrame.visibility == View.VISIBLE) {
+                    searchOptionsFrame.visibility = View.GONE
+                } else {
+                    searchOptionsFrame.visibility = View.VISIBLE
+                }
             }
             true
         }
@@ -276,7 +291,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     @RequiresApi(Build.VERSION_CODES.N)
     private fun setButtonListeners(root: View) {
 
-        root.search_position.setOnClickListener {
+
+        root.search_by_position.setOnClickListener {
 
             if (root.search_bar.visibility == View.VISIBLE) {
                 root.search_bar.visibility = View.GONE
@@ -296,8 +312,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
             }
         }
 
-        root.search_filters.setOnClickListener {
-
+        root.search_by_filters.setOnClickListener {
             BottomSheetBehavior.from(_binding!!.filterSheet).apply {
                 this.state = BottomSheetBehavior.STATE_EXPANDED
                 searchFiltersWrapperBuilder = SearchFiltersWrapper.Builder()

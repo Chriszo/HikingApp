@@ -5,12 +5,17 @@
       <map>
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/background.xml" value="0.15885416666666666" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/circular_button.xml" value="0.25104166666666666" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/custom_filters_search_icon.xml" value="0.14791666666666667" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/custom_location_search_icon.xml" value="0.3748717948717949" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/custom_search_icon.xml" value="0.36875" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/custom_search_options_menu_icon.xml" value="0.15989583333333332" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/ic_alert_foreground.xml" value="0.22135416666666666" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/ic_play_foreground.xml" value="0.22135416666666666" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/ic_stop_background.xml" value="0.22135416666666666" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/ic_stop_foreground.xml" value="0.22135416666666666" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/inner_nav_item.xml" value="0.22552083333333334" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/mylocation_icon_background.xml" value="0.19739583333333333" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/mylocation_icon_foreground.xml" value="0.19739583333333333" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/olympus_background.xml" value="0.16458333333333333" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/rounded.xml" value="0.18541666666666667" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/rounded_green.xml" value="0.3807291666666667" />
