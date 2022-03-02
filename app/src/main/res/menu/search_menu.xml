@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <group android:id="@+id/countries">
+        <item android:title="us" app:showAsAction="always">USA</item>
+        <item android:title="cn" app:showAsAction="always">China</item>
+        <item android:title="de" app:showAsAction="always">Germany</item>
+        <item android:title="uk" app:showAsAction="always">United Kingdom</item>
+    </group>
+</menu>

@@ -10,13 +10,15 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.SearchView
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -41,8 +43,10 @@ import com.mapbox.search.*
 import com.mapbox.search.result.SearchResult
 import com.mapbox.search.result.SearchSuggestion
 import kotlinx.android.synthetic.main.fragment_discover.view.*
+import kotlinx.android.synthetic.main.simple_item.view.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.apache.commons.lang3.StringUtils
 import java.io.Serializable
 import java.util.*
 import java.util.stream.Collectors
@@ -57,6 +61,11 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     private val locationManager by lazy {
         activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
+
+    private val searchType = SearchType.BY_PLACE
+    private lateinit var searchTerm: String
+    private lateinit var searchView: AutoCompleteTextView
+
 
     private lateinit var searchEngine: SearchEngine
     private lateinit var searchRequestTask: SearchRequestTask
@@ -176,7 +185,6 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         val root: View = _binding!!.root
 
-        val searchType = SearchType.BY_PLACE
 
         MapboxSearchSdk.initialize(
             application = requireActivity().application,
@@ -189,57 +197,79 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         setFiltersScreenListeners(root)
 
+        searchView = root.findViewById(R.id.search_bar) as AutoCompleteTextView
 
-        root.search_bar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        val countries = MockDatabase.mockSearchResults.stream().map { it.third.routeName }
+            .collect(Collectors.toList())
 
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                navigateToSearchResults()
-                return true
+        val countriesAdapter =
+            ArrayAdapter<String>(requireContext(), R.layout.simple_item, countries)
+
+        searchView.setAdapter(countriesAdapter)
+
+        searchView.addTextChangedListener {
+            searchTerm = it.toString()
+        }
+
+        searchView.setOnItemClickListener { _, view, _, _ ->
+
+            searchRoutes(view.searchItem.text.toString())
+        }
+
+        root.search_icon.setOnTouchListener { v, event ->
+            v.performClick()
+            if (StringUtils.isNotBlank(searchTerm)) {
+                searchRoutes(searchTerm)
             }
+            true
+        }
 
-            @RequiresApi(Build.VERSION_CODES.N)
-            override fun onQueryTextChange(keyword: String?): Boolean {
 
-                if (keyword?.length!! < 4) {
-                    return true
-                }
+        searchView.setOnKeyListener { _, keyCode, _ ->
 
-                if (searchType == SearchType.BY_PLACE) {
-
-                    routeSearchResults = SearchUtils.searchByPlace(keyword)
-
-                    if (routeSearchResults.isNullOrEmpty()) {
-                        timer.cancel()
-                        timer = Timer()
-                        timer.schedule(500) {
-                            GlobalScope.launch {
-
-                                routeSearchResults = SearchUtils.performGeocodingAPICall(
-                                    userLocation,
-                                    keyword
-                                )
-                            }
-                        }
-                    } else {
-                        // TODO Handle no results found
+            when (keyCode) {
+                KeyEvent.KEYCODE_ENTER -> {
+                    if (StringUtils.isNotBlank(searchTerm)) {
+                        searchRoutes(searchTerm)
                     }
                 }
-                return true
             }
-
-        })
-
-        discoverViewModel.text.observe(viewLifecycleOwner, {
-        })
+            true
+        }
 
         return root
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun searchRoutes(searchValue: String) {
+        if (searchValue.length >= 4 && searchType == SearchType.BY_PLACE) {
+            routeSearchResults = SearchUtils.searchByPlace(searchValue)
+
+            if (routeSearchResults.isNullOrEmpty()) {
+                timer.cancel()
+                timer = Timer()
+                timer.schedule(500) {
+                    GlobalScope.launch {
+
+                        routeSearchResults = SearchUtils.performGeocodingAPICall(
+                            userLocation,
+                            searchValue
+                        )
+                    }
+                }
+            } else {
+                navigateToSearchResults()
+            }
+        }
+    }
+
     private fun navigateToSearchResults() {
-        val intent = Intent(context,SearchResultsActivity::class.java)
+        val intent = Intent(context, SearchResultsActivity::class.java)
         val bundle = Bundle()
-        bundle.putSerializable("routes",routeSearchResults as Serializable)
-        intent.putExtra("routesBundle",bundle)
+        bundle.putSerializable("routes", routeSearchResults as Serializable)
+        intent.putExtra("routesBundle", bundle)
+        searchTerm = ""
+        searchView.setText(searchTerm)
         startActivity(intent)
     }
 
@@ -331,6 +361,6 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     }
 
     override fun onLocationChanged(location: Location) {
-        userLocation = Point.fromLngLat(location.longitude,location.latitude)
+        userLocation = Point.fromLngLat(location.longitude, location.latitude)
     }
 }

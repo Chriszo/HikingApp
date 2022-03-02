@@ -15,24 +15,81 @@
 
 
         <LinearLayout
-            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             tools:context=".ui.discover.DiscoverFragment">
 
 
-            <!--TODO change border radius-->
-            <SearchView
+            <!--ODO change border radius-->
+            <AutoCompleteTextView
                 android:id="@+id/search_bar"
+                android:layout_width="350dp"
+                android:layout_gravity="center"
+                android:hint="Search Routes..."
+                android:completionThreshold="1"
+                android:completionHint="Select Route"
+                android:singleLine="true"
+                android:layout_height="wrap_content"/>
+
+            <ImageView
+                android:id="@+id/search_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/custom_search_icon"
+                android:layout_marginTop="-40dp"
+                android:layout_marginStart="350dp"
+                />
+
+<!--            <RelativeLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent"-->
+<!--                android:layout_marginTop="-50dp"-->
+<!--                android:layout_marginEnd="0dp">-->
+
+<!--                <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--                    android:id="@+id/search_button"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:src="@drawable/search_icon_foreground"-->
+<!--                    android:backgroundTint="@color/white"-->
+<!--                    app:borderWidth="0dp"/>-->
+<!--            </RelativeLayout>-->
+
+
+
+            <!--<FrameLayout
+                android:id="@+id/search_frame"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_marginLeft="25dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginRight="25dp"
-                android:background="@drawable/background"
-                android:focusable="true"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:layout_editor_absoluteX="30dp" />
+                android:layout_height="match_parent">
+
+                <com.arlib.floatingsearchview.FloatingSearchView
+                    android:id="@+id/search_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:focusable="false"
+                    app:floatingSearch_close_search_on_keyboard_dismiss="true"
+                    app:floatingSearch_leftActionMode="showHamburger"
+                    app:floatingSearch_menu="@menu/search_menu"
+                    app:floatingSearch_searchBarMarginLeft="5dp"
+                    app:floatingSearch_searchBarMarginRight="5dp"
+                    app:floatingSearch_searchBarMarginTop="5dp"
+                    app:floatingSearch_searchHint="Search..."
+                    app:floatingSearch_showSearchKey="true"
+                    app:floatingSearch_dimBackground="false"
+                    app:floatingSearch_suggestionsListAnimDuration="250" />
+            </FrameLayout>-->
+            <!-- <SearchView
+                 android:id="@+id/search_bar"
+                 android:layout_width="match_parent"
+                 android:layout_height="40dp"
+                 android:layout_marginLeft="25dp"
+                 android:layout_marginTop="20dp"
+                 android:layout_marginRight="25dp"
+                 android:background="@drawable/background"
+                 android:focusable="true"
+                 app:layout_constraintTop_toTopOf="parent"
+                 tools:layout_editor_absoluteX="30dp" />-->
 
             <LinearLayout
                 android:id="@+id/liner_id"
@@ -83,9 +140,8 @@
                 android:id="@+id/search_results_list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/liner_id"
                 android:layout_marginBottom="50dp"
-                />
+                app:layout_constraintTop_toBottomOf="@id/liner_id" />
 
         </LinearLayout>
 
