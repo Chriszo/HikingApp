@@ -36,7 +36,6 @@ import com.mapbox.search.result.SearchSuggestion
 import kotlinx.android.synthetic.main.fragment_discover.view.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.io.Serializable
 import java.util.*
 import java.util.stream.Collectors
@@ -66,7 +65,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
     private lateinit var routeListAdapter: RouteListAdapter
     private lateinit var layoutManager: LinearLayoutManager
 
-    private lateinit var routes: MutableList<Route>
+    private lateinit var currentRoutes: MutableList<Route>
     private lateinit var routeSearchResults: MutableList<Route>
     private lateinit var categories: MutableList<String>
 
@@ -129,20 +128,21 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
             this.state = BottomSheetBehavior.STATE_COLLAPSED
         }
 
-        routes = mutableListOf()
+        currentRoutes = mutableListOf()
 
         layoutManager = LinearLayoutManager(context)
 
         routesRecyclerView = _binding!!.searchResultsList
         routesRecyclerView.layoutManager = layoutManager
 
-        routes =
+        // TODO Populate with database Data
+        currentRoutes =
             MockDatabase.mockSearchResults.stream().map { it.third }.collect(Collectors.toList())
 
         categories = mutableListOf("Top Rated", "Popular", "Easy")
 
         routeListAdapter =
-            RouteListAdapter(categories, routes, requireContext(), itemClickedListener)
+            RouteListAdapter(categories, currentRoutes, requireContext(), itemClickedListener)
         routesRecyclerView.adapter = routeListAdapter
         routesRecyclerView.setHasFixedSize(true)
 
@@ -174,11 +174,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
         root.search_bar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
             override fun onQueryTextSubmit(query: String?): Boolean {
-                val intent = Intent(context,SearchResultsActivity::class.java)
-                val bundle = Bundle()
-                bundle.putSerializable("routes",routeSearchResults as Serializable)
-                intent.putExtra("routesBundle",bundle)
-                startActivity(intent)
+                navigateToSearchResults()
                 return true
             }
 
@@ -193,44 +189,20 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
 
                     routeSearchResults = SearchUtils.searchByPlace(keyword)
 
-                    if (!routeSearchResults.isNullOrEmpty()) {
-                        /*routesFound.forEach { route ->
-                            // TODO Populate route with search results
-                        }*/
-                    } else {
-
-                        // Make Geocoding API Call (MAPBOX API)
-                        /*SearchUtils.performGeocodingAPICall(
-                            Point.fromLngLat(23.74986906294603,37.99658992267283 ),
-                            searchEngine,
-                            newText,
-                            SearchUtils.defineSearchQueryOptions(searchType),
-                            searchCallback
-                        )*/
-
-                        //OpenStreetMap API
-
+                    if (routeSearchResults.isNullOrEmpty()) {
                         timer.cancel()
                         timer = Timer()
                         timer.schedule(500) {
-                            val job = GlobalScope.launch {
+                            GlobalScope.launch {
 
                                 routeSearchResults = SearchUtils.performGeocodingAPICall(
                                     userLocation,
                                     keyword
                                 ) // TODO Change with user's lccation
                             }
-
-                            runBlocking {
-                                job.join()
-                                if (!routeSearchResults.isNullOrEmpty()) {
-                                    // TODO populate view with search results
-                                } else {
-                                    // root.text_discover.text = getString(R.string.route_not_found)
-                                }
-                            }
                         }
-
+                    } else {
+                        // TODO Handle no results found
                     }
                 }
                 return true
@@ -244,6 +216,14 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
         return root
     }
 
+    private fun navigateToSearchResults() {
+        val intent = Intent(context,SearchResultsActivity::class.java)
+        val bundle = Bundle()
+        bundle.putSerializable("routes",routeSearchResults as Serializable)
+        intent.putExtra("routesBundle",bundle)
+        startActivity(intent)
+    }
+
     @RequiresApi(Build.VERSION_CODES.N)
     private fun setButtonListeners(root: View) {
 
@@ -251,8 +231,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
 
             if (root.search_bar.visibility == View.VISIBLE) {
                 root.search_bar.visibility = View.GONE
-                routes = SearchUtils.searchByPosition(userLocation)
-                // TODO populate view with search results
+                routeSearchResults = SearchUtils.searchByPosition(userLocation)
+                navigateToSearchResults()
             } else {
                 root.search_bar.visibility = View.VISIBLE
             }
@@ -280,11 +260,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
 
                 this.state = BottomSheetBehavior.STATE_COLLAPSED
                 val searchFilters = searchFiltersWrapperBuilder.build()
-                routes = SearchUtils.searchByFilters(searchFilters).toMutableList()
-                //TODO populate view with seach results
-                routes.forEach {
-                    println(it)
-                }
+                routeSearchResults = SearchUtils.searchByFilters(searchFilters).toMutableList()
+                navigateToSearchResults()
             }
         }
     }
@@ -330,7 +307,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener {
     override fun onItemClicked(position: Int, bundle: Bundle) {
 
         val intent = Intent(context, RouteActivity::class.java)
-        intent.putExtra("route", routes[position])
+        intent.putExtra("route", currentRoutes[position])
         startActivity(intent)
     }
 }

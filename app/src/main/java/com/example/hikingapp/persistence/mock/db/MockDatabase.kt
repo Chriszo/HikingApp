@@ -81,7 +81,7 @@ class MockDatabase {
             ),
             Triple(
                 setOf("pindos", "pindus"),
-                Point.fromLngLat(22.34898859796338, 40.10140396689491),
+                Point.fromLngLat(20.754802018618687, 39.992533423861374),
                 Route(
                     "Pindus",
                     "Epirus",
