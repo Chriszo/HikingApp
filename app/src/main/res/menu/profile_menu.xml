@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:icon="@drawable/favorite_icon_foreground"
+        android:id="@+id/favoritesFragment"
+        android:title="@string/favorites" />
+    <item
+        android:icon="@drawable/completed_icon_foreground"
+        android:id="@+id/completedFragment"
+        android:title="@string/completed" />
+</menu>

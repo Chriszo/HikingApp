@@ -1,13 +1,12 @@
 package com.example.hikingapp.ui.profile
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.hikingapp.domain.route.Route
+import java.io.Serializable
 
-class ProfileViewModel : ViewModel() {
+class ProfileViewModel : ViewModel(), Serializable {
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is profile Fragment"
-    }
-    val text: LiveData<String> = _text
+    val favoriteRoutes = MutableLiveData<List<Route>>()
+
 }

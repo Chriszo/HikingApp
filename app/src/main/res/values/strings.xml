@@ -21,5 +21,7 @@
     <string name="distance_covered_content">Covered: %s</string>
     <string name="distance_remaining_content">Remaining: %s</string>
     <string name="route_not_found">Route not found</string>
+    <string name="completed">Completed</string>
+    <string name="favorites">Favorites</string>
 
 </resources>

@@ -70,7 +70,7 @@
                         android:orientation="horizontal"
                         android:layout_gravity="center_horizontal|top"
                         android:background="@drawable/search_options_panel"
-                        android:visibility="visible"
+                        android:visibility="gone"
                         android:layout_marginHorizontal="30dp">
 
                         <LinearLayout

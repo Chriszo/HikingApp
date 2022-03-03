@@ -155,8 +155,12 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            return _binding!!.root
-        }
+            requestPermissions(
+                arrayOf(
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ), 234
+            )        }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, this)
 
         BottomSheetBehavior.from(_binding!!.filterSheet).apply {
