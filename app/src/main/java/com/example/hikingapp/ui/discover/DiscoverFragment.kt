@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -14,6 +16,7 @@ import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.widget.addTextChangedListener
@@ -63,6 +66,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     private val searchType = SearchType.BY_PLACE
     private lateinit var searchTerm: String
     private lateinit var searchView: AutoCompleteTextView
+    private lateinit var searchOptionsFrame: LinearLayout
 
 
     private lateinit var searchEngine: SearchEngine
@@ -196,12 +200,13 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         setFiltersScreenListeners(root)
 
         searchView = root.findViewById(R.id.search_bar) as AutoCompleteTextView
+        searchOptionsFrame = root.findViewById(R.id.search_options_layout) as LinearLayout
 
-        val countries = MockDatabase.mockSearchResults.stream().map { it.third.routeName }
+        val routeNames = MockDatabase.mockSearchResults.stream().map { it.third.routeName }
             .collect(Collectors.toList())
 
         val countriesAdapter =
-            ArrayAdapter<String>(requireContext(), R.layout.simple_item, countries)
+            ArrayAdapter<String>(requireContext(), R.layout.simple_item, routeNames)
 
         searchView.setAdapter(countriesAdapter)
 
@@ -211,6 +216,9 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         searchView.setOnItemClickListener { _, view, _, _ ->
 
+            if (searchOptionsFrame.visibility == View.VISIBLE) {
+                searchOptionsFrame.visibility = View.GONE
+            }
             searchRoutes(view.searchItem.text.toString())
         }
 
@@ -219,6 +227,9 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
             if (event.action == MotionEvent.ACTION_UP) {
                 v.performClick()
                 if (StringUtils.isNotBlank(searchTerm)) {
+                    if (searchOptionsFrame.visibility == View.VISIBLE) {
+                        searchOptionsFrame.visibility = View.GONE
+                    }
                     searchRoutes(searchTerm)
                 }
             }
@@ -229,11 +240,12 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
             if (event.action == MotionEvent.ACTION_UP) {
                 v.performClick()
-                val searchOptionsFrame = root.findViewById(R.id.search_options_frame) as FrameLayout
                 if (searchOptionsFrame.visibility == View.VISIBLE) {
                     searchOptionsFrame.visibility = View.GONE
+                    routesRecyclerView.alpha = 1f
                 } else {
                     searchOptionsFrame.visibility = View.VISIBLE
+                    routesRecyclerView.alpha = 0.4f
                 }
             }
             true
@@ -245,6 +257,9 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
             when (keyCode) {
                 KeyEvent.KEYCODE_ENTER -> {
                     if (StringUtils.isNotBlank(searchTerm)) {
+                        if (searchOptionsFrame.visibility == View.VISIBLE) {
+                            searchOptionsFrame.visibility = View.GONE
+                        }
                         searchRoutes(searchTerm)
                     }
                 }
@@ -291,22 +306,13 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     @RequiresApi(Build.VERSION_CODES.N)
     private fun setButtonListeners(root: View) {
 
-
         root.search_by_position.setOnClickListener {
 
             if (root.search_bar.visibility == View.VISIBLE) {
-                root.search_bar.visibility = View.GONE
                 routeSearchResults = SearchUtils.searchByPosition(userLocation)
                 navigateToSearchResults()
-            } else {
-                root.search_bar.visibility = View.VISIBLE
-            }
-        }
-
-        root.search_place.setOnClickListener {
-
-            if (root.search_bar.visibility == View.GONE || root.search_bar.visibility == View.INVISIBLE) {
-                root.search_bar.visibility = View.VISIBLE
+                searchOptionsFrame.visibility = View.GONE
+                routesRecyclerView.alpha = 1f
             } else {
                 root.search_bar.visibility = View.VISIBLE
             }
@@ -314,6 +320,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         root.search_by_filters.setOnClickListener {
             BottomSheetBehavior.from(_binding!!.filterSheet).apply {
+                searchOptionsFrame.visibility = View.GONE
                 this.state = BottomSheetBehavior.STATE_EXPANDED
                 searchFiltersWrapperBuilder = SearchFiltersWrapper.Builder()
             }
@@ -326,6 +333,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                 val searchFilters = searchFiltersWrapperBuilder.build()
                 routeSearchResults = SearchUtils.searchByFilters(searchFilters).toMutableList()
                 navigateToSearchResults()
+                routesRecyclerView.alpha = 1f
             }
         }
     }
