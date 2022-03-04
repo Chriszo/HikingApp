@@ -9,4 +9,6 @@ class ProfileViewModel : ViewModel(), Serializable {
 
     val favoriteRoutes = MutableLiveData<List<Route>>()
 
+    val completedRoutes = MutableLiveData<List<Route>>()
+
 }

@@ -1,60 +1,85 @@
 package com.example.hikingapp.ui.profile
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
+import com.example.hikingapp.RouteActivity
+import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.ui.adapters.OnItemClickedListener
+import com.example.hikingapp.ui.adapters.RouteAdapter
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+class CompletedFragment : Fragment() , OnItemClickedListener{
 
-/**
- * A simple [Fragment] subclass.
- * Use the [CompletedFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
-class CompletedFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private val profileViewModel: ProfileViewModel by activityViewModels()
+
+    private lateinit var routes: MutableList<Route>
+    private lateinit var sights: MutableList<Route>
+
+
+    private lateinit var routesLayoutManager: LinearLayoutManager
+    private lateinit var sightsLayoutManager: LinearLayoutManager
+
+
+    private lateinit var routesRecyclerView: RecyclerView
+    private lateinit var sightsRecyclerView: RecyclerView
+    private lateinit var routesAdapter: RouteAdapter
+    private lateinit var sightsAdapter: RouteAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_completed, container, false)
+        val view =  inflater.inflate(R.layout.fragment_completed, container, false)
+
+        initializeCompletedRoutes(view)
+        initializeCompletedSights(view)
+
+        return view
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment CompletedFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            CompletedFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    private fun initializeCompletedSights(view: View) {
+        sightsRecyclerView = view.findViewById(R.id.completedSightsRView)
+        sightsLayoutManager = LinearLayoutManager(context,LinearLayoutManager.HORIZONTAL, false)
+        sightsRecyclerView.layoutManager = sightsLayoutManager
+
+        // TODO initialize sights list with sights
+        profileViewModel.completedRoutes.observe(viewLifecycleOwner, {
+            sights = it as MutableList<Route>
+            sightsAdapter = RouteAdapter(sights, this)
+            sightsRecyclerView.adapter = sightsAdapter
+        })
     }
+
+    private fun initializeCompletedRoutes(view: View) {
+        routesRecyclerView = view.findViewById(R.id.completedRoutesRView)
+        routesLayoutManager = LinearLayoutManager(context,LinearLayoutManager.HORIZONTAL, false)
+        routesRecyclerView.layoutManager = routesLayoutManager
+
+        profileViewModel.completedRoutes.observe(viewLifecycleOwner, {
+            routes = it as MutableList<Route>
+            routesAdapter = RouteAdapter(routes, this)
+            routesRecyclerView.adapter = routesAdapter
+        })
+    }
+
+
+    override fun onItemClicked(position: Int, bundle: Bundle) {
+        val intent = Intent(context, RouteActivity::class.java)
+        // TODO replace with Global Utils ID
+        intent.putExtra("route", routes[position])
+        startActivity(intent)
+    }
+
 }

@@ -37,7 +37,7 @@ class ProfileFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
         val root: View = binding.root
@@ -51,6 +51,8 @@ class ProfileFragment : Fragment() {
         // TODO Populate with data from DB
         routes = MockDatabase.mockSearchResults.stream().map { it.third }.collect(Collectors.toList())
         profileViewModel.favoriteRoutes.postValue(routes)
+        // TODO Populate Completed routes (and with data from db. Associated to user!!)
+        profileViewModel.completedRoutes.postValue(routes)
 
         return root
     }

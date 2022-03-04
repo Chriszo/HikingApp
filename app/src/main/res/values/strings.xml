@@ -23,5 +23,7 @@
     <string name="route_not_found">Route not found</string>
     <string name="completed">Completed</string>
     <string name="favorites">Favorites</string>
+    <string name="routes_label">Routes</string>
+    <string name="sights_label">Sights</string>
 
 </resources>

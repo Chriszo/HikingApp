@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/favoritesFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/favoritesFragment"
+    android:layout_marginBottom="120dp"
     tools:context=".ui.profile.FavoritesFragment">
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,18 +17,18 @@
             android:id="@+id/routes_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Routes"
             android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/routes_label"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="10dp"/>
+            android:textStyle="bold" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/favoritesRoutesRView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            />
+            android:layout_margin="10dp" />
+
 
         <View
             android:id="@+id/sight_divider"
@@ -38,22 +40,18 @@
             android:id="@+id/sights_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sights"
             android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/sights_label"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="10dp"/>
+            android:textStyle="bold" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/favoritesSightsRView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="10dp"/>
-
+            android:layout_margin="10dp" />
 
     </LinearLayout>
 
-
-
-</FrameLayout>
+</ScrollView>
