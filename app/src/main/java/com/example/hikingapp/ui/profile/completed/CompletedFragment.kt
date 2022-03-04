@@ -1,11 +1,11 @@
-package com.example.hikingapp.ui.profile
+package com.example.hikingapp.ui.profile.completed
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -14,8 +14,9 @@ import com.example.hikingapp.RouteActivity
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteAdapter
+import com.example.hikingapp.ui.profile.ProfileViewModel
 
-class FavoritesFragment : Fragment(), OnItemClickedListener {
+class CompletedFragment : Fragment() , OnItemClickedListener{
 
     private val profileViewModel: ProfileViewModel by activityViewModels()
 
@@ -29,9 +30,8 @@ class FavoritesFragment : Fragment(), OnItemClickedListener {
 
     private lateinit var routesRecyclerView: RecyclerView
     private lateinit var sightsRecyclerView: RecyclerView
-    private lateinit var favoritesAdapter: RouteAdapter
+    private lateinit var routesAdapter: RouteAdapter
     private lateinit var sightsAdapter: RouteAdapter
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,44 +42,45 @@ class FavoritesFragment : Fragment(), OnItemClickedListener {
         savedInstanceState: Bundle?
     ): View {
         // Inflate the layout for this fragment
-        val view = inflater.inflate(R.layout.fragment_favorites, container, false)
+        val view =  inflater.inflate(R.layout.fragment_completed, container, false)
 
-        initializeFavoriteRoutes(view)
-
-        initializeFavoriteSights(view)
+        initializeCompletedRoutes(view)
+        initializeCompletedSights(view)
 
         return view
     }
 
-    private fun initializeFavoriteSights(view: View) {
-        sightsRecyclerView = view.findViewById(R.id.favoritesSightsRView)
+    private fun initializeCompletedSights(view: View) {
+        sightsRecyclerView = view.findViewById(R.id.completedSightsRView)
         sightsLayoutManager = LinearLayoutManager(context,LinearLayoutManager.HORIZONTAL, false)
         sightsRecyclerView.layoutManager = sightsLayoutManager
 
         // TODO initialize sights list with sights
-        profileViewModel.favoriteRoutes.observe(viewLifecycleOwner, {
+        profileViewModel.completedRoutes.observe(viewLifecycleOwner, {
             sights = it as MutableList<Route>
             sightsAdapter = RouteAdapter(sights, this)
             sightsRecyclerView.adapter = sightsAdapter
         })
     }
 
-    private fun initializeFavoriteRoutes(view: View) {
-        routesRecyclerView = view.findViewById(R.id.favoritesRoutesRView)
+    private fun initializeCompletedRoutes(view: View) {
+        routesRecyclerView = view.findViewById(R.id.completedRoutesRView)
         routesLayoutManager = LinearLayoutManager(context,LinearLayoutManager.HORIZONTAL, false)
         routesRecyclerView.layoutManager = routesLayoutManager
 
-        profileViewModel.favoriteRoutes.observe(viewLifecycleOwner, {
+        profileViewModel.completedRoutes.observe(viewLifecycleOwner, {
             routes = it as MutableList<Route>
-            favoritesAdapter = RouteAdapter(routes, this)
-            routesRecyclerView.adapter = favoritesAdapter
+            routesAdapter = RouteAdapter(routes, this)
+            routesRecyclerView.adapter = routesAdapter
         })
     }
 
+
     override fun onItemClicked(position: Int, bundle: Bundle) {
-        val intent = Intent(context,RouteActivity::class.java)
+        val intent = Intent(context, RouteActivity::class.java)
         // TODO replace with Global Utils ID
         intent.putExtra("route", routes[position])
+        intent.putExtra("action", "completed")
         startActivity(intent)
     }
 

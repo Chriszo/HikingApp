@@ -2,9 +2,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:icon="@drawable/favorite_icon_foreground"
-        android:id="@+id/favoritesFragment"
-        android:title="@string/favorites" />
+        android:icon="@drawable/bookmark_icon_foreground"
+        android:id="@+id/savedFragment"
+        android:title="@string/saved" />
     <item
         android:icon="@drawable/completed_icon_foreground"
         android:id="@+id/completedFragment"

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/route_nav_graph"
+    app:startDestination="@id/completedRouteInfoFragment">
+
+    <fragment
+        android:id="@+id/completedRouteInfoFragment"
+        android:name="com.example.hikingapp.ui.profile.completed.CompletedRouteInfoFragment"
+        android:label="fragment_completed_route_info"
+        tools:layout="@layout/fragment_completed_route_info" />
+</navigation>

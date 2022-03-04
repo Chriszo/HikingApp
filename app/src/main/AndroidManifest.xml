@@ -16,6 +16,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HikingApp.NoActionBar">
         <activity
+            android:name=".ShareActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ReviewActivity"
+            android:exported="false" />
+        <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity

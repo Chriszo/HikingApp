@@ -2,9 +2,9 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/routeFragment"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".ui.profile.completed.CompletedRouteFragment">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -32,7 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="0dp"
-                android:layout_marginTop="190dp"
+                android:layout_marginTop="260dp"
                 android:layout_marginBottom="136dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -47,7 +47,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
-                        android:layout_marginTop="120dp"
+                        android:layout_marginTop="50dp"
                         android:text="RouteName"
                         android:textColor="@color/white"
                         android:textSize="20dp"
@@ -90,7 +90,7 @@
                     android:orientation="vertical">
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/route_bookmark"
+                        android:id="@+id/rate_button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="330dp"
@@ -99,11 +99,11 @@
                         android:paddingEnd="20dp"
                         android:rotationX="4"
                         app:backgroundTint="#FFFFFF"
-                        app:srcCompat="@drawable/bookmark_icon_foreground" />
+                        app:srcCompat="@drawable/rate_icon_foreground" />
 
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/show_map"
+                        android:id="@+id/share_button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="330dp"
@@ -112,17 +112,17 @@
                         android:paddingEnd="20dp"
                         android:rotationX="4"
                         app:backgroundTint="#FFFFFF"
-                        app:srcCompat="@drawable/map_icon_foreground" />
+                        app:srcCompat="@drawable/share_icon_foreground" />
 
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/navigate"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="330dp"
-                        android:layout_marginTop="5dp"
-                        android:layout_marginBottom="5dp"
-                        app:backgroundTint="#FFFFFF"
-                        app:srcCompat="@drawable/navigate_icon_foreground" />
+<!--                    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--                        android:id="@+id/navigate"-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_marginStart="330dp"-->
+<!--                        android:layout_marginTop="5dp"-->
+<!--                        android:layout_marginBottom="5dp"-->
+<!--                        app:backgroundTint="#FFFFFF"-->
+<!--                        app:srcCompat="@drawable/navigate_icon_foreground" />-->
                 </LinearLayout>
             </RelativeLayout>
 
@@ -168,9 +168,11 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/inner_nav_divider"
-                app:navGraph="@navigation/route_nav_graph"
+                app:navGraph="@navigation/completed_route_nav_graph"
                 tools:layout_editor_absoluteX="1dp"
                 tools:layout_editor_absoluteY="457dp" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </FrameLayout>
+
 </ScrollView>

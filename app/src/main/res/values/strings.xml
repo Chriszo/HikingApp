@@ -21,8 +21,7 @@
     <string name="distance_covered_content">Covered: %s</string>
     <string name="distance_remaining_content">Remaining: %s</string>
     <string name="route_not_found">Route not found</string>
-    <string name="completed">Completed</string>
-    <string name="favorites">Favorites</string>
+    <string name="completed">Completed Routes</string>
     <string name="routes_label">Routes</string>
     <string name="sights_label">Sights</string>
     <string name="nav_header_desc">Navigation Header</string>
@@ -30,5 +29,6 @@
     <!--    <string name="nav_header_subtitle">Header Subtitle</string>-->
     <string name="open">open</string>
     <string name="close">close</string>
+    <string name="saved">Saved Routes</string>
 
 </resources>

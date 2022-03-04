@@ -3,16 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/profile_nav"
-    app:startDestination="@id/favoritesFragment">
+    app:startDestination="@id/savedFragment">
 
     <fragment
-        android:id="@+id/favoritesFragment"
-        android:name="com.example.hikingapp.ui.profile.FavoritesFragment"
-        android:label="fragment_favorites"
-        tools:layout="@layout/fragment_favorites" />
+        android:id="@+id/savedFragment"
+        android:name="com.example.hikingapp.ui.profile.saved.SavedFragment"
+        android:label="fragment_saved"
+        tools:layout="@layout/fragment_saved" />
     <fragment
         android:id="@+id/completedFragment"
-        android:name="com.example.hikingapp.ui.profile.CompletedFragment"
+        android:name="com.example.hikingapp.ui.profile.completed.CompletedFragment"
         android:label="fragment_completed"
         tools:layout="@layout/fragment_completed" />
 </navigation>

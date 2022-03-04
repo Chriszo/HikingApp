@@ -7,10 +7,8 @@
     android:layout_height="match_parent"
     tools:context=".ui.route.photos.RoutePhotosFragment">
 
-
     <LinearLayout
         android:id="@+id/test"
-        android:layout_marginTop="0dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -29,7 +27,10 @@
             android:text="Photos"
             android:textColor="@android:color/white"
             android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/actions_layout_id"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/sight_photos_recycler_view"

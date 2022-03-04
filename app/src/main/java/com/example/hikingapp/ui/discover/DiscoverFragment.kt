@@ -68,10 +68,6 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     private lateinit var searchView: AutoCompleteTextView
     private lateinit var searchOptionsFrame: LinearLayout
 
-
-    private lateinit var searchEngine: SearchEngine
-    private lateinit var searchRequestTask: SearchRequestTask
-
     private lateinit var searchFiltersWrapperBuilder: SearchFiltersWrapper.Builder
 
     private lateinit var userLocation: Point
@@ -87,44 +83,6 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     private lateinit var categories: MutableList<String>
 
     private lateinit var itemClickedListener: OnItemClickedListener
-
-    private val searchCallback = object : SearchSelectionCallback {
-
-        override fun onSuggestions(
-            suggestions: List<SearchSuggestion>,
-            responseInfo: ResponseInfo
-        ) {
-            if (suggestions.isEmpty()) {
-                Log.i("SearchApiExample", "No suggestions found")
-            } else {
-                Log.i(
-                    "SearchApiExample",
-                    "Search suggestions: $suggestions.\nSelecting first suggestion..."
-                )
-                searchRequestTask = searchEngine.select(suggestions.first(), this)
-            }
-        }
-
-        override fun onResult(
-            suggestion: SearchSuggestion,
-            result: SearchResult,
-            responseInfo: ResponseInfo
-        ) {
-            Log.i("SearchApiExample", "Search result: $result")
-        }
-
-        override fun onCategoryResult(
-            suggestion: SearchSuggestion,
-            results: List<SearchResult>,
-            responseInfo: ResponseInfo
-        ) {
-            Log.i("SearchApiExample", "Category search results: $results")
-        }
-
-        override fun onError(e: Exception) {
-            Log.i("SearchApiExample", "Search error", e)
-        }
-    }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -190,14 +148,6 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
             ViewModelProvider(this)[DiscoverViewModel::class.java]
 
         val root: View = _binding!!.root
-
-
-        MapboxSearchSdk.initialize(
-            application = requireActivity().application,
-            accessToken = getString(R.string.mapbox_access_token),
-            locationEngine = LocationEngineProvider.getBestLocationEngine(requireContext())
-        )
-        searchEngine = MapboxSearchSdk.getSearchEngine()
 
         setButtonListeners(root)
 
@@ -376,7 +326,6 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     }
 
     override fun onDestroy() {
-//        searchRequestTask.cancel()
         super.onDestroy()
     }
 
@@ -384,6 +333,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         val intent = Intent(context, RouteActivity::class.java)
         intent.putExtra("route", currentRoutes[position])
+        intent.putExtra("action", "normal")
         startActivity(intent)
     }
 
