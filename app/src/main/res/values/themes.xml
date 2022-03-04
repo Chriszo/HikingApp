@@ -14,6 +14,20 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="Theme.HikingApp.NoActionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">#009688</item>
+        <item name="colorPrimaryVariant">#00695C</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <!-- Customize your theme here. -->
+    </style>
+
     <style name="button.white.bg" parent="ThemeOverlay.AppCompat">
         <item name="colorAccent">@android:color/white</item>
     </style>
@@ -23,4 +37,8 @@
         <item name="colorControlNormal">#cccccc</item>
         <item name="colorControlActivated">#ffcc00</item>
     </style>
+
+    <style name="Theme.HikingApp.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.HikingApp.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

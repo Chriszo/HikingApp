@@ -1,6 +1,8 @@
 package com.example.hikingapp.domain.weather
 
-class WeatherForecast {
+import java.io.Serializable
+
+class WeatherForecast : Serializable {
 
     lateinit var weatherForecast: List<WeatherInfo>
 }

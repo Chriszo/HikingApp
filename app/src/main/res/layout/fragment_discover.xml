@@ -28,6 +28,7 @@
                 android:completionThreshold="1"
                 android:hint="Search Routes..."
                 android:paddingStart="30dp"
+                android:layout_marginTop="10dp"
                 android:singleLine="true" />
 
             <ImageView
@@ -59,7 +60,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
-                        android:layout_marginBottom="50dp"
+                        android:layout_marginBottom="110dp"
                         android:layout_gravity="center_horizontal|bottom"
                         />
 

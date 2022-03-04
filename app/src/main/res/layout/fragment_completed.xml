@@ -4,7 +4,7 @@
     android:id="@+id/completedFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginBottom="120dp"
+    android:layout_marginBottom="160dp"
     tools:context=".ui.profile.CompletedFragment">
 
     <LinearLayout

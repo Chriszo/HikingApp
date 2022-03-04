@@ -14,7 +14,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.HikingApp">
+        android:theme="@style/Theme.HikingApp.NoActionBar">
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.search.results.SearchResultsActivity"
             android:exported="false" />
