@@ -1,10 +1,12 @@
 package com.example.hikingapp.persistence.mock.db
 
 import com.example.hikingapp.R
+import com.example.hikingapp.domain.culture.CultureInfo
+import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DifficultyLevel
+import com.example.hikingapp.domain.enums.RouteType
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.route.RouteInfo
-import com.example.hikingapp.domain.enums.RouteType
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.geometry.LatLng
 
@@ -31,16 +33,38 @@ class MockDatabase {
                 setOf("philopappou", "filopappou", "filopapou", "philopapou"),
                 Point.fromLngLat(23.71683574779853, 37.97362915837593),
                 Route(
-                    "Philopappou", "Attica", R.drawable.philopappou, RouteInfo(
+                    1, "Philopappou", "Attica", R.drawable.philopappou, RouteInfo(
                         4.5, 65.2, RouteType.LINEAR,
                         DifficultyLevel.EASY, 3.5f, null
-                    ), null, null, null, listOf(R.drawable.philopappou)
+                    ), null, null, CultureInfo(
+                        mutableListOf(
+                            Sight(
+                                1,
+                                Point.fromLngLat(23.71683574779853, 37.97362915837593),
+                                "Thiseion",
+                                "Attica",
+                                3.8f,
+                                R.drawable.thiseion,
+                                mutableListOf()
+                            ),
+                            Sight(
+                                2,
+                                Point.fromLngLat(23.751349476821982, 37.965990579031484),
+                                "Lentzos",
+                                "Attica",
+                                4.3f,
+                                R.drawable.philopappou,
+                                mutableListOf()
+                            )
+                        )
+                    ), listOf(R.drawable.philopappou)
                 )
             ),
             Triple(
                 setOf("Philolaou", "filolaou"),
                 Point.fromLngLat(23.751349476821982, 37.965990579031484),
                 Route(
+                    2,
                     "Philolaou",
                     "Attica",
                     R.drawable.thiseion,
@@ -55,6 +79,7 @@ class MockDatabase {
                 setOf("pilion", "pilio", "pelion", "pelio"),
                 Point.fromLngLat(23.044974025226864, 39.4436732830854),
                 Route(
+                    3,
                     "Pelion",
                     "Thessaly",
                     R.drawable.pelion_bridge,
@@ -69,6 +94,7 @@ class MockDatabase {
                 setOf("olympus", "olympos", "όλυμπος", "ολυμπος"),
                 Point.fromLngLat(22.34898859796338, 40.10140396689491),
                 Route(
+                    4,
                     "Olympus",
                     "Central Macedonia",
                     R.drawable.olympus,
@@ -83,6 +109,7 @@ class MockDatabase {
                 setOf("pindos", "pindus"),
                 Point.fromLngLat(20.754802018618687, 39.992533423861374),
                 Route(
+                    5,
                     "Pindus",
                     "Epirus",
                     R.drawable.thiseion,
@@ -91,6 +118,61 @@ class MockDatabase {
                     null,
                     null,
                     listOf(R.drawable.thiseion)
+                )
+            )
+        )
+
+        val mockSights = setOf<Triple<Set<String>, Point, Sight>>(
+            Triple(
+                setOf("philopappou", "filopappou", "filopapou", "philopapou"),
+                Point.fromLngLat(23.71683574779853, 37.97362915837593),
+                Sight(
+                    1,
+                    Point.fromLngLat(23.71683574779853, 37.97362915837593),
+                    "Thiseion",
+                    "Attica",
+                    3.8f,
+                    R.drawable.thiseion,
+                    mutableListOf()
+                )
+            ),
+            Triple(
+                setOf("Philolaou", "filolaou"),
+                Point.fromLngLat(23.751349476821982, 37.965990579031484),
+                Sight(
+                    2,
+                    Point.fromLngLat(23.751349476821982, 37.965990579031484),
+                    "Lentzos",
+                    "Attica",
+                    4.3f,
+                    R.drawable.philopappou,
+                    mutableListOf()
+                )
+            ),
+            Triple(
+                setOf("pilion", "pilio", "pelion", "pelio"),
+                Point.fromLngLat(23.044974025226864, 39.4436732830854),
+                Sight(
+                    3,
+                    Point.fromLngLat(23.044974025226864, 39.4436732830854),
+                    "Makrinitsa",
+                    "Thessaly",
+                    4.9f,
+                    R.drawable.pelion_greece,
+                    mutableListOf()
+                )
+            ),
+            Triple(
+                setOf("olympus", "olympos", "όλυμπος", "ολυμπος"),
+                Point.fromLngLat(22.34898859796338, 40.10140396689491),
+                Sight(
+                    4,
+                    Point.fromLngLat(22.34898859796338, 40.10140396689491),
+                    "Stefani",
+                    "Central Macedonia",
+                    4.8f,
+                    R.drawable.olympus,
+                    mutableListOf()
                 )
             )
         )

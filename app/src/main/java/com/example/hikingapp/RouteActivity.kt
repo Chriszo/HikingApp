@@ -2,6 +2,7 @@ package com.example.hikingapp
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.profile.completed.CompletedRouteFragment
 import com.example.hikingapp.ui.profile.saved.SavedRouteFragment
@@ -40,5 +41,10 @@ class RouteActivity : AppCompatActivity() {
 
         }
 
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i(this.localClassName,"on Destroy called...")
     }
 }

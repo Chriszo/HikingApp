@@ -3,9 +3,11 @@ package com.example.hikingapp.domain.route
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.weather.WeatherForecast
+import com.example.hikingapp.ui.UIElement
 import java.io.Serializable
 
 class Route(
+    var routeId: Long,
     var routeName: String?,
     var stateName: String?,
     var mainPhoto: Int?,
@@ -14,8 +16,8 @@ class Route(
     var mapInfo: MapInfo?,
     var cultureInfo: CultureInfo?,
     var photos: List<Int>?
-) : Serializable {
+) : Serializable, UIElement {
 
-    constructor() : this(null, null, null, null, null, null, null, null)
+    constructor() : this(0,null, null, null, null, null, null, null, null)
 
 }

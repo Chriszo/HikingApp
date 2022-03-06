@@ -1,34 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/fragmentContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/info_nav_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
+            app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:menu="@menu/profile_menu" />
 
-            <com.google.android.material.bottomnavigation.BottomNavigationView
-                android:id="@+id/info_nav_view"
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/profileFragmentContainer"
+            android:name="androidx.navigation.fragment.NavHostFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:defaultNavHost="false"
+            app:layout_constraintStart_toStartOf="@id/info_nav_view"
+            app:layout_constraintTop_toBottomOf="@id/info_nav_view"
+            app:navGraph="@navigation/profile_navigation" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="110dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <LinearLayout
+                android:id="@+id/delete_routes_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
-                app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:menu="@menu/profile_menu" />
+                android:orientation="vertical"
+                android:background="@drawable/search_options_panel"
+                android:layout_gravity="bottom"
+                android:gravity="center_horizontal|bottom">
 
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/profileFragmentContainer"
-                android:name="androidx.navigation.fragment.NavHostFragment"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:defaultNavHost="true"
-                app:layout_constraintStart_toStartOf="@id/info_nav_view"
-                app:layout_constraintTop_toBottomOf="@id/info_nav_view"
-                app:navGraph="@navigation/profile_navigation" />
+                <ImageView
+                    android:id="@+id/removeImage"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:alpha="0.5"
+                    android:src="@drawable/delete_icon_foreground" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:id="@+id/removeText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Remove Route(s)" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

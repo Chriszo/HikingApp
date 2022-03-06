@@ -17,6 +17,4 @@
         app:menu="@menu/settings_menu"
         android:layout_gravity="start"/>
 
-
-
 </androidx.drawerlayout.widget.DrawerLayout>

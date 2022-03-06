@@ -4,11 +4,11 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
@@ -26,13 +26,20 @@ import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
+import com.example.hikingapp.ui.profile.ProfileViewModel
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
-import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
-import kotlinx.android.synthetic.main.route_fragment.view.*
+import kotlinx.android.synthetic.main.fragment_saved_route.view.*
+import kotlinx.android.synthetic.main.route_fragment.view.info_nav_view
+import kotlinx.android.synthetic.main.route_fragment.view.navigate
+import kotlinx.android.synthetic.main.route_fragment.view.routeName
+import kotlinx.android.synthetic.main.route_fragment.view.routeRating
+import kotlinx.android.synthetic.main.route_fragment.view.route_info_image
+import kotlinx.android.synthetic.main.route_fragment.view.show_map
+import kotlinx.android.synthetic.main.route_fragment.view.stateName
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -47,7 +54,7 @@ import java.util.stream.Collectors
 
 class SavedRouteFragment : Fragment() {
 
-    private val viewModel: RouteViewModel by activityViewModels()
+    private val routeViewModel: RouteViewModel by activityViewModels()
 
     private lateinit var mapService: MapService
 
@@ -69,8 +76,8 @@ class SavedRouteFragment : Fragment() {
 
         route = arguments?.get("route") as Route
 
-        if (viewModel.photos.value.isNullOrEmpty()) {
-            viewModel.photos.postValue(route.photos)
+        if (routeViewModel.photos.value.isNullOrEmpty()) {
+            routeViewModel.photos.postValue(route.photos)
         }
 
         mapService = MapServiceImpl()
@@ -78,27 +85,35 @@ class SavedRouteFragment : Fragment() {
 
         route.mapInfo = mapService.getMapInformation(getJson(route.routeName))
 
+        val removeBookmarkButton = view.route_remove_bookmark
+
+        removeBookmarkButton.setOnClickListener {
+
+            requireArguments().putSerializable("removeSaved", route)
+        }
+
         GlobalScope.launch {
 
-            if (viewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
+            if (routeViewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
                 route.routeInfo!!.elevationData = setRouteElevationData(route)
             }
 
-            val cultureInfoJob = if (viewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
-                GlobalScope.launch {
+            val cultureInfoJob =
+                if (routeViewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
+                    GlobalScope.launch {
 
-                    if (Objects.isNull(viewModel.cultureInfo.value)) {
-                        route.cultureInfo =
-                            CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
-                        viewModel.cultureInfo.postValue(route.cultureInfo)
+                        if (Objects.isNull(routeViewModel.cultureInfo.value)) {
+                            route.cultureInfo =
+                                CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+                            routeViewModel.cultureInfo.postValue(route.cultureInfo)
+                        }
                     }
+                } else {
+                    null
                 }
-            } else {
-                null
-            }
 
             val weatherInfoJob =
-                if (viewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
+                if (routeViewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
                     GlobalScope.launch {
                         val weatherForecast = WeatherForecast()
                         weatherForecast.weatherForecast = weatherService.getForecastForDays(
@@ -115,7 +130,7 @@ class SavedRouteFragment : Fragment() {
             cultureInfoJob?.join()
             weatherInfoJob?.join()
 
-            viewModel.route.postValue(route)
+            routeViewModel.route.postValue(route)
         }
 
         initializeNavigationComponents(view)
@@ -130,8 +145,20 @@ class SavedRouteFragment : Fragment() {
     }
 
 
-    private fun initializeButtonListeners(view: View?) {
-        val showMapButton = view?.show_map
+    override fun onDestroyView() {
+        super.onDestroyView()
+        println("on destroy view")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        println("on destroy")
+    }
+
+    private fun initializeButtonListeners(view: View) {
+
+
+        val showMapButton = view.show_map
         showMapButton?.setOnClickListener {
             activity?.let {
                 val intent = Intent(it, SampleMapActivity::class.java)
@@ -140,7 +167,7 @@ class SavedRouteFragment : Fragment() {
             }
         }
 
-        val showNavButton = view?.navigate
+        val showNavButton = view.navigate
         showNavButton?.setOnClickListener {
             activity?.let {
                 val intent = Intent(it, SampleNavigationActivity::class.java)
@@ -162,13 +189,6 @@ class SavedRouteFragment : Fragment() {
     private fun getJson(routeName: String?): String {
         return requireContext().assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
             .toString(Charsets.UTF_8)
-    }
-
-    private fun getMapPoints(json: MultiLineString): List<MapPoint> {
-        return json.coordinates()[0].map {
-            MapPoint(it)
-        }
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -215,7 +235,7 @@ class SavedRouteFragment : Fragment() {
                                 .collect(Collectors.toList())
                         route.routeInfo?.elevationData = elevationData
                     }
-                    viewModel.elevationData.postValue(elevationData)
+                    routeViewModel.elevationData.postValue(elevationData)
                 }
             }
         }

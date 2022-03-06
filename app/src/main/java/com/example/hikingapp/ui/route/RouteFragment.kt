@@ -163,13 +163,6 @@ class RouteFragment : Fragment() {
             .toString(Charsets.UTF_8)
     }
 
-    private fun getMapPoints(json: MultiLineString): List<MapPoint> {
-        return json.coordinates()[0].map {
-            MapPoint(it)
-        }
-
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 //        viewModel = ViewModelProvider(this)[RouteViewModel::class.java]

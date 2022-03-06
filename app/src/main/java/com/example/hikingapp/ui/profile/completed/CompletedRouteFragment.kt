@@ -4,27 +4,25 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.example.hikingapp.*
+import com.example.hikingapp.R
+import com.example.hikingapp.ReviewActivity
+import com.example.hikingapp.ShareActivity
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.domain.weather.WeatherForecast
 import com.example.hikingapp.persistence.mock.db.MockDatabase
-import com.example.hikingapp.services.culture.CultureUtils
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
-import com.example.hikingapp.services.weather.WeatherService
-import com.example.hikingapp.services.weather.WeatherServiceImpl
-import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 import com.example.hikingapp.utils.GlobalUtils
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
@@ -32,7 +30,6 @@ import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import kotlinx.android.synthetic.main.fragment_completed_route.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.*
-import kotlinx.android.synthetic.main.route_fragment.view.info_nav_view
 import kotlinx.android.synthetic.main.route_fragment.view.routeName
 import kotlinx.android.synthetic.main.route_fragment.view.routeRating
 import kotlinx.android.synthetic.main.route_fragment.view.route_info_image
@@ -51,9 +48,13 @@ import java.util.stream.Collectors
 
 class CompletedRouteFragment : Fragment() {
 
-    private val viewModel: RouteViewModel by activityViewModels()
+    private val completedViewModel: CompletedViewModel by activityViewModels()
 
     private lateinit var route: Route
+
+    private val mapService: MapService by lazy {
+        MapServiceImpl()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,16 +70,25 @@ class CompletedRouteFragment : Fragment() {
 
         route = arguments?.get("route") as Route
 
-        if (viewModel.photos.value.isNullOrEmpty()) {
-            viewModel.photos.postValue(route.photos)
+        if (completedViewModel.route.value == null) {
+            completedViewModel.route.postValue(route)
+        }
+
+        if (completedViewModel.photos.value.isNullOrEmpty()) {
+//            routeViewModel.photos.postValue(route.photos)
+            completedViewModel.photos.postValue(route.photos)
         }
 
         GlobalScope.launch {
 
-            if (viewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
+            if (completedViewModel.elevationData.value.isNullOrEmpty()) {
+                if(route.mapInfo == null) {
+                    route.mapInfo = mapService.getMapInformation(getJson(route.routeName))
+                }
                 route.routeInfo!!.elevationData = setRouteElevationData(route)
+                completedViewModel.route.postValue(route)
+                completedViewModel.elevationData.postValue(route.routeInfo!!.elevationData)
             }
-            viewModel.route.postValue(route)
         }
 
         initializeNavigationComponents(view)
@@ -91,7 +101,6 @@ class CompletedRouteFragment : Fragment() {
         view.routeRating.rating = route.routeInfo!!.rating!!
         return view
     }
-
 
 
     private fun initializeButtonListeners(view: View?) {
@@ -128,18 +137,8 @@ class CompletedRouteFragment : Fragment() {
             .toString(Charsets.UTF_8)
     }
 
-    private fun getMapPoints(json: MultiLineString): List<MapPoint> {
-        return json.coordinates()[0].map {
-            MapPoint(it)
-        }
-
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-//        viewModel = ViewModelProvider(this)[RouteViewModel::class.java]
-        // TODO: Use the ViewModel
-//        viewModel.defineRoute(route)
     }
 
 
@@ -179,7 +178,7 @@ class CompletedRouteFragment : Fragment() {
                                 .collect(Collectors.toList())
                         route.routeInfo?.elevationData = elevationData
                     }
-                    viewModel.elevationData.postValue(elevationData)
+                    completedViewModel.elevationData.postValue(elevationData)
                 }
             }
         }

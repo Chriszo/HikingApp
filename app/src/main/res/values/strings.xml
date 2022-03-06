@@ -18,6 +18,9 @@
     <string name="distance_covered_empty">Covered: -</string>
     <string name="distance_remaining_empty">Remaining: -</string>
     <string name="estimated_time_content">Estimated:%s min</string>
+    <string name="completed_distance_content">%s km</string>
+    <string name="completed_elevation_content">%s m</string>
+    <string name="completed_time_content">%s min</string>
     <string name="distance_covered_content">Covered: %s</string>
     <string name="distance_remaining_content">Remaining: %s</string>
     <string name="route_not_found">Route not found</string>
@@ -30,5 +33,10 @@
     <string name="open">open</string>
     <string name="close">close</string>
     <string name="saved">Saved Routes</string>
+    <string name="select_all"><u>Select all</u></string>
+    <string name="un_select_all"><u>UnSelect all</u></string>
+    <string name="remove_sights">Remove Sight(s)</string>
+    <string name="remove_routes">Remove Route(s)</string>
+
 
 </resources>

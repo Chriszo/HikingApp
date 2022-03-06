@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/routeFragment"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".ui.route.RouteFragment">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -12,8 +13,7 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            tools:context=".ui.route.RouteFragment">
+            android:layout_height="match_parent">
 
             <ImageView
                 android:id="@+id/route_info_image"
@@ -99,7 +99,7 @@
                         android:paddingEnd="20dp"
                         android:rotationX="4"
                         app:backgroundTint="#FFFFFF"
-                        app:srcCompat="@drawable/bookmark_icon_foreground" />
+                        app:srcCompat="@drawable/bookmark_outlined_icon_foreground" />
 
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton

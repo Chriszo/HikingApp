@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintBottom_toTopOf="@+id/elevation_graph"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent">
@@ -21,13 +21,13 @@
             android:id="@+id/basic_info_title"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:background="#aaaa"
-            android:text="Route Statistics"
+            android:background="@drawable/side_nav_bar"
             android:gravity="center_vertical"
             android:paddingStart="10dp"
+            android:text="Route Statistics"
+            android:textColor="@android:color/white"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="@android:color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/actions_layout_id" />
@@ -41,14 +41,15 @@
             android:id="@+id/quantity_info"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:gravity="start"
+            android:layout_marginVertical="20dp"
             android:orientation="horizontal">
 
             <LinearLayout
                 android:id="@+id/distance_info"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_margin="5dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -70,7 +71,7 @@
                 android:id="@+id/elevation_info"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_margin="5dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -91,7 +92,7 @@
                 android:id="@+id/time_info"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_margin="5dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -111,10 +112,9 @@
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                >
+                android:layout_margin="5dp">
 
                 <TextView
                     android:id="@+id/time_title"
@@ -143,25 +143,36 @@
             android:id="@+id/route_id"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginVertical="20dp"
             android:text="This is a more detailed description of the route containing a description of the main points of interest, what to be careful about the route and what to give credits.Whatever....just a dummy description."
             android:textSize="14sp"
             app:layout_constraintTop_toBottomOf="@id/content_title" />
 
-        <!-- WEATHER INFORMATION SECTION -->
+        <TextView
+            android:id="@+id/elevation_profile_title"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="@drawable/side_nav_bar"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:text="Elevation Profile"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/elevation_graph"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginVertical="20dp"
+            android:background="@color/white" />
+
+
+        <include layout="@layout/fragment_photos"/>
 
     </LinearLayout>
-
-
-    <com.jjoe64.graphview.GraphView
-        android:id="@+id/elevation_graph"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="20dp"
-        android:background="@color/white"
-
-        app:layout_constraintBottom_toBottomOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

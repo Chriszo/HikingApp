@@ -22,7 +22,6 @@
                 android:layout_marginTop="0dp"
                 android:scaleType="fitXY"
                 android:src="@drawable/philopappou"
-                app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -114,19 +113,19 @@
                         app:backgroundTint="#FFFFFF"
                         app:srcCompat="@drawable/share_icon_foreground" />
 
-<!--                    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-<!--                        android:id="@+id/navigate"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_marginStart="330dp"-->
-<!--                        android:layout_marginTop="5dp"-->
-<!--                        android:layout_marginBottom="5dp"-->
-<!--                        app:backgroundTint="#FFFFFF"-->
-<!--                        app:srcCompat="@drawable/navigate_icon_foreground" />-->
+                    <!--                    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+                    <!--                        android:id="@+id/navigate"-->
+                    <!--                        android:layout_width="wrap_content"-->
+                    <!--                        android:layout_height="wrap_content"-->
+                    <!--                        android:layout_marginStart="330dp"-->
+                    <!--                        android:layout_marginTop="5dp"-->
+                    <!--                        android:layout_marginBottom="5dp"-->
+                    <!--                        app:backgroundTint="#FFFFFF"-->
+                    <!--                        app:srcCompat="@drawable/navigate_icon_foreground" />-->
                 </LinearLayout>
             </RelativeLayout>
 
-            <View
+            <!--<View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@android:color/darker_gray"
@@ -150,14 +149,15 @@
                     app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
                     app:menu="@menu/route_nav_menu" />
 
-            </LinearLayout>
+            </LinearLayout>-->
 
             <View
                 android:id="@+id/inner_nav_divider"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@android:color/darker_gray"
-                app:layout_constraintTop_toBottomOf="@id/actions_layout_id" />
+                app:layout_constraintTop_toBottomOf="@id/route_info_image" />
+
 
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/fragmentContainerView"

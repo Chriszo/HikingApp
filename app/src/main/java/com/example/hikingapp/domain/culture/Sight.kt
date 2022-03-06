@@ -1,16 +1,18 @@
 package com.example.hikingapp.domain.culture
 
+import com.example.hikingapp.ui.UIElement
 import com.mapbox.geojson.Point
 import java.io.Serializable
 
 class Sight(
+    var sightId: Long,
     var point: Point?,
     var name: String?,
     var description: String?,
     var rating: Float?,
     var mainPhoto: Int?,
     var photos: MutableList<Int>?
-) : Serializable {
+) : Serializable, UIElement {
 
-    constructor() : this(null, null, null, null, null, null)
+    constructor() : this(0,null, null, null, null, null, null)
 }

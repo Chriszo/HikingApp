@@ -15,10 +15,12 @@ import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteAdapter
 import com.example.hikingapp.ui.profile.ProfileViewModel
+import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 
 class CompletedFragment : Fragment() , OnItemClickedListener{
 
     private val profileViewModel: ProfileViewModel by activityViewModels()
+    private val completedViewModel: CompletedViewModel by activityViewModels()
 
     private lateinit var routes: MutableList<Route>
     private lateinit var sights: MutableList<Route>

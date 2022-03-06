@@ -31,7 +31,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
     "apparentTemperatureMin",
     "apparentTemperatureMinTime",
     "apparentTemperatureMax",
-    "apparentTemperatureMaxTime"
+    "apparentTemperatureMaxTime",
+    "precipAccumulation"
 )
 class WeatherInfoDto private constructor(){
 
