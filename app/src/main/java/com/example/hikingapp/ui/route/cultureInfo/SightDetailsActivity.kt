@@ -63,11 +63,13 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
         val nameView = binding.sightName
         val descriptionView = binding.sightState
         val mainPhotoView = binding.sightImage
+        val ratingView = binding.sightRating
 
 
         nameView.text = sightInfo.name
         descriptionView.text = sightInfo.description
         sightInfo.mainPhoto?.let { mainPhotoView.setImageResource(it) }
+        sightInfo.rating?.let { ratingView.rating = it }
 
     }
 

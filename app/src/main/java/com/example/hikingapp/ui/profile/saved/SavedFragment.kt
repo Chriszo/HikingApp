@@ -57,7 +57,7 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
         val selectAllSightsTextView = view.findViewById(R.id.select_all_sight_items) as TextView
 
 
-        profileViewModel.isRoutesLongClickPressed.observe(viewLifecycleOwner,{
+        profileViewModel.isRoutesLongClickPressed.observe(viewLifecycleOwner, {
 
             if (it == true) {
                 selectAllRoutesTextView.visibility = View.VISIBLE
@@ -67,7 +67,7 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
             }
         })
 
-        profileViewModel.isSightsLongClickPressed.observe(viewLifecycleOwner,{
+        profileViewModel.isSightsLongClickPressed.observe(viewLifecycleOwner, {
 
             if (it == true) {
                 selectAllSightsTextView.visibility = View.VISIBLE
@@ -77,20 +77,13 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
             }
         })
 
-        profileViewModel.savedRoutesEnabled.observe(viewLifecycleOwner,{
-            routesAdapter.setEnabled(it)
-        })
-
-        profileViewModel.savedSightsEnabled.observe(viewLifecycleOwner,{
-            sightsAdapter.setEnabled(it)
-        })
 
         selectAllRoutesTextView.setOnClickListener {
             if (!allRouteItemsSelected) {
                 routesAdapter.selectAllItems()
                 selectAllRoutesTextView.text = getString(R.string.un_select_all)
                 allRouteItemsSelected = true
-            } else{
+            } else {
                 routesAdapter.clearAllItems()
                 selectAllRoutesTextView.text = getString(R.string.select_all)
                 selectAllRoutesTextView.visibility = View.GONE
@@ -104,7 +97,7 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
                 sightsAdapter.selectAllItems()
                 selectAllSightsTextView.text = getString(R.string.un_select_all)
                 allSightItemsSelected = true
-            } else{
+            } else {
                 sightsAdapter.clearAllItems()
                 selectAllSightsTextView.text = getString(R.string.select_all)
                 selectAllSightsTextView.visibility = View.GONE
@@ -143,7 +136,11 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
             sights = sightsList
             sightsAdapter = SightsProfileAdapter(sights, this, this)
             sightsRecyclerView.adapter = sightsAdapter
-        })    }
+            profileViewModel.savedSightsEnabled.observe(viewLifecycleOwner, {
+                sightsAdapter.setEnabled(it)
+            })
+        })
+    }
 
     private fun initializeSavedRoutes(view: View) {
         routesRecyclerView = view.findViewById(R.id.favoritesRoutesRView)
@@ -154,12 +151,17 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
             routes = it as MutableList<Route>
             routesAdapter = RoutesProfileAdapter(routes, this, this)
             routesRecyclerView.adapter = routesAdapter
+
+
+            profileViewModel.savedRoutesEnabled.observe(viewLifecycleOwner, {
+                routesAdapter.setEnabled(it)
+            })
         })
     }
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
         if (bundle.containsKey("class")) {
-            when(bundle.get("class")){
+            when (bundle.get("class")) {
                 Route::class.java.simpleName -> {
                     val intent = Intent(context, RouteActivity::class.java)
                     // TODO replace with Global Utils ID
@@ -196,13 +198,15 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
             }
         }
 
-        if (bundle.containsKey("sightSelectedItems")){
-            val selectedItemsWrapper = bundle.getSerializable("sightSelectedItems") as SelectedItemsWrapper
+        if (bundle.containsKey("sightSelectedItems")) {
+            val selectedItemsWrapper =
+                bundle.getSerializable("sightSelectedItems") as SelectedItemsWrapper
             profileViewModel.selectedSightItems.postValue(selectedItemsWrapper.selectedItems)
         }
 
-        if (bundle.containsKey("routeSelectedItems")){
-            val selectedItemsWrapper = bundle.getSerializable("routeSelectedItems") as SelectedItemsWrapper
+        if (bundle.containsKey("routeSelectedItems")) {
+            val selectedItemsWrapper =
+                bundle.getSerializable("routeSelectedItems") as SelectedItemsWrapper
             profileViewModel.selectedRouteItems.postValue(selectedItemsWrapper.selectedItems)
         }
     }

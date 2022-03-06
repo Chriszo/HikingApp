@@ -16,6 +16,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
+import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.route.Route
 
@@ -32,7 +33,6 @@ class RouteAdapter(
         var stateView: TextView
         var ratingView: RatingBar
         var difficultyLevelView: TextView
-        var bundle: Bundle = Bundle()
 
         init {
             view.setOnClickListener(this)
@@ -44,6 +44,8 @@ class RouteAdapter(
         }
 
         override fun onClick(v: View?) {
+            val bundle = Bundle()
+            bundle.putSerializable("class", Route::class.java.simpleName)
             itemClickedListener.onItemClicked(adapterPosition, bundle)
         }
 
