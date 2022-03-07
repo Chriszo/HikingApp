@@ -179,9 +179,9 @@ class MockDatabase {
         )
 
         val mockUsers = setOf<User>(
-            User(1,"user-1", "user1@mail.com", "password1", null),
-            User(2,"user-2", "user2@mail.com", "password2", null),
-            User(3,"user-3", "user3@mail.com", "password3", null)
+            User(1,"","user-1", "user1@mail.com", "password1", null),
+            User(2,"","user-2", "user2@mail.com", "password2", null),
+            User(3,"","user-3", "user3@mail.com", "password3", null)
         )
 
 

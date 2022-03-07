@@ -3,6 +3,7 @@ package com.example.hikingapp
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
+import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -10,7 +11,9 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.databinding.ActivityMainBinding
+import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.content_main.view.*
@@ -18,6 +21,7 @@ import kotlinx.android.synthetic.main.content_main.view.*
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private val userViewModel: UserViewModel by viewModels()
 
     private lateinit var optionsMenu: Menu
 
@@ -27,7 +31,13 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        if (intent.extras?.containsKey("user") == true) {
+            (intent.extras!!["user"] as FirebaseUser).apply { userViewModel.user.postValue(this) }
+        }
+
         setSupportActionBar(toolbar!!)
+        toolbar.title = "Login"
+
 
         val toggle =
             ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close)

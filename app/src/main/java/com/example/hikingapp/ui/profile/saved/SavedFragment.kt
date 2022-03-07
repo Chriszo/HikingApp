@@ -17,7 +17,7 @@ import com.example.hikingapp.RouteActivity
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.adapters.*
-import com.example.hikingapp.ui.profile.ProfileViewModel
+import com.example.hikingapp.ui.viewModels.ProfileViewModel
 import com.example.hikingapp.ui.route.cultureInfo.SightDetailsActivity
 import java.util.stream.Collectors
 

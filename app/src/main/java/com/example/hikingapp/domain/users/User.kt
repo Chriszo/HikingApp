@@ -4,6 +4,7 @@ import java.io.Serializable
 
 class User(
     var userId: Long,
+    var uId: String,
     var userName: String,
     var mail: String,
     var password: String,

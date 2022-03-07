@@ -30,6 +30,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_ar.xml" value="0.1" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_completed_route.xml" value="0.1" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_end_of_navigation.xml" value="0.1" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_login.xml" value="0.22" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_main.xml" value="0.33" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_photo.xml" value="0.1" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_review.xml" value="0.75" />
@@ -40,6 +41,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_settings.xml" value="0.140625" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_share.xml" value="0.25" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_sight_details.xml" value="0.25" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_sign_up.xml" value="0.20364583333333333" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/content_main.xml" value="0.2171875" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/example_layout.xml" value="0.1921875" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_completed.xml" value="0.18854166666666666" />

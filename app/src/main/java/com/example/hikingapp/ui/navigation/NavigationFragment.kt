@@ -1,18 +1,23 @@
 package com.example.hikingapp.ui.navigation
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.databinding.FragmentNavigationBinding
+import com.example.hikingapp.ui.viewModels.UserViewModel
 
 class NavigationFragment : Fragment() {
 
     private lateinit var navigationViewModel: NavigationViewModel
+    private val userViewModel: UserViewModel by activityViewModels()
     private var _binding: FragmentNavigationBinding? = null
 
     // This property is only valid between onCreateView and
@@ -24,17 +29,24 @@ class NavigationFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        navigationViewModel =
-            ViewModelProvider(this).get(NavigationViewModel::class.java)
 
-        _binding = FragmentNavigationBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+        if (userViewModel.user.value == null) {
+            val intent = Intent(context, LoginActivity::class.java)
+            startActivity(intent)
+        } else {
+            navigationViewModel =
+                ViewModelProvider(this).get(NavigationViewModel::class.java)
 
-        val textView: TextView = binding.textNavigation
-        navigationViewModel.text.observe(viewLifecycleOwner, Observer {
-            textView.text = it
-        })
-        return root
+            _binding = FragmentNavigationBinding.inflate(inflater, container, false)
+            val root: View = binding.root
+
+            val textView: TextView = binding.textNavigation
+            navigationViewModel.text.observe(viewLifecycleOwner, Observer {
+                textView.text = it
+            })
+            return root
+        }
+        return null
     }
 
     override fun onDestroyView() {
