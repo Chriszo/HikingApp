@@ -15,15 +15,13 @@ import com.example.hikingapp.R
 import com.example.hikingapp.RouteActivity
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.ui.adapters.OnItemClickedListener
-import com.example.hikingapp.ui.adapters.RouteAdapter
-import com.example.hikingapp.ui.adapters.SightsAdapter
+import com.example.hikingapp.ui.adapters.*
 import com.example.hikingapp.ui.viewModels.ProfileViewModel
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 import com.example.hikingapp.ui.route.cultureInfo.SightDetailsActivity
 import java.util.stream.Collectors
 
-class CompletedFragment : Fragment(), OnItemClickedListener {
+class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListener {
 
     private val profileViewModel: ProfileViewModel by activityViewModels()
     private val completedViewModel: CompletedViewModel by activityViewModels()
@@ -39,7 +37,7 @@ class CompletedFragment : Fragment(), OnItemClickedListener {
     private lateinit var routesRecyclerView: RecyclerView
     private lateinit var sightsRecyclerView: RecyclerView
     private lateinit var routesAdapter: RouteAdapter
-    private lateinit var sightsAdapter: SightsAdapter
+    private lateinit var sightsAdapter: SightsProfileAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,7 +69,7 @@ class CompletedFragment : Fragment(), OnItemClickedListener {
             sights = it as MutableList<Sight>
             profileViewModel.user.value?.profileInfo?.completedSights =
                 sights.stream().map { it.sightId }.collect(Collectors.toList())
-            sightsAdapter = SightsAdapter(sights, this)
+            sightsAdapter = SightsProfileAdapter(sights, this,this)
             sightsRecyclerView.adapter = sightsAdapter
         })
     }
@@ -117,6 +115,10 @@ class CompletedFragment : Fragment(), OnItemClickedListener {
             }
 
         }
+
+    }
+
+    override fun onItemLongClicked(position: Int, bundle: Bundle) {
 
     }
 

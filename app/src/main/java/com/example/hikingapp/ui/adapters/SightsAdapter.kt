@@ -17,24 +17,15 @@ class SightsAdapter(var sights: List<Sight>, var itemClicked: OnItemClickedListe
 
         private val mView = view
         private val itemClickListener = itemClicked
-        var imageView: ImageView
-        var nameView: TextView
-        var stateView: TextView
-        var ratingView: RatingBar
-        var difficultyLevelView: TextView
+        val sightNameView: TextView = view.findViewById(R.id.sight_name)
+        val sightDescriptionView: TextView = view.findViewById(R.id.sight_description)
+        private val bundle = Bundle()
 
         init {
             mView.setOnClickListener(this)
-            imageView = view.findViewById(R.id.route_imageView)
-            nameView = view.findViewById(R.id.route_name)
-            stateView = view.findViewById(R.id.route_state)
-            ratingView = view.findViewById(R.id.routeRating)
-            difficultyLevelView = view.findViewById(R.id.difficulty_level)
         }
 
         override fun onClick(v: View?) {
-            val bundle = Bundle()
-            bundle.putSerializable("class", Sight::class.java.simpleName)
             itemClickListener.onItemClicked(adapterPosition, bundle)
         }
 
@@ -42,21 +33,16 @@ class SightsAdapter(var sights: List<Sight>, var itemClicked: OnItemClickedListe
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.profile_route_item, parent, false)
+            .inflate(R.layout.sight_item, parent, false)
 
         return ViewHolder(view, itemClicked!!)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
-        val sight = sights[position]
-        holder.imageView.setImageResource(sight.mainPhoto!!)
-        holder.nameView.text = sight.name
-        holder.stateView.text = sight.description
-        holder.ratingView.rating = sight.rating!!
-        holder.difficultyLevelView.visibility = View.GONE
+        holder.sightNameView.text = sights[position].name
+        holder.sightDescriptionView.text = sights[position].description
     }
 
     override fun getItemCount() = sights.count()
-
 }
