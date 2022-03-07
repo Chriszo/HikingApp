@@ -30,6 +30,7 @@ class NavigationFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
+        requireActivity().actionBar?.title = "Navigation"
         if (userViewModel.user.value == null) {
             val intent = Intent(context, LoginActivity::class.java)
             startActivity(intent)
@@ -41,7 +42,7 @@ class NavigationFragment : Fragment() {
             val root: View = binding.root
 
             val textView: TextView = binding.textNavigation
-            navigationViewModel.text.observe(viewLifecycleOwner, Observer {
+            navigationViewModel.text.observe(viewLifecycleOwner, {
                 textView.text = it
             })
             return root

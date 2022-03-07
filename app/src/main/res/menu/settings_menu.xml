@@ -11,4 +11,8 @@
         android:title="App Settings"
         android:id="@+id/appSettingsFragment"
         />
+    <item
+        android:title="Logout"
+        android:id="@+id/logoutActivity"
+        />
 </menu>

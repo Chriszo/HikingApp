@@ -3,6 +3,7 @@ package com.example.hikingapp
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -32,12 +33,21 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         if (intent.extras?.containsKey("user") == true) {
-            (intent.extras!!["user"] as FirebaseUser).apply { userViewModel.user.postValue(this) }
+            (intent.extras!!["user"] as FirebaseUser).apply {
+                userViewModel.user.postValue(this)
+                toolbar.action_bar_user.text = this.email
+            }
         }
 
         setSupportActionBar(toolbar!!)
-        toolbar.title = "Login"
 
+        toolbar.action_bar_user.setOnClickListener {
+
+            val actionBarTextView = it as TextView
+            if (actionBarTextView.text.toString() == "Login") {
+                startActivity(Intent(this, LoginActivity::class.java))
+            }
+        }
 
         val toggle =
             ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close)
@@ -67,18 +77,33 @@ class MainActivity : AppCompatActivity() {
 
         val accountSettingsItem = optionsMenu.findItem(R.id.accountSettingsFragment)
         val appSettingsItem = optionsMenu.findItem(R.id.appSettingsFragment)
+        val logoutItem = optionsMenu.findItem(R.id.logoutActivity)
 
         accountSettingsItem.setOnMenuItemClickListener {
-            val intent = Intent(MainActivity@this,SettingsActivity::class.java)
+            val intent = Intent(this, SettingsActivity::class.java)
+            intent.putExtra("user", userViewModel.user.value)
             intent.putExtra("selectedSetting", "Account Setting clicked")
             startActivity(intent)
             true
         }
 
         appSettingsItem.setOnMenuItemClickListener {
-            val intent = Intent(MainActivity@this,SettingsActivity::class.java)
+            val intent = Intent(this, SettingsActivity::class.java)
+            intent.putExtra("user", userViewModel.user.value)
             intent.putExtra("selectedSetting", "App Setting clicked")
             startActivity(intent)
             true
-        }    }
+        }
+
+        logoutItem.setOnMenuItemClickListener {
+            if (userViewModel.user.value != null) {
+                val intent = Intent(this,LogoutActivity::class.java)
+                intent.putExtra("user", userViewModel.user.value)
+                startActivity(intent)
+            }
+            true
+        }
+    }
+
+
 }

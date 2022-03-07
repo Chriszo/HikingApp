@@ -4,14 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SignUpActivity">
-
+    tools:context=".LogoutActivity">
 
     <TextView
-        android:id="@+id/signUpTitle"
+        android:id="@+id/loginTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Sign Up"
+        android:text="Logout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -20,31 +19,45 @@
         android:layout_marginTop="40dp"/>
 
     <TextView
-        android:id="@+id/signUpHint"
+        android:id="@+id/loginHint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Create a new account"
+        android:text="Logout of your account"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/signUpTitle"
-        android:textStyle="bold"/>
+        app:layout_constraintTop_toBottomOf="@+id/loginTitle"
+        android:textStyle="bold"
+        />
+
+    <TextView
+        android:id="@+id/userMail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="UserMail"
+        />
 
 
-    <com.google.android.material.textfield.TextInputLayout
+    <!--<com.google.android.material.textfield.TextInputLayout
         android:id="@+id/emailLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:passwordToggleEnabled="false">
+        app:endIconMode="clear_text">
 
         <EditText
             android:id="@+id/emailText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Email"
-            android:inputType="textEmailAddress" />
+            android:inputType="textEmailAddress"/>
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -55,7 +68,7 @@
         app:layout_constraintTop_toBottomOf="@id/emailLayout"
         android:layout_marginTop="10dp"
         android:paddingHorizontal="10dp"
-        app:passwordToggleEnabled="true">
+        app:endIconMode="password_toggle">
 
         <EditText
             android:id="@+id/passwordText"
@@ -64,17 +77,26 @@
             android:hint="Password"
             android:inputType="textPassword"/>
 
-    </com.google.android.material.textfield.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>-->
 
     <Button
-        android:id="@+id/signUpButton"
+        android:id="@+id/logoutButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="10dp"
-        app:layout_constraintTop_toBottomOf="@id/passwordLayout"
-        android:text="Sign Up"/>
+        app:layout_constraintTop_toBottomOf="@id/userMail"
+        android:text="Logout"/>
 
 
-
+    <TextView
+        android:id="@+id/signUpHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Not have account? SignUp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="20dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
