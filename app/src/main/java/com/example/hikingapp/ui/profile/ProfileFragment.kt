@@ -24,6 +24,7 @@ import com.example.hikingapp.domain.users.ProfileInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.ui.viewModels.ProfileViewModel
 import com.example.hikingapp.ui.viewModels.UserViewModel
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.android.synthetic.main.fragment_profile.view.*
 import java.util.stream.Collectors
 
@@ -37,6 +38,8 @@ class ProfileFragment : Fragment() {
     private lateinit var completedRoutes: MutableList<Route>
     private lateinit var savedSights: MutableList<Sight>
     private lateinit var completedSights: MutableList<Sight>
+
+    private lateinit var userAuthInfo: FirebaseUser
 
 
     // This property is only valid between onCreateView and
@@ -53,8 +56,11 @@ class ProfileFragment : Fragment() {
         if (userViewModel.user.value == null) {
             startActivity(Intent(context, LoginActivity::class.java))
         } else {
+
             _binding = FragmentProfileBinding.inflate(inflater, container, false)
             val root: View = binding.root
+
+            userAuthInfo = userViewModel.user.value!!
 
             val navHost =
                 childFragmentManager.findFragmentById(R.id.profileFragmentContainer) as NavHostFragment
@@ -123,22 +129,21 @@ class ProfileFragment : Fragment() {
 
 
             // TODO Populate with data from DB and will be related to User
-            val userId = 3L
-            val user = MockDatabase.mockUsers.stream().filter { it.userId == userId }.findFirst()
+            val user = MockDatabase.mockUsers.stream().filter { it.uId == userAuthInfo.uid}.findFirst()
                 .orElse(null)
 
             val userSavedRouteIds =
-                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == userId }
+                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == user.userId }
                     .flatMap { it.second.stream() }.collect(Collectors.toList())
             val userCompletedRouteIds =
-                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == userId }
+                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == user.userId }
                     .flatMap { it.second.stream() }.collect(Collectors.toList())
 
             val userSavedSightIds =
-                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == userId }
+                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == user.userId }
                     .flatMap { it.third.stream() }.collect(Collectors.toList())
             val userCompletedSightIds =
-                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == userId }
+                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == user.userId }
                     .flatMap { it.third.stream() }.collect(Collectors.toList())
 
             user.profileInfo = ProfileInfo(
