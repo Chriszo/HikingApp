@@ -86,6 +86,13 @@ class SightsProfileAdapter(
                                     SelectedItemsWrapper(selectedItems)
                                 )
                                 itemLongClickedListener.onItemLongClicked(adapterPosition, bundle)
+                            } else {
+                                bundle.putBoolean(longClick, true)
+                                bundle.putSerializable(
+                                    sightItems,
+                                    SelectedItemsWrapper(selectedItems)
+                                )
+                                itemLongClickedListener.onItemLongClicked(adapterPosition, bundle)
                             }
                         } else {
                             inSelectMode = false

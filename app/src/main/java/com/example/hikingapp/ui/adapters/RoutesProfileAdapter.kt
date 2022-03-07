@@ -87,6 +87,13 @@ class RoutesProfileAdapter(
                                     SelectedItemsWrapper(selectedItems)
                                 )
                                 itemLongClickedListener.onItemLongClicked(adapterPosition, bundle)
+                            } else {
+                                bundle.putBoolean(longClick, true)
+                                bundle.putSerializable(
+                                    routeItems,
+                                    SelectedItemsWrapper(selectedItems)
+                                )
+                                itemLongClickedListener.onItemLongClicked(adapterPosition, bundle)
                             }
                         } else {
                             inSelectMode = false

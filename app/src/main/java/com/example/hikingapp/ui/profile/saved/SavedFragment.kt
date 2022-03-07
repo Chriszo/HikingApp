@@ -17,8 +17,8 @@ import com.example.hikingapp.RouteActivity
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.adapters.*
-import com.example.hikingapp.ui.viewModels.ProfileViewModel
 import com.example.hikingapp.ui.route.cultureInfo.SightDetailsActivity
+import com.example.hikingapp.ui.viewModels.ProfileViewModel
 import java.util.stream.Collectors
 
 class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListener {
@@ -72,9 +72,28 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
 
             if (it == true) {
                 selectAllSightsTextView.visibility = View.VISIBLE
-                selectAllSightsTextView.text = getString(R.string.select_all)
+                if (profileViewModel.savedRoutes.value?.size == profileViewModel.selectedRouteItems.value?.size) {
+                    selectAllSightsTextView.text = getString(R.string.un_select_all)
+                } else {
+                    selectAllSightsTextView.text = getString(R.string.select_all)
+                }
+
             } else {
                 selectAllSightsTextView.visibility = View.GONE
+            }
+        })
+
+        profileViewModel.selectedRouteItems.observe(viewLifecycleOwner, {
+            allRouteItemsSelected = profileViewModel.selectedRouteItems.value?.size == profileViewModel.savedRoutes.value?.size
+            if (allRouteItemsSelected) {
+                selectAllRoutesTextView.text = getString(R.string.un_select_all)
+            }
+        })
+
+        profileViewModel.selectedSightItems.observe(viewLifecycleOwner, {
+            allSightItemsSelected = profileViewModel.selectedSightItems.value?.size == profileViewModel.savedSights.value?.size
+            if (allSightItemsSelected) {
+                selectAllSightsTextView.text = getString(R.string.un_select_all)
             }
         })
 
@@ -131,7 +150,8 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
         profileViewModel.savedSights.observe(viewLifecycleOwner, { sightsList ->
 
             sights = sightsList
-            profileViewModel.user.value?.profileInfo?.savedSights = sights.stream().map { it.sightId }.collect(Collectors.toList())
+            profileViewModel.user.value?.profileInfo?.savedSights =
+                sights.stream().map { it.sightId }.collect(Collectors.toList())
             sightsAdapter = SightsProfileAdapter(sights, this, this)
             sightsRecyclerView.adapter = sightsAdapter
             profileViewModel.savedSightsEnabled.observe(viewLifecycleOwner, {
@@ -149,7 +169,8 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
         profileViewModel.savedRoutes.observe(viewLifecycleOwner, {
             routes = it as MutableList<Route>
 
-            profileViewModel.user.value?.profileInfo?.savedRoutes = routes.stream().map { it.routeId }.collect(Collectors.toList())
+            profileViewModel.user.value?.profileInfo?.savedRoutes =
+                routes.stream().map { it.routeId }.collect(Collectors.toList())
             routesAdapter = RoutesProfileAdapter(routes, this, this)
             routesRecyclerView.adapter = routesAdapter
 
