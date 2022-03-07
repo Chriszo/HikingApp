@@ -19,6 +19,7 @@ import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.adapters.*
 import com.example.hikingapp.ui.profile.ProfileViewModel
 import com.example.hikingapp.ui.route.cultureInfo.SightDetailsActivity
+import java.util.stream.Collectors
 
 class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListener {
 
@@ -126,14 +127,11 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
         sightsRecyclerView.layoutManager = sightsLayoutManager
 
         // TODO initialize sights list with sights
-        /*profileViewModel.savedRoutes.observe(viewLifecycleOwner, { routesList ->
-            sights = (routesList as MutableList<Route>).stream().flatMap { it.cultureInfo?.sights?.stream()}.collect(Collectors.toList())
-            sightsAdapter = RoutesProfileAdapter(sights, this, this)
-            sightsRecyclerView.adapter = sightsAdapter
-        })*/
 
         profileViewModel.savedSights.observe(viewLifecycleOwner, { sightsList ->
+
             sights = sightsList
+            profileViewModel.user.value?.profileInfo?.savedSights = sights.stream().map { it.sightId }.collect(Collectors.toList())
             sightsAdapter = SightsProfileAdapter(sights, this, this)
             sightsRecyclerView.adapter = sightsAdapter
             profileViewModel.savedSightsEnabled.observe(viewLifecycleOwner, {
@@ -142,6 +140,7 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
         })
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun initializeSavedRoutes(view: View) {
         routesRecyclerView = view.findViewById(R.id.favoritesRoutesRView)
         routesLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
@@ -149,9 +148,10 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
 
         profileViewModel.savedRoutes.observe(viewLifecycleOwner, {
             routes = it as MutableList<Route>
+
+            profileViewModel.user.value?.profileInfo?.savedRoutes = routes.stream().map { it.routeId }.collect(Collectors.toList())
             routesAdapter = RoutesProfileAdapter(routes, this, this)
             routesRecyclerView.adapter = routesAdapter
-
 
             profileViewModel.savedRoutesEnabled.observe(viewLifecycleOwner, {
                 routesAdapter.setEnabled(it)

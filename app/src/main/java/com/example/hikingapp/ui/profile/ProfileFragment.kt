@@ -18,6 +18,7 @@ import com.example.hikingapp.R
 import com.example.hikingapp.databinding.FragmentProfileBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.ProfileInfo
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import kotlinx.android.synthetic.main.fragment_profile.view.*
 import java.util.stream.Collectors
@@ -27,8 +28,11 @@ class ProfileFragment : Fragment() {
     private val profileViewModel: ProfileViewModel by activityViewModels()
     private var _binding: FragmentProfileBinding? = null
 
-    private lateinit var routes: MutableList<Route>
-    private lateinit var sights: MutableList<Sight>
+    private lateinit var savedRoutes: MutableList<Route>
+    private lateinit var completedRoutes: MutableList<Route>
+    private lateinit var savedSights: MutableList<Sight>
+    private lateinit var completedSights: MutableList<Sight>
+    
 
 
     // This property is only valid between onCreateView and
@@ -112,57 +116,74 @@ class ProfileFragment : Fragment() {
 
 
         // TODO Populate with data from DB and will be related to User
-        routes =
-            MockDatabase.mockSearchResults.stream().map { it.third }.collect(Collectors.toList())
-        profileViewModel.savedRoutes.postValue(routes)
+        val userId = 3L
+        val user = MockDatabase.mockUsers.stream().filter{it.userId == userId}.findFirst().orElse(null)
+
+        val userSavedRouteIds = MockDatabase.mockUsersSavedInfo.stream().filter{it.first == userId}.flatMap { it.second.stream() }.collect(Collectors.toList())
+        val userCompletedRouteIds = MockDatabase.mockUsersCompletedInfo.stream().filter{it.first == userId}.flatMap { it.second.stream() }.collect(Collectors.toList())
+
+        val userSavedSightIds = MockDatabase.mockUsersSavedInfo.stream().filter{it.first == userId}.flatMap { it.third.stream() }.collect(Collectors.toList())
+        val userCompletedSightIds = MockDatabase.mockUsersCompletedInfo.stream().filter{it.first == userId}.flatMap { it.third.stream() }.collect(Collectors.toList())
+
+        user.profileInfo = ProfileInfo(userSavedRouteIds,userCompletedRouteIds,userSavedSightIds,userCompletedSightIds)
+
+        savedRoutes =
+            MockDatabase.mockSearchResults.stream().filter{ user.profileInfo!!.savedRoutes.contains(it.third.routeId)}.map { it.third }.collect(Collectors.toList())
+        profileViewModel.savedRoutes.postValue(savedRoutes)
         // TODO Populate Completed routes (and with data from db. Associated to user!!)
-        profileViewModel.completedRoutes.postValue(routes)
+        completedRoutes = MockDatabase.mockSearchResults.stream().filter{ user.profileInfo!!.completedRoutes.contains(it.third.routeId)}.map { it.third }.collect(Collectors.toList())
+        profileViewModel.completedRoutes.postValue(completedRoutes)
 
 
-        sights = routes.stream().flatMap { it.cultureInfo?.sights?.stream() }
-            .collect(Collectors.toList())
+        /*savedSights = savedRoutes.stream().flatMap { it.cultureInfo?.sights?.stream() }
+            .collect(Collectors.toList())*/
+        savedSights = MockDatabase.mockSights.stream().filter{ user.profileInfo!!.savedSights.contains(it.third.sightId)}.map { it.third }.collect(Collectors.toList())
+        profileViewModel.savedSights.postValue(savedSights)
 
-        profileViewModel.savedSights.postValue(sights)
-        profileViewModel.completedSights.postValue(sights)
+        completedSights = MockDatabase.mockSights.stream().filter{ user.profileInfo!!.completedSights.contains(it.third.sightId)}.map { it.third }.collect(Collectors.toList())
+        profileViewModel.completedSights.postValue(completedSights)
+
+        profileViewModel.user.postValue(user)
 
         return root
     }
 
     private fun handleSightSelectedItems(selectedSightItemsList: MutableList<Int>) {
 
-        val sightsCopy = mutableListOf<Sight>().apply { addAll(sights) }
-        sights.clear()
+        val sightsCopy = mutableListOf<Sight>().apply { addAll(savedSights) }
+        savedSights.clear()
 
         sightsCopy.withIndex().forEach {
             if (!selectedSightItemsList.contains(it.index)) {
-                sights.add(it.value)
+                savedSights.add(it.value)
             }
         }
 
         selectedSightItemsList.clear()
         profileViewModel.selectedSightItems.postValue(selectedSightItemsList)
-        profileViewModel.savedSights.postValue(sights)
+        profileViewModel.savedSights.postValue(savedSights)
         profileViewModel.isSightsLongClickPressed.postValue(false)
     }
 
     private fun handleRouteSelectedItems(selectedRouteItemsList: MutableList<Int>) {
-        val routesCopy = mutableListOf<Route>().apply { addAll(routes) }
-        routes.clear()
+        val routesCopy = mutableListOf<Route>().apply { addAll(savedRoutes) }
+        savedRoutes.clear()
 
         routesCopy.withIndex().forEach {
             if (!selectedRouteItemsList.contains(it.index)) {
-                routes.add(it.value)
+                savedRoutes.add(it.value)
             }
         }
 
         selectedRouteItemsList.clear()
         profileViewModel.selectedRouteItems.postValue(selectedRouteItemsList)
-        profileViewModel.savedRoutes.postValue(routes)
+        profileViewModel.savedRoutes.postValue(savedRoutes)
         profileViewModel.isRoutesLongClickPressed.postValue(false)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        println(profileViewModel.user.value)
         _binding = null
     }
 }

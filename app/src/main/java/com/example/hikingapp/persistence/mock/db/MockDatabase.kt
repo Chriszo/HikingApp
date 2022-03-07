@@ -7,6 +7,7 @@ import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.enums.RouteType
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.route.RouteInfo
+import com.example.hikingapp.domain.users.User
 import com.mapbox.geojson.Point
 import com.mapbox.mapboxsdk.geometry.LatLng
 
@@ -175,6 +176,25 @@ class MockDatabase {
                     mutableListOf()
                 )
             )
+        )
+
+        val mockUsers = setOf<User>(
+            User(1,"user-1", "user1@mail.com", "password1", null),
+            User(2,"user-2", "user2@mail.com", "password2", null),
+            User(3,"user-3", "user3@mail.com", "password3", null)
+        )
+
+
+        val mockUsersSavedInfo = setOf<Triple<Long, MutableList<Long>, MutableList<Long>>>(
+            Triple(1, mutableListOf(1, 3), mutableListOf(2, 3)),
+            Triple(2, mutableListOf(1, 2), mutableListOf(1)),
+            Triple(3, mutableListOf(3, 4), mutableListOf(3, 4))
+        )
+
+        val mockUsersCompletedInfo = setOf<Triple<Long, MutableList<Long>, MutableList<Long>>>(
+            Triple(1, mutableListOf(2), mutableListOf(1, 2)),
+            Triple(2, mutableListOf(1, 3), mutableListOf(2,3)),
+            Triple(3, mutableListOf(2,3), mutableListOf(4))
         )
 
 
