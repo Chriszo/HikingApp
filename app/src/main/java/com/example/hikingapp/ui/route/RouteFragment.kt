@@ -20,6 +20,7 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
+import com.example.hikingapp.persistence.entities.MapPointEntity
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.culture.CultureUtils
 import com.example.hikingapp.services.map.MapService
@@ -28,6 +29,7 @@ import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.firebase.database.FirebaseDatabase
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.MultiLineString
@@ -57,6 +59,10 @@ class RouteFragment : Fragment() {
 
     private lateinit var route: Route
 
+    private val database: FirebaseDatabase by lazy {
+        FirebaseDatabase.getInstance()
+    }
+
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -76,6 +82,24 @@ class RouteFragment : Fragment() {
         weatherService = WeatherServiceImpl()
 
         route.mapInfo = mapService.getMapInformation(getJson(route.routeName))
+
+        /*database.getReference("mapData")
+            .child(route.routeId.toString())
+            .child("origin")
+            .setValue(MapPointEntity(route?.mapInfo?.origin?.longitude()!!,route?.mapInfo?.origin?.latitude()!!))
+
+        database.getReference("mapData")
+            .child(route.routeId.toString())
+            .child("destination")
+            .setValue(MapPointEntity(route?.mapInfo?.origin?.longitude()!!,route?.mapInfo?.origin?.latitude()!!))
+
+        route?.mapInfo?.mapPoints!!.withIndex().forEach {
+            database.getReference("mapData")
+                .child(route.routeId.toString())
+                .child("point${it.index}").setValue(MapPointEntity(it.value.point.longitude(),it.value.point.latitude()))
+        }*/
+
+
 
         GlobalScope.launch {
 
@@ -207,6 +231,9 @@ class RouteFragment : Fragment() {
                                 .collect(Collectors.toList())
                         route.routeInfo?.elevationData = elevationData
                     }
+                    /*elevationData.withIndex().forEach {
+                        database.getReference("elevationData").child(route.routeId.toString()).child(it.index.toString()).setValue(it.value)
+                    }*/
                     viewModel.elevationData.postValue(elevationData)
                 }
             }
@@ -221,7 +248,7 @@ class RouteFragment : Fragment() {
 
         val pointIndexMap = HashMap<String, Int>()
         var elevationData = mutableListOf<ExtendedMapPoint>()
-        val extendedMapPoints = filterRoutePoints(mapInfo.mapPoints!!, 3)
+        val extendedMapPoints = filterRoutePoints(mapInfo.mapPoints!!, 5)
 
 
         extendedMapPoints.stream().forEach {
@@ -255,7 +282,7 @@ class RouteFragment : Fragment() {
     ) {
 
         if (extendedPoint.index % 50 == 0) {
-            delay(3000)
+            delay(10000)
             println("WAITING")
         }
 

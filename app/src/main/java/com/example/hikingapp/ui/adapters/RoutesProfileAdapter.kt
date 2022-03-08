@@ -49,7 +49,6 @@ class RoutesProfileAdapter(
         var difficultyLevelView: TextView
 
         init {
-
             view.setOnLongClickListener {
                 if (!inSelectMode && routesViewEnabled) {
                     it.setBackgroundColor(Color.rgb(0, 82, 204))
@@ -95,6 +94,7 @@ class RoutesProfileAdapter(
                                 )
                                 itemLongClickedListener.onItemLongClicked(adapterPosition, bundle)
                             }
+
                         } else {
                             inSelectMode = false
                             itemLongClickedListener.onItemLongClicked(adapterPosition, bundle)

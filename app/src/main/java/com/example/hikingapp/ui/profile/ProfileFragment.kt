@@ -1,6 +1,5 @@
 package com.example.hikingapp.ui.profile
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -15,7 +14,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
 import com.example.hikingapp.databinding.FragmentProfileBinding
 import com.example.hikingapp.domain.culture.Sight
@@ -25,6 +23,7 @@ import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.ui.viewModels.ProfileViewModel
 import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.fragment_profile.view.*
 import java.util.stream.Collectors
 
@@ -40,6 +39,7 @@ class ProfileFragment : Fragment() {
     private lateinit var completedSights: MutableList<Sight>
 
     private lateinit var userAuthInfo: FirebaseUser
+    private lateinit var database: FirebaseDatabase
 
 
     // This property is only valid between onCreateView and
@@ -53,14 +53,24 @@ class ProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-        if (userViewModel.user.value == null) {
-            startActivity(Intent(context, LoginActivity::class.java))
+        val inProdMode = getString(R.string.prodMode).toBooleanStrict()
+
+        database = FirebaseDatabase.getInstance()
+
+
+        if (userViewModel.user.value == null && inProdMode) {
+
+            // TODO Populate with data from DB and will be related to User
+//            DBUtils.initializeDatabaseData()
+//            startActivity(Intent(context, LoginActivity::class.java))
         } else {
 
             _binding = FragmentProfileBinding.inflate(inflater, container, false)
             val root: View = binding.root
 
-            userAuthInfo = userViewModel.user.value!!
+            if (inProdMode) {
+                userAuthInfo = userViewModel.user.value!!
+            }
 
             val navHost =
                 childFragmentManager.findFragmentById(R.id.profileFragmentContainer) as NavHostFragment
@@ -129,21 +139,27 @@ class ProfileFragment : Fragment() {
 
 
             // TODO Populate with data from DB and will be related to User
-            val user = MockDatabase.mockUsers.stream().filter { it.uId == userAuthInfo.uid}.findFirst()
-                .orElse(null)
+
+            val user = if (inProdMode) {
+                MockDatabase.mockUsers.stream().filter { it.uId == userAuthInfo.uid }.findFirst()
+                    .orElse(null)
+            } else {
+                MockDatabase.mockUsers.stream().filter { it.userId == 1L }.findFirst()
+                    .orElse(null)
+            }
 
             val userSavedRouteIds =
-                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == user.userId }
+                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == user.uId }
                     .flatMap { it.second.stream() }.collect(Collectors.toList())
             val userCompletedRouteIds =
-                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == user.userId }
+                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == user.uId }
                     .flatMap { it.second.stream() }.collect(Collectors.toList())
 
             val userSavedSightIds =
-                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == user.userId }
+                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == user.uId }
                     .flatMap { it.third.stream() }.collect(Collectors.toList())
             val userCompletedSightIds =
-                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == user.userId }
+                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == user.uId }
                     .flatMap { it.third.stream() }.collect(Collectors.toList())
 
             user.profileInfo = ProfileInfo(
@@ -157,6 +173,7 @@ class ProfileFragment : Fragment() {
                 MockDatabase.mockSearchResults.stream()
                     .filter { user.profileInfo!!.savedRoutes.contains(it.third.routeId) }
                     .map { it.third }.collect(Collectors.toList())
+
             profileViewModel.savedRoutes.postValue(savedRoutes)
             // TODO Populate Completed routes (and with data from db. Associated to user!!)
             completedRoutes = MockDatabase.mockSearchResults.stream()

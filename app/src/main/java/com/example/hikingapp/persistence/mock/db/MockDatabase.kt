@@ -185,16 +185,16 @@ class MockDatabase {
         )
 
 
-        val mockUsersSavedInfo = setOf<Triple<Long, MutableList<Long>, MutableList<Long>>>(
-            Triple(1, mutableListOf(1, 3), mutableListOf(2, 3)),
-            Triple(2, mutableListOf(1, 2), mutableListOf(1)),
-            Triple(3, mutableListOf(3, 4), mutableListOf(3, 4))
+        val mockUsersSavedInfo = setOf<Triple<String, MutableList<Long>, MutableList<Long>>>(
+            Triple("M47JKPnilaU39gnHxAvvBj62DmW2", mutableListOf(1, 3), mutableListOf(2, 3)),
+            Triple("bO32JG2nRLY65EHswirMDJIBg6l2", mutableListOf(1, 2), mutableListOf(1)),
+            Triple("test", mutableListOf(3, 4), mutableListOf(3, 4))
         )
 
-        val mockUsersCompletedInfo = setOf<Triple<Long, MutableList<Long>, MutableList<Long>>>(
-            Triple(1, mutableListOf(2), mutableListOf(1, 2)),
-            Triple(2, mutableListOf(1, 3), mutableListOf(2,3)),
-            Triple(3, mutableListOf(2,3), mutableListOf(4))
+        val mockUsersCompletedInfo = setOf<Triple<String, MutableList<Long>, MutableList<Long>>>(
+            Triple("M47JKPnilaU39gnHxAvvBj62DmW2", mutableListOf(2), mutableListOf(1, 2)),
+            Triple("bO32JG2nRLY65EHswirMDJIBg6l2", mutableListOf(1, 3), mutableListOf(2,3)),
+            Triple("test", mutableListOf(2,3), mutableListOf(4))
         )
 
 
