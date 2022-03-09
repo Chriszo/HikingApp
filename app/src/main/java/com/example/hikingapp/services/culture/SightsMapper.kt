@@ -1,6 +1,5 @@
 package com.example.hikingapp.services.culture
 
-import android.graphics.drawable.Drawable
 import android.os.Build
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.services.culture.results.SightResponseElement
@@ -37,7 +36,30 @@ class SightsMapper {
 
             return sight
         }
-
     }
+
+
+    /*
+
+    FOR DB ACTIONS
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun map(responseWrapper: SightResponseWrapper, route: Route): MutableList<Sight>? {
+        var counter = 0
+        val data = responseWrapper.results
+            ?.stream()
+            ?.map { mapToSight(it, route) }
+            ?.collect(Collectors.toList())
+
+        val sightEntities = data?.stream()?.map { SightEntity((++counter).toLong(),it.name!!,it.description!!,it.rating!!,0) }!!.collect(Collectors.toList())
+
+        val map = mapOf<String,List<SightEntity>>(Pair(route.routeId.toString(),sightEntities))
+
+         database.getReference("route_sights").updateChildren(map)
+
+        return data
+    }
+
+}*/
 
 }

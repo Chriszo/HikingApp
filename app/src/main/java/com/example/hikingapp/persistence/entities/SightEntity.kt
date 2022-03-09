@@ -5,5 +5,5 @@ data class SightEntity(
     val name: String,
     val description: String,
     val rating: Float,
-    val mainPhoto: Int
+    val mainPhoto: Int?
 )

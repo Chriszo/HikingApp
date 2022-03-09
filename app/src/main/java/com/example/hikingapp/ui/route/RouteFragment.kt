@@ -20,7 +20,7 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
-import com.example.hikingapp.persistence.entities.MapPointEntity
+import com.example.hikingapp.persistence.entities.SightEntity
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.culture.CultureUtils
 import com.example.hikingapp.services.map.MapService
@@ -32,7 +32,6 @@ import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.database.FirebaseDatabase
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
-import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import kotlinx.android.synthetic.main.route_fragment.view.*
 import kotlinx.coroutines.GlobalScope
@@ -231,9 +230,6 @@ class RouteFragment : Fragment() {
                                 .collect(Collectors.toList())
                         route.routeInfo?.elevationData = elevationData
                     }
-                    /*elevationData.withIndex().forEach {
-                        database.getReference("elevationData").child(route.routeId.toString()).child(it.index.toString()).setValue(it.value)
-                    }*/
                     viewModel.elevationData.postValue(elevationData)
                 }
             }
@@ -248,7 +244,7 @@ class RouteFragment : Fragment() {
 
         val pointIndexMap = HashMap<String, Int>()
         var elevationData = mutableListOf<ExtendedMapPoint>()
-        val extendedMapPoints = filterRoutePoints(mapInfo.mapPoints!!, 5)
+        val extendedMapPoints = filterRoutePoints(mapInfo.mapPoints!!, 3)
 
 
         extendedMapPoints.stream().forEach {
@@ -311,6 +307,7 @@ class RouteFragment : Fragment() {
                             ?.max()
                             ?.ifPresent { max ->
                                 val index = pointIndexMap[pointsMapKey]
+//                                database.getReference("elevationData").child(route.routeId.toString()).child(index.toString()).setValue(max)
                                 mapInfo.mapPoints?.get(index!!)?.elevation = max
                                 extendedPoint.elevation = max
                                 elevationData.add(extendedPoint)
