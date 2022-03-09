@@ -20,7 +20,6 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
-import com.example.hikingapp.persistence.entities.SightEntity
 import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.culture.CultureUtils
 import com.example.hikingapp.services.map.MapService
@@ -29,7 +28,10 @@ import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
@@ -210,19 +212,57 @@ class RouteFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.N)
     private fun setRouteElevationData(
         route: Route// TODO Remove it when you must. It is used in order to bypass execution during test., graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}
-    ): MutableList<Int>? {
-        var elevationData = mutableListOf<Int>()
+    ): MutableList<Long> {
+        var elevationData = mutableListOf<Long>()
 
         if (getString(R.string.prodMode).toBooleanStrict()) { // TODO Remove. Only for test
             if (route.mapInfo!!.elevationDataLoaded) { // Means that these data may be stored in db and can be retrieved from there
                 elevationData = (route.mapInfo!!.mapPoints?.stream()?.map { it.elevation }
                     ?.collect(Collectors.toList())?.toMutableList()
-                    ?: emptyList<Int>()) as MutableList<Int>
+                    ?: emptyList<Long>()) as MutableList<Long>
                 route.routeInfo?.elevationData = elevationData
             } else {
                 // TODO Make a query to DB when implemented
+
+                database.getReference("elevationData").child(route.routeId.toString())
+                    .addValueEventListener(object : ValueEventListener {
+
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value) && (snapshot.value as ArrayList<Long>).size > 0) {
+                                elevationData = snapshot.value as MutableList<Long>
+                                route.routeInfo?.elevationData = elevationData
+                                viewModel.elevationData.postValue(elevationData)
+                            } else {
+                                GlobalScope.launch {
+
+                                    collectionElevData(route.mapInfo!!).collect { elevationDataList ->
+                                        elevationData =
+                                            elevationDataList.stream().map { it.elevation }
+                                                .collect(Collectors.toList())
+                                        route.routeInfo?.elevationData = elevationData
+                                    }
+                                    viewModel.elevationData.postValue(elevationData)
+                                }
+                            }
+                        }
+                        override fun onCancelled(error: DatabaseError) {
+                            GlobalScope.launch {
+
+                                collectionElevData(route.mapInfo!!).collect { elevationDataList ->
+                                    elevationData =
+                                        elevationDataList.stream().map { it.elevation }
+                                            .collect(Collectors.toList())
+                                    route.routeInfo?.elevationData = elevationData
+                                }
+                                viewModel.elevationData.postValue(elevationData)
+                            }
+                        }
+
+                    })
+
+
                 // Data have not been loaded so need Tilequery async API calls to populate data.
-                GlobalScope.launch {
+                /*GlobalScope.launch {
 
                     collectionElevData(route.mapInfo!!).collect { elevationDataList ->
                         elevationData =
@@ -231,7 +271,7 @@ class RouteFragment : Fragment() {
                         route.routeInfo?.elevationData = elevationData
                     }
                     viewModel.elevationData.postValue(elevationData)
-                }
+                }*/
             }
         }
         return elevationData
@@ -262,7 +302,7 @@ class RouteFragment : Fragment() {
         }
         elevationData = elevationData
             .stream()
-            .filter { it.elevation != -10000 }
+            .filter { it.elevation != -10000L }
             .sorted(Comparator.comparing(ExtendedMapPoint::index))
             .collect(Collectors.toList()).toMutableList()
 
@@ -301,8 +341,8 @@ class RouteFragment : Fragment() {
 
                         response.body()?.features()
                             ?.stream()
-                            ?.mapToInt { feature ->
-                                feature.properties()?.get("ele")?.asInt!!
+                            ?.mapToLong { feature ->
+                                feature.properties()?.get("ele")?.asLong!!
                             }
                             ?.max()
                             ?.ifPresent { max ->

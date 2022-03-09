@@ -214,14 +214,14 @@ class SavedRouteFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.N)
     private fun setRouteElevationData(
         route: Route// TODO Remove it when you must. It is used in order to bypass execution during test., graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}, graph: com.jjoe64.graphview.GraphView){}
-    ): MutableList<Int> {
-        var elevationData = mutableListOf<Int>()
+    ): MutableList<Long> {
+        var elevationData = mutableListOf<Long>()
 
         if (getString(R.string.prodMode).toBooleanStrict()) { // TODO Remove. Only for test
             if (route.mapInfo!!.elevationDataLoaded) { // Means that these data may be stored in db and can be retrieved from there
                 elevationData = (route.mapInfo!!.mapPoints?.stream()?.map { it.elevation }
                     ?.collect(Collectors.toList())?.toMutableList()
-                    ?: emptyList<Int>()) as MutableList<Int>
+                    ?: emptyList<Long>()) as MutableList<Long>
                 route.routeInfo?.elevationData = elevationData
             } else {
                 // TODO Make a query to DB when implemented
@@ -266,7 +266,7 @@ class SavedRouteFragment : Fragment() {
         }
         elevationData = elevationData
             .stream()
-            .filter { it.elevation != -10000 }
+            .filter { it.elevation != -10000L }
             .sorted(Comparator.comparing(ExtendedMapPoint::index))
             .collect(Collectors.toList()).toMutableList()
 
@@ -305,8 +305,8 @@ class SavedRouteFragment : Fragment() {
 
                         response.body()?.features()
                             ?.stream()
-                            ?.mapToInt { feature ->
-                                feature.properties()?.get("ele")?.asInt!!
+                            ?.mapToLong { feature ->
+                                feature.properties()?.get("ele")?.asLong!!
                             }
                             ?.max()
                             ?.ifPresent { max ->

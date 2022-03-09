@@ -8,5 +8,5 @@ class CompletedViewModel : ViewModel() {
 
     val route = MutableLiveData<Route>()
     val photos = MutableLiveData<List<Int>>()
-    val elevationData = MutableLiveData<List<Int>>()
+    val elevationData = MutableLiveData<List<Long>>()
 }

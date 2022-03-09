@@ -34,7 +34,7 @@ class RouteInfoFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_route_info, container, false)
 
         //TODO Retrieve current Route Map information
-        var routeName = savedInstanceState?.get("RouteName")
+        savedInstanceState?.get("RouteName")
         val route = viewModel.route.value
         println(route)
 
@@ -99,7 +99,7 @@ class RouteInfoFragment : Fragment() {
         })
 
         viewModel.elevationData.observe(viewLifecycleOwner, {
-            drawGraph(it as MutableList<Int>?, view.elevation_graph)
+            drawGraph(it as MutableList<Long>?, view.elevation_graph)
         })
 
 
@@ -133,10 +133,10 @@ class RouteInfoFragment : Fragment() {
         }
     }
 
-    private fun drawGraph(elevationData: MutableList<Int>?, graph: GraphView?) {
+    private fun drawGraph(elevationData: MutableList<Long>?, graph: GraphView?) {
         val series = LineGraphSeries<DataPoint>()
 
-        elevationData?.withIndex()?.forEach {
+        elevationData!!.withIndex().filter { it.value != null }.forEach {
             series.appendData(
                 DataPoint(it.index.toDouble(), it.value.toDouble()),
                 false,

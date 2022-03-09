@@ -29,7 +29,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
     private lateinit var route: Route
     private lateinit var completedRoutePhotos: MutableList<Int>
-    private lateinit var elevationData: MutableList<Int>
+    private lateinit var elevationData: MutableList<Long>
 
     private lateinit var completedPhotosRecyclerView: RecyclerView
     private lateinit var photosAdapter: PhotoAdapter

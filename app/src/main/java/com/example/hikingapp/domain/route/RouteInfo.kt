@@ -11,7 +11,7 @@ class RouteInfo(
     var routeType: RouteType?,
     var difficultyLevel: DifficultyLevel?,
     var rating: Float?,
-    var elevationData: MutableList<Int>?,
+    var elevationData: MutableList<Long>?,
 ): Serializable {
 
 

@@ -10,7 +10,7 @@ class RouteViewModel : ViewModel(), Serializable {
 
     val route = MutableLiveData<Route>()
 
-    val elevationData = MutableLiveData<List<Int>>()
+    val elevationData = MutableLiveData<List<Long>>()
 
     val cultureInfo = MutableLiveData<CultureInfo>()
 
