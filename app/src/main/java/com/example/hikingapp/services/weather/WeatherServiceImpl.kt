@@ -19,7 +19,7 @@ class WeatherServiceImpl : WeatherService {
         onProdMode: Boolean
     ): List<WeatherInfo> {
 
-        val weatherDataResponse: String = if (!onProdMode) {
+        val weatherDataResponse: String = if (true) {
             SampleData.rawWeatherData
         } else {
 

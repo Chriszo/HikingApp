@@ -1,6 +1,7 @@
 package com.example.hikingapp.ui.discover
 
 import android.Manifest
+import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -84,6 +85,9 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         FirebaseDatabase.getInstance()
     }
 
+    private lateinit var progressDialog: ProgressDialog
+
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
         itemClickedListener = this
@@ -136,6 +140,11 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         val root: View = _binding!!.root
 
+        progressDialog = ProgressDialog(context)
+        progressDialog.setTitle("Please wait...")
+        progressDialog.setMessage("Loading Routes...")
+        progressDialog.setCanceledOnTouchOutside(false)
+
 
         // TODO Populate with database Data
 
@@ -152,7 +161,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         database.getReference("routes").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-
+                progressDialog.show()
                 currentRoutes = (snapshot.value as HashMap<String, *>)
                     .entries
                     .map { DBUtils.mapToRouteEntity(it.value as HashMap<String, String>) }
@@ -168,7 +177,9 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                                 mutableListOf()
                             ), null, null, null, mutableListOf()
                         )
-                    }.stream().collect(Collectors.toList())
+                    }.stream()
+                    .sorted(Comparator.comparing(Route::routeId))
+                    .collect(Collectors.toList())
 
                 categories = mutableListOf("Top Rated", "Popular", "Easy")
 
@@ -254,6 +265,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                     }
                     true
                 }
+                progressDialog.dismiss()
 
             }
 
