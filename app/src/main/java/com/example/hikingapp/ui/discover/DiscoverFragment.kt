@@ -4,24 +4,19 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
@@ -30,7 +25,8 @@ import com.example.hikingapp.databinding.FragmentDiscoverBinding
 import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.enums.RouteType
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.example.hikingapp.domain.route.RouteInfo
+import com.example.hikingapp.persistence.utils.DBUtils
 import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.search.SearchUtils
@@ -38,11 +34,11 @@ import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteListAdapter
 import com.example.hikingapp.ui.search.results.SearchResultsActivity
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.mapbox.android.core.location.LocationEngineProvider
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.mapbox.geojson.Point
-import com.mapbox.search.*
-import com.mapbox.search.result.SearchResult
-import com.mapbox.search.result.SearchSuggestion
 import kotlinx.android.synthetic.main.fragment_discover.view.*
 import kotlinx.android.synthetic.main.simple_item.view.*
 import kotlinx.coroutines.GlobalScope
@@ -84,6 +80,10 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
     private lateinit var itemClickedListener: OnItemClickedListener
 
+    private val database: FirebaseDatabase by lazy {
+        FirebaseDatabase.getInstance()
+    }
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
         itemClickedListener = this
@@ -118,7 +118,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ), 234
-            )        }
+            )
+        }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, this)
 
         BottomSheetBehavior.from(_binding!!.filterSheet).apply {
@@ -133,95 +134,137 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         routesRecyclerView = _binding!!.searchResultsList
         routesRecyclerView.layoutManager = layoutManager
 
-        // TODO Populate with database Data
-        currentRoutes =
-            MockDatabase.mockSearchResults.stream().map { it.third }.collect(Collectors.toList())
-
-        categories = mutableListOf("Top Rated", "Popular", "Easy")
-
-        routeListAdapter =
-            RouteListAdapter(categories, currentRoutes, requireContext(), itemClickedListener)
-        routesRecyclerView.adapter = routeListAdapter
-        routesRecyclerView.setHasFixedSize(true)
-
-        discoverViewModel =
-            ViewModelProvider(this)[DiscoverViewModel::class.java]
-
         val root: View = _binding!!.root
 
-        setButtonListeners(root)
 
-        setFiltersScreenListeners(root)
+        // TODO Populate with database Data
 
-        searchView = root.findViewById(R.id.search_bar) as AutoCompleteTextView
-        searchOptionsFrame = root.findViewById(R.id.search_options_layout) as LinearLayout
-
-        val routeNames = MockDatabase.mockSearchResults.stream().map { it.third.routeName }
-            .collect(Collectors.toList())
-
-        val countriesAdapter =
-            ArrayAdapter<String>(requireContext(), R.layout.simple_item, routeNames)
-
-        searchView.setAdapter(countriesAdapter)
-
-        searchView.addTextChangedListener {
-            searchTerm = it.toString()
-        }
-
-        searchView.setOnItemClickListener { _, view, _, _ ->
-
-            if (searchOptionsFrame.visibility == View.VISIBLE) {
-                searchOptionsFrame.visibility = View.GONE
+        database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                println(snapshot)
             }
-            searchRoutes(view.searchItem.text.toString())
-        }
 
-        root.search_icon.setOnTouchListener { v, event ->
+            override fun onCancelled(error: DatabaseError) {
+            }
 
-            if (event.action == MotionEvent.ACTION_UP) {
-                v.performClick()
-                if (StringUtils.isNotBlank(searchTerm)) {
+        })
+
+
+        database.getReference("routes").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+
+                currentRoutes = (snapshot.value as HashMap<String, *>)
+                    .entries
+                    .map { DBUtils.mapToRouteEntity(it.value as HashMap<String, String>) }
+                    .map {
+                        Route(
+                            it.routeId, it.routeName, it.stateName, it.mainPhoto,
+                            RouteInfo(
+                                it.distance,
+                                it.timeEstimation,
+                                it.routeType,
+                                it.difficultyLevel,
+                                it.rating,
+                                mutableListOf()
+                            ), null, null, null, mutableListOf()
+                        )
+                    }.stream().collect(Collectors.toList())
+
+                categories = mutableListOf("Top Rated", "Popular", "Easy")
+
+                routeListAdapter =
+                    RouteListAdapter(
+                        categories,
+                        currentRoutes,
+                        requireContext(),
+                        itemClickedListener
+                    )
+                routesRecyclerView.adapter = routeListAdapter
+                routesRecyclerView.setHasFixedSize(true)
+
+                setButtonListeners(root)
+
+                setFiltersScreenListeners(root)
+
+                searchView = root.findViewById(R.id.search_bar) as AutoCompleteTextView
+                searchOptionsFrame = root.findViewById(R.id.search_options_layout) as LinearLayout
+
+
+                val routeNames =
+                    currentRoutes.stream().map { it.routeName }.collect(Collectors.toList())
+
+                val routeNamesAdapter =
+                    ArrayAdapter<String>(requireContext(), R.layout.simple_item, routeNames)
+
+                searchView.setAdapter(routeNamesAdapter)
+
+                searchView.addTextChangedListener {
+                    searchTerm = it.toString()
+                }
+
+                searchView.setOnItemClickListener { _, view, _, _ ->
+
                     if (searchOptionsFrame.visibility == View.VISIBLE) {
                         searchOptionsFrame.visibility = View.GONE
                     }
-                    searchRoutes(searchTerm)
+                    searchRoutes(view.searchItem.text.toString())
                 }
-            }
-            true
-        }
 
-        root.search_menu_icon.setOnTouchListener { v, event ->
+                root.search_icon.setOnTouchListener { v, event ->
 
-            if (event.action == MotionEvent.ACTION_UP) {
-                v.performClick()
-                if (searchOptionsFrame.visibility == View.VISIBLE) {
-                    searchOptionsFrame.visibility = View.GONE
-                    routesRecyclerView.alpha = 1f
-                } else {
-                    searchOptionsFrame.visibility = View.VISIBLE
-                    routesRecyclerView.alpha = 0.4f
+                    if (event.action == MotionEvent.ACTION_UP) {
+                        v.performClick()
+                        if (StringUtils.isNotBlank(searchTerm)) {
+                            if (searchOptionsFrame.visibility == View.VISIBLE) {
+                                searchOptionsFrame.visibility = View.GONE
+                            }
+                            searchRoutes(searchTerm)
+                        }
+                    }
+                    true
                 }
-            }
-            true
-        }
 
+                root.search_menu_icon.setOnTouchListener { v, event ->
 
-        searchView.setOnKeyListener { _, keyCode, _ ->
-
-            when (keyCode) {
-                KeyEvent.KEYCODE_ENTER -> {
-                    if (StringUtils.isNotBlank(searchTerm)) {
+                    if (event.action == MotionEvent.ACTION_UP) {
+                        v.performClick()
                         if (searchOptionsFrame.visibility == View.VISIBLE) {
                             searchOptionsFrame.visibility = View.GONE
+                            routesRecyclerView.alpha = 1f
+                        } else {
+                            searchOptionsFrame.visibility = View.VISIBLE
+                            routesRecyclerView.alpha = 0.4f
                         }
-                        searchRoutes(searchTerm)
                     }
+                    true
                 }
+
+
+                searchView.setOnKeyListener { _, keyCode, _ ->
+
+                    when (keyCode) {
+                        KeyEvent.KEYCODE_ENTER -> {
+                            if (StringUtils.isNotBlank(searchTerm)) {
+                                if (searchOptionsFrame.visibility == View.VISIBLE) {
+                                    searchOptionsFrame.visibility = View.GONE
+                                }
+                                searchRoutes(searchTerm)
+                            }
+                        }
+                    }
+                    true
+                }
+
             }
-            true
-        }
+
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+
+        })
 
         return root
+
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
