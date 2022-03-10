@@ -18,6 +18,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
@@ -34,6 +35,7 @@ import com.example.hikingapp.search.SearchUtils
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteListAdapter
 import com.example.hikingapp.ui.search.results.SearchResultsActivity
+import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -83,6 +85,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
     }
+
+    private val routeViewModel: RouteViewModel by activityViewModels()
 
     private lateinit var progressDialog: ProgressDialog
 
@@ -229,6 +233,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                     }.stream()
                     .sorted(Comparator.comparing(Route::routeId))
                     .collect(Collectors.toList())
+
+                routeViewModel.currentRoutes.postValue(currentRoutes)
 
                 categories = mutableListOf("Top Rated", "Popular", "Easy")
 

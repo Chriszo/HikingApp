@@ -1,5 +1,6 @@
 package com.example.hikingapp.ui.profile
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -14,23 +15,30 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
 import com.example.hikingapp.databinding.FragmentProfileBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.domain.users.ProfileInfo
-import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.example.hikingapp.domain.users.User
 import com.example.hikingapp.ui.viewModels.ProfileViewModel
+import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.fragment_profile.view.*
 import java.util.stream.Collectors
 
 class ProfileFragment : Fragment() {
 
+
     private val profileViewModel: ProfileViewModel by activityViewModels()
     private val userViewModel: UserViewModel by activityViewModels()
+    private val routeViewModel: RouteViewModel by activityViewModels()
+
     private var _binding: FragmentProfileBinding? = null
 
     private lateinit var savedRoutes: MutableList<Route>
@@ -39,7 +47,15 @@ class ProfileFragment : Fragment() {
     private lateinit var completedSights: MutableList<Sight>
 
     private lateinit var userAuthInfo: FirebaseUser
-    private lateinit var database: FirebaseDatabase
+    private val database: FirebaseDatabase by lazy {
+        FirebaseDatabase.getInstance()
+    }
+
+    private lateinit var user: User
+    private lateinit var userSavedRouteIds: MutableList<Long>
+    private lateinit var userCompletedRouteIds: MutableList<Long>
+    private lateinit var userSavedSightIds: MutableList<Long>
+    private lateinit var userCompletedSightIds: MutableList<Long>
 
 
     // This property is only valid between onCreateView and
@@ -55,14 +71,11 @@ class ProfileFragment : Fragment() {
 
         val inProdMode = getString(R.string.prodMode).toBooleanStrict()
 
-        database = FirebaseDatabase.getInstance()
-
-
         if (userViewModel.user.value == null && inProdMode) {
 
             // TODO Populate with data from DB and will be related to User
 //            DBUtils.initializeDatabaseData()
-//            startActivity(Intent(context, LoginActivity::class.java))
+            startActivity(Intent(context, LoginActivity::class.java))
         } else {
 
             _binding = FragmentProfileBinding.inflate(inflater, container, false)
@@ -137,64 +150,188 @@ class ProfileFragment : Fragment() {
                 }
             }
 
+            database.getReference("completedRouteAssociations")
+                .addValueEventListener(object : ValueEventListener {
 
-            // TODO Populate with data from DB and will be related to User
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        userSavedSightIds = (snapshot.value as HashMap<String, *>).entries
+                            .stream()
+                            .filter { it.key == userAuthInfo.uid }
+                            .flatMap { (it.value as MutableList<Long>).stream() }
+                            .collect(Collectors.toList())
+                    }
 
-            val user = if (inProdMode) {
-                MockDatabase.mockUsers.stream().filter { it.uId == userAuthInfo.uid }.findFirst()
-                    .orElse(null)
-            } else {
-                MockDatabase.mockUsers.stream().filter { it.userId == 1L }.findFirst()
-                    .orElse(null)
-            }
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
 
-            val userSavedRouteIds =
-                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == user.uId }
-                    .flatMap { it.second.stream() }.collect(Collectors.toList())
-            val userCompletedRouteIds =
-                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == user.uId }
-                    .flatMap { it.second.stream() }.collect(Collectors.toList())
+                })
 
-            val userSavedSightIds =
-                MockDatabase.mockUsersSavedInfo.stream().filter { it.first == user.uId }
-                    .flatMap { it.third.stream() }.collect(Collectors.toList())
-            val userCompletedSightIds =
-                MockDatabase.mockUsersCompletedInfo.stream().filter { it.first == user.uId }
-                    .flatMap { it.third.stream() }.collect(Collectors.toList())
+            database.getReference("completedSightAssociations")
+                .addValueEventListener(object : ValueEventListener {
 
-            user.profileInfo = ProfileInfo(
-                userSavedRouteIds,
-                userCompletedRouteIds,
-                userSavedSightIds,
-                userCompletedSightIds
-            )
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        userCompletedSightIds = (snapshot.value as HashMap<String, *>).entries
+                            .stream()
+                            .filter { it.key == userAuthInfo.uid }
+                            .flatMap { (it.value as MutableList<Long>).stream() }
+                            .collect(Collectors.toList())
+                    }
 
-            savedRoutes =
-                MockDatabase.mockSearchResults.stream()
-                    .filter { user.profileInfo!!.savedRoutes.contains(it.third.routeId) }
-                    .map { it.third }.collect(Collectors.toList())
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
 
-            profileViewModel.savedRoutes.postValue(savedRoutes)
-            // TODO Populate Completed routes (and with data from db. Associated to user!!)
-            completedRoutes = MockDatabase.mockSearchResults.stream()
-                .filter { user.profileInfo!!.completedRoutes.contains(it.third.routeId) }
-                .map { it.third }.collect(Collectors.toList())
-            profileViewModel.completedRoutes.postValue(completedRoutes)
+                })
+
+            routeViewModel.currentRoutes.observe(viewLifecycleOwner, { currentRoutes ->
+
+                database.getReference("savedRouteAssociations")
+                    .addValueEventListener(object : ValueEventListener {
+
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            userSavedRouteIds = (snapshot.value as HashMap<String, *>).entries
+                                .stream()
+                                .filter { it.key == userAuthInfo.uid }
+                                .flatMap { (it.value as MutableList<Long>).stream() }
+                                .collect(Collectors.toList())
 
 
-            /*savedSights = savedRoutes.stream().flatMap { it.cultureInfo?.sights?.stream() }
-                .collect(Collectors.toList())*/
-            savedSights = MockDatabase.mockSights.stream()
-                .filter { user.profileInfo!!.savedSights.contains(it.third.sightId) }
-                .map { it.third }.collect(Collectors.toList())
-            profileViewModel.savedSights.postValue(savedSights)
+                            savedRoutes =
+                                currentRoutes.stream()
+                                    .filter { userSavedRouteIds.contains(it.routeId) }
+                                    .collect(Collectors.toList())
+                            profileViewModel.savedRoutes.postValue(savedRoutes)
 
-            completedSights = MockDatabase.mockSights.stream()
-                .filter { user.profileInfo!!.completedSights.contains(it.third.sightId) }
-                .map { it.third }.collect(Collectors.toList())
-            profileViewModel.completedSights.postValue(completedSights)
+                        }
 
-            profileViewModel.user.postValue(user)
+                        override fun onCancelled(error: DatabaseError) {
+                            TODO("Not yet implemented")
+                        }
+
+                    })
+
+                database.getReference("completedRouteAssociations")
+                    .addValueEventListener(object : ValueEventListener {
+
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            userCompletedRouteIds = (snapshot.value as HashMap<String, *>).entries
+                                .stream()
+                                .filter { it.key == userAuthInfo.uid }
+                                .flatMap { (it.value as MutableList<Long>).stream() }
+                                .collect(Collectors.toList())
+
+                            completedRoutes =
+                                currentRoutes.stream()
+                                    .filter { userCompletedRouteIds.contains(it.routeId) }
+                                    .collect(Collectors.toList())
+                            profileViewModel.completedRoutes.postValue(completedRoutes)
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            TODO("Not yet implemented")
+                        }
+
+                    })
+
+
+
+                database.getReference("savedSightAssociations")
+                    .addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            userSavedSightIds = (snapshot.value as HashMap<String, *>).entries
+                                .stream()
+                                .filter { it.key == userAuthInfo.uid }
+                                .flatMap { (it.value as MutableList<Long>).stream() }
+                                .collect(Collectors.toList())
+
+                            database.getReference("sights")
+                                .addValueEventListener(object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+
+                                        savedSights = (snapshot.value as HashMap<String, *>).entries
+                                            .stream()
+                                            .filter { sightEntry -> sightEntry.key.split("_")[1].toLong() in userSavedSightIds }
+                                            .map {
+                                                val sightInfo = it.value as HashMap<String, *>
+                                                Sight(
+                                                    sightInfo["sightId"] as Long,
+                                                    null,
+                                                    sightInfo["name"] as String,
+                                                    sightInfo["description"] as String,
+                                                    (sightInfo["rating"] as Double).toFloat(),
+                                                    (sightInfo["mainPhoto"] as Long).toInt(),
+                                                    mutableListOf()
+                                                )
+                                            }
+                                            .collect(Collectors.toList())
+                                        profileViewModel.savedSights.postValue(savedSights)
+                                    }
+
+                                    override fun onCancelled(error: DatabaseError) {
+                                        TODO("Not yet implemented")
+                                    }
+
+                                })
+
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            TODO("Not yet implemented")
+                        }
+
+                    })
+
+
+
+
+                database.getReference("completedSightAssociations")
+                    .addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            userCompletedSightIds = (snapshot.value as HashMap<String, *>).entries
+                                .stream()
+                                .filter { it.key == userAuthInfo.uid }
+                                .flatMap { (it.value as MutableList<Long>).stream() }
+                                .collect(Collectors.toList())
+
+                            database.getReference("sights")
+                                .addValueEventListener(object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+
+                                        completedSights =
+                                            (snapshot.value as HashMap<String, *>).entries
+                                                .stream()
+                                                .filter { sightEntry -> sightEntry.key.split("_")[1].toLong() in userCompletedSightIds }
+                                                .map {
+                                                    val sightInfo = it.value as HashMap<String, *>
+                                                    Sight(
+                                                        sightInfo["sightId"] as Long,
+                                                        null,
+                                                        sightInfo["name"] as String,
+                                                        sightInfo["description"] as String,
+                                                        (sightInfo["rating"] as Double).toFloat(),
+                                                        (sightInfo["mainPhoto"] as Long).toInt(),
+                                                        mutableListOf()
+                                                    )
+                                                }
+                                                .collect(Collectors.toList())
+                                        profileViewModel.completedSights.postValue(completedSights)
+                                    }
+
+                                    override fun onCancelled(error: DatabaseError) {
+                                        TODO("Not yet implemented")
+                                    }
+
+                                })
+
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            TODO("Not yet implemented")
+                        }
+
+                    })
+            })
 
             return root
         }

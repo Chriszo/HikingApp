@@ -8,6 +8,8 @@ import java.io.Serializable
 
 class RouteViewModel : ViewModel(), Serializable {
 
+    val currentRoutes = MutableLiveData<List<Route>>()
+
     val route = MutableLiveData<Route>()
 
     val elevationData = MutableLiveData<List<Long>>()
@@ -16,23 +18,23 @@ class RouteViewModel : ViewModel(), Serializable {
 
     val photos = MutableLiveData<List<Int>>()
 
-   /* fun defineRoute(r: Route) {
-        route.value = r
-    }
+    /* fun defineRoute(r: Route) {
+         route.value = r
+     }
 
-    fun setElevationData(elevationDataList: MutableList<Int>) {
-        route.value?.routeInfo?.elevationData = elevationDataList
-        elevationData.value = elevationDataList
-    }
+     fun setElevationData(elevationDataList: MutableList<Int>) {
+         route.value?.routeInfo?.elevationData = elevationDataList
+         elevationData.value = elevationDataList
+     }
 
-    fun setCultureInfo(updatedCultureInfo: CultureInfo) {
-        route.value?.cultureInfo = updatedCultureInfo
-        cultureInfo.value = updatedCultureInfo
-    }
+     fun setCultureInfo(updatedCultureInfo: CultureInfo) {
+         route.value?.cultureInfo = updatedCultureInfo
+         cultureInfo.value = updatedCultureInfo
+     }
 
-    fun setPhotos(updatedPhotosList: MutableList<Int>) {
-        route.value?.photos = updatedPhotosList
-        photos.value = updatedPhotosList
-    }*/
+     fun setPhotos(updatedPhotosList: MutableList<Int>) {
+         route.value?.photos = updatedPhotosList
+         photos.value = updatedPhotosList
+     }*/
 
 }
