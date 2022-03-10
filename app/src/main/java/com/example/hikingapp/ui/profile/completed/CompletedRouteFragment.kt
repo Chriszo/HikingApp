@@ -19,11 +19,14 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.MultiLineString
@@ -45,12 +48,19 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.util.*
 import java.util.stream.Collectors
+import kotlin.collections.HashMap
 
 class CompletedRouteFragment : Fragment() {
+
+    private lateinit var routeMap: String
 
     private val completedViewModel: CompletedViewModel by activityViewModels()
 
     private lateinit var route: Route
+
+    private val database: FirebaseDatabase by lazy {
+        FirebaseDatabase.getInstance()
+    }
 
     private val mapService: MapService by lazy {
         MapServiceImpl()
@@ -79,17 +89,38 @@ class CompletedRouteFragment : Fragment() {
             completedViewModel.photos.postValue(route.photos)
         }
 
-        GlobalScope.launch {
+        database.getReference("routeMaps").addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
 
-            if (completedViewModel.elevationData.value.isNullOrEmpty()) {
-                if(route.mapInfo == null) {
-                    route.mapInfo = mapService.getMapInformation(getJson(route.routeName))
+                routeMap = (snapshot.value as HashMap<String,*>).entries
+                    .stream()
+                    .filter { routeMapEntry ->  routeMapEntry.key.split("_")[1].toLong() == route.routeId}
+                    .map { it.value as String }
+                    .findFirst().orElse(null)
+
+                GlobalScope.launch {
+
+                    if (completedViewModel.elevationData.value.isNullOrEmpty()) {
+
+                        if(route.mapInfo == null) {
+                            route.mapInfo = mapService.getMapInformation(getJson())
+                        }
+
+                        route.routeInfo!!.elevationData = setRouteElevationData(route)
+
+                        completedViewModel.route.postValue(route)
+                        completedViewModel.elevationData.postValue(route.routeInfo!!.elevationData)
+                    }
                 }
-                route.routeInfo!!.elevationData = setRouteElevationData(route)
-                completedViewModel.route.postValue(route)
-                completedViewModel.elevationData.postValue(route.routeInfo!!.elevationData)
             }
-        }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+
+        })
+
+
 
         initializeNavigationComponents(view)
 
@@ -132,8 +163,8 @@ class CompletedRouteFragment : Fragment() {
         navView?.setupWithNavController(navController)
     }
 
-    private fun getJson(routeName: String?): String {
-        return requireContext().assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
+    private fun getJson(): String {
+        return requireContext().assets.open(routeMap).readBytes()
             .toString(Charsets.UTF_8)
     }
 

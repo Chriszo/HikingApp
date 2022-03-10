@@ -21,7 +21,6 @@ import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
 import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
-import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.utils.GlobalUtils
@@ -558,15 +557,18 @@ class SampleNavigationActivity : AppCompatActivity() {
         val routeName =
             if (intent.extras?.get("routeName") != null) intent.extras!!["routeName"] as String else ""
 
-        mapInfo = mapService.getMapInformation(getJson(routeName))
+        val routeMap =
+            if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
 
-       /* mapInfo = if (obj != null) {
-            println("Getting mapInfo from Intent")
-            obj as MapInfo
-        } else {
-            println("Getting mapInfo from retrieveMapInformation() method")
-            retrieveMapInformation(null)
-        }*/
+        mapInfo = mapService.getMapInformation(getJson(routeMap))
+
+        /* mapInfo = if (obj != null) {
+             println("Getting mapInfo from Intent")
+             obj as MapInfo
+         } else {
+             println("Getting mapInfo from retrieveMapInformation() method")
+             retrieveMapInformation(null)
+         }*/
 
 
         binding.textDistanceRemaining.text = getString(R.string.distance_remaining_empty)
@@ -834,8 +836,8 @@ class SampleNavigationActivity : AppCompatActivity() {
         mapboxNavigation.startTripSession()
     }
 
-    private fun getJson(routeName: String?): String {
-        return assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
+    private fun getJson(routeMap: String?): String {
+        return assets.open(routeMap!!).readBytes()
             .toString(Charsets.UTF_8)
     }
 

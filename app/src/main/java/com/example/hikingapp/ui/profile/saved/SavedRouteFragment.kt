@@ -20,7 +20,6 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
-import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.culture.CultureUtils
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
@@ -28,6 +27,10 @@ import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
@@ -53,11 +56,17 @@ import java.util.stream.Collectors
 
 class SavedRouteFragment : Fragment() {
 
+    private lateinit var routeMap: String
+
     private val routeViewModel: RouteViewModel by activityViewModels()
 
     private lateinit var mapService: MapService
 
     private lateinit var weatherService: WeatherService
+
+    private val database: FirebaseDatabase by lazy {
+        FirebaseDatabase.getInstance()
+    }
 
     private lateinit var route: Route
 
@@ -82,8 +91,6 @@ class SavedRouteFragment : Fragment() {
         mapService = MapServiceImpl()
         weatherService = WeatherServiceImpl()
 
-        route.mapInfo = mapService.getMapInformation(getJson(route.routeName))
-
         val removeBookmarkButton = view.route_remove_bookmark
 
         removeBookmarkButton.setOnClickListener {
@@ -91,46 +98,63 @@ class SavedRouteFragment : Fragment() {
             requireArguments().putSerializable("removeSaved", route)
         }
 
-        GlobalScope.launch {
+        database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
 
-            if (routeViewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
-                route.routeInfo!!.elevationData = setRouteElevationData(route)
+                routeMap = (snapshot.value as HashMap<String, *>).entries
+                    .stream()
+                    .filter { routeMapEntry -> routeMapEntry.key.split("_")[1].toLong() == route.routeId }
+                    .map { it.value as String }
+                    .findFirst().orElse(null)
+
+                route.mapInfo = mapService.getMapInformation(getJson())
+
+                GlobalScope.launch {
+
+                    if (routeViewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
+                        route.routeInfo!!.elevationData = setRouteElevationData(route)
+                    }
+
+                    val cultureInfoJob =
+                        if (routeViewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
+                            GlobalScope.launch {
+
+                                if (Objects.isNull(routeViewModel.cultureInfo.value)) {
+                                    route.cultureInfo =
+                                        CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+                                    routeViewModel.cultureInfo.postValue(route.cultureInfo)
+                                }
+                            }
+                        } else {
+                            null
+                        }
+
+                    val weatherInfoJob =
+                        if (routeViewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
+                            GlobalScope.launch {
+                                val weatherForecast = WeatherForecast()
+                                weatherForecast.weatherForecast = weatherService.getForecastForDays(
+                                    route.mapInfo!!.origin,
+                                    4,
+                                    getString(R.string.prodMode).toBooleanStrict()
+                                ) //TODO remove this test flag when in PROD
+                                route.weatherForecast = weatherForecast
+                            }
+                        } else {
+                            null
+                        }
+
+                    cultureInfoJob?.join()
+                    weatherInfoJob?.join()
+
+                    routeViewModel.route.postValue(route)
+                }
             }
 
-            val cultureInfoJob =
-                if (routeViewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
-                    GlobalScope.launch {
-
-                        if (Objects.isNull(routeViewModel.cultureInfo.value)) {
-                            route.cultureInfo =
-                                CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
-                            routeViewModel.cultureInfo.postValue(route.cultureInfo)
-                        }
-                    }
-                } else {
-                    null
-                }
-
-            val weatherInfoJob =
-                if (routeViewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
-                    GlobalScope.launch {
-                        val weatherForecast = WeatherForecast()
-                        weatherForecast.weatherForecast = weatherService.getForecastForDays(
-                            route.mapInfo!!.origin,
-                            4,
-                            getString(R.string.prodMode).toBooleanStrict()
-                        ) //TODO remove this test flag when in PROD
-                        route.weatherForecast = weatherForecast
-                    }
-                } else {
-                    null
-                }
-
-            cultureInfoJob?.join()
-            weatherInfoJob?.join()
-
-            routeViewModel.route.postValue(route)
-        }
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
 
         initializeNavigationComponents(view)
 
@@ -162,6 +186,7 @@ class SavedRouteFragment : Fragment() {
             activity?.let {
                 val intent = Intent(it, SampleMapActivity::class.java)
                 intent.putExtra("routeName", route.routeName)
+                intent.putExtra("routeMap", routeMap)
                 it.startActivity(intent)
             }
         }
@@ -171,6 +196,7 @@ class SavedRouteFragment : Fragment() {
             activity?.let {
                 val intent = Intent(it, SampleNavigationActivity::class.java)
                 intent.putExtra("routeName", route.routeName)
+                intent.putExtra("routeMap", routeMap)
                 it.startActivity(intent)
             }
         }
@@ -185,8 +211,8 @@ class SavedRouteFragment : Fragment() {
         navView?.setupWithNavController(navController)
     }
 
-    private fun getJson(routeName: String?): String {
-        return requireContext().assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
+    private fun getJson(): String {
+        return requireContext().assets.open(routeMap).readBytes()
             .toString(Charsets.UTF_8)
     }
 

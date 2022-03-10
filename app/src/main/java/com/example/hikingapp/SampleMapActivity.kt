@@ -15,7 +15,6 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
@@ -333,7 +332,9 @@ class SampleMapActivity : AppCompatActivity() {
         val routeName =
             if (intent.extras?.get("routeName") != null) intent.extras!!["routeName"] as String else ""
 
-        val mapInfo = mapService.getMapInformation(getJson(routeName))
+        val routeMap = if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
+
+        val mapInfo = mapService.getMapInformation(getJson(routeMap))
         route.mapInfo = mapInfo
 
         /* mapboxMap.addOnMapLoadedListener {
@@ -361,8 +362,8 @@ class SampleMapActivity : AppCompatActivity() {
             .toMutableList()
     }
 
-    private fun getJson(routeName: String?): String {
-        return assets.open(MockDatabase.routesMap[routeName]?.second!!).readBytes()
+    private fun getJson(routeMap: String?): String {
+        return assets.open(routeMap!!).readBytes()
             .toString(Charsets.UTF_8)
     }
 
