@@ -36,6 +36,7 @@ import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteListAdapter
 import com.example.hikingapp.ui.search.results.SearchResultsActivity
 import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -87,6 +88,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     }
 
     private val routeViewModel: RouteViewModel by activityViewModels()
+    private val userViewModel: UserViewModel by activityViewModels()
 
     private lateinit var progressDialog: ProgressDialog
 
@@ -471,6 +473,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         val intent = Intent(context, RouteActivity::class.java)
         intent.putExtra("route", currentRoutes[position])
         intent.putExtra("action", "normal")
+        intent.putExtra("authInfo", userViewModel.user.value)
         startActivity(intent)
     }
 

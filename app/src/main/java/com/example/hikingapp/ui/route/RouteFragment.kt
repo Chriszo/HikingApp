@@ -26,7 +26,9 @@ import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -61,6 +63,8 @@ class RouteFragment : Fragment() {
 
     private lateinit var route: Route
 
+    private var authInfo: FirebaseUser? = null
+
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
     }
@@ -79,6 +83,8 @@ class RouteFragment : Fragment() {
         if (viewModel.photos.value.isNullOrEmpty()) {
             viewModel.photos.postValue(route.photos)
         }
+
+        authInfo = requireArguments()["authInfo"] as FirebaseUser?
 
         mapService = MapServiceImpl()
         weatherService = WeatherServiceImpl()
@@ -172,6 +178,7 @@ class RouteFragment : Fragment() {
                 val intent = Intent(it, SampleNavigationActivity::class.java)
                 intent.putExtra("routeName", route.routeName)
                 intent.putExtra("routeMap", routeMap)
+                intent.putExtra("authInfo", authInfo)
                 it.startActivity(intent)
             }
         }

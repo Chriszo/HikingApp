@@ -292,8 +292,6 @@ class ProfileFragment : Fragment() {
                     })
 
 
-
-
                 database.getReference("completedSightAssociations")
                     .addValueEventListener(object : ValueEventListener {
                         override fun onDataChange(snapshot: DataSnapshot) {

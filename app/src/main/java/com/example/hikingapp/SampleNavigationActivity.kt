@@ -549,154 +549,148 @@ class SampleNavigationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         println("INTO CREATE")
         super.onCreate(savedInstanceState)
-        binding = ActivitySampleNavigationBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        mapboxMap = binding.mapView.getMapboxMap()
+        if (intent?.extras?.containsKey("authInfo") == true && intent!!.extras!!.get("authInfo") != null) {
 
-        val routeMap =
-            if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
+            binding = ActivitySampleNavigationBinding.inflate(layoutInflater)
+            setContentView(binding.root)
 
-        mapInfo = mapService.getMapInformation(getJson(routeMap), routeMap)
+            mapboxMap = binding.mapView.getMapboxMap()
 
-        /* mapInfo = if (obj != null) {
-             println("Getting mapInfo from Intent")
-             obj as MapInfo
-         } else {
-             println("Getting mapInfo from retrieveMapInformation() method")
-             retrieveMapInformation(null)
-         }*/
+            val routeMap =
+                if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
 
+            mapInfo = mapService.getMapInformation(getJson(routeMap), routeMap)
 
-        binding.textDistanceRemaining.text = getString(R.string.distance_remaining_empty)
+            binding.textDistanceRemaining.text = getString(R.string.distance_remaining_empty)
 
-        binding.textDistanceCovered.text = getString(R.string.distance_covered_empty)
+            binding.textDistanceCovered.text = getString(R.string.distance_covered_empty)
 
-        binding.textTimeEstimated.text = getString(R.string.estimated_time_empty)
+            binding.textTimeEstimated.text = getString(R.string.estimated_time_empty)
 
-//        binding.textTimeCovered.text = "Time: -"
-
-        // initialize the location puck
-        binding.mapView.location.apply {
-            this.locationPuck = LocationPuck2D(
-                bearingImage = ContextCompat.getDrawable(
-                    this@SampleNavigationActivity,
-                    R.drawable.mapbox_navigation_puck_icon
+            // initialize the location puck
+            binding.mapView.location.apply {
+                this.locationPuck = LocationPuck2D(
+                    bearingImage = ContextCompat.getDrawable(
+                        this@SampleNavigationActivity,
+                        R.drawable.mapbox_navigation_puck_icon
+                    )
                 )
+                setLocationProvider(navigationLocationProvider)
+                enabled = true
+            }
+            // initialize Mapbox Navigation
+            mapboxNavigation = if (MapboxNavigationProvider.isCreated()) {
+                MapboxNavigationProvider.retrieve()
+            } else {
+                MapboxNavigationProvider.create(
+                    NavigationOptions.Builder(this.applicationContext)
+                        .accessToken(getString(R.string.mapbox_access_token))
+                        // comment out the location engine setting block to disable simulation
+                        .locationEngine(replayLocationEngine)
+                        .build()
+                )
+            }
+
+            // initialize Navigation Camera
+            viewportDataSource = MapboxNavigationViewportDataSource(mapboxMap)
+            navigationCamera = NavigationCamera(
+                mapboxMap,
+                binding.mapView.camera,
+                viewportDataSource
             )
-            setLocationProvider(navigationLocationProvider)
-            enabled = true
-        }
-        // initialize Mapbox Navigation
-        mapboxNavigation = if (MapboxNavigationProvider.isCreated()) {
-            MapboxNavigationProvider.retrieve()
-        } else {
-            MapboxNavigationProvider.create(
-                NavigationOptions.Builder(this.applicationContext)
-                    .accessToken(getString(R.string.mapbox_access_token))
-                    // comment out the location engine setting block to disable simulation
-                    .locationEngine(replayLocationEngine)
+            // set the animations lifecycle listener to ensure the NavigationCamera stops
+            // automatically following the user location when the map is interacted with
+            binding.mapView.camera.addCameraAnimationsLifecycleListener(
+                NavigationBasicGesturesHandler(navigationCamera)
+            )
+            navigationCamera.registerNavigationCameraStateChangeObserver { navigationCameraState ->
+
+                // shows/hide the recenter button depending on the camera state
+                when (navigationCameraState) {
+                    NavigationCameraState.TRANSITION_TO_FOLLOWING -> binding.recenter.visibility =
+                        View.GONE
+                    NavigationCameraState.FOLLOWING -> binding.routeOverview.visibility =
+                        View.VISIBLE
+                    NavigationCameraState.TRANSITION_TO_OVERVIEW -> binding.routeOverview.visibility =
+                        View.GONE
+                    NavigationCameraState.OVERVIEW -> binding.recenter.visibility = View.VISIBLE
+                    NavigationCameraState.IDLE -> binding.routeOverview.visibility = View.GONE
+                    NavigationCameraState.IDLE -> binding.recenter.visibility = View.VISIBLE
+                }
+            }
+            // set the padding values depending on screen orientation and visible view layout
+            if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                viewportDataSource.overviewPadding = landscapeOverviewPadding
+            } else {
+                viewportDataSource.overviewPadding = overviewPadding
+            }
+            if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                viewportDataSource.followingPadding = landscapeFollowingPadding
+            } else {
+                viewportDataSource.followingPadding = followingPadding
+            }
+
+            // make sure to use the same DistanceFormatterOptions across different features
+            val distanceFormatterOptions =
+                mapboxNavigation.navigationOptions.distanceFormatterOptions
+                    .toBuilder()
+                    .unitType(UnitType.METRIC)
+                    .locale(Locale.ENGLISH)
+                    .build()
+
+            // initialize maneuver api that feeds the data to the top banner maneuver view
+            maneuverApi = MapboxManeuverApi(
+                MapboxDistanceFormatter(distanceFormatterOptions)
+            )
+
+            // initialize bottom progress view
+            tripProgressApi = MapboxTripProgressApi(
+                TripProgressUpdateFormatter.Builder(this)
+                    .distanceRemainingFormatter(
+                        DistanceRemainingFormatter(distanceFormatterOptions)
+                    )
+                    .timeRemainingFormatter(
+                        TimeRemainingFormatter(this)
+                    )
+                    .percentRouteTraveledFormatter(
+                        PercentDistanceTraveledFormatter()
+                    )
+                    .estimatedTimeToArrivalFormatter(
+                        EstimatedTimeToArrivalFormatter(this, TimeFormat.TWENTY_FOUR_HOURS)
+                    )
                     .build()
             )
-        }
 
-        // initialize Navigation Camera
-        viewportDataSource = MapboxNavigationViewportDataSource(mapboxMap)
-        navigationCamera = NavigationCamera(
-            mapboxMap,
-            binding.mapView.camera,
-            viewportDataSource
-        )
-        // set the animations lifecycle listener to ensure the NavigationCamera stops
-        // automatically following the user location when the map is interacted with
-        binding.mapView.camera.addCameraAnimationsLifecycleListener(
-            NavigationBasicGesturesHandler(navigationCamera)
-        )
-        navigationCamera.registerNavigationCameraStateChangeObserver { navigationCameraState ->
+            // initialize voice instructions api and the voice instruction player
+            speechApi = MapboxSpeechApi(
+                this,
+                getString(R.string.mapbox_access_token),
+                Locale.US.language
+            )
+            voiceInstructionsPlayer = MapboxVoiceInstructionsPlayer(
+                this,
+                getString(R.string.mapbox_access_token),
+                Locale.US.language
+            )
 
-            // shows/hide the recenter button depending on the camera state
-            when (navigationCameraState) {
-                NavigationCameraState.TRANSITION_TO_FOLLOWING -> binding.recenter.visibility =
-                    View.GONE
-                NavigationCameraState.FOLLOWING -> binding.routeOverview.visibility = View.VISIBLE
-                NavigationCameraState.TRANSITION_TO_OVERVIEW -> binding.routeOverview.visibility =
-                    View.GONE
-                NavigationCameraState.OVERVIEW -> binding.recenter.visibility = View.VISIBLE
-                NavigationCameraState.IDLE -> binding.routeOverview.visibility = View.GONE
-                NavigationCameraState.IDLE -> binding.recenter.visibility = View.VISIBLE
-            }
-        }
-        // set the padding values depending on screen orientation and visible view layout
-        if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            viewportDataSource.overviewPadding = landscapeOverviewPadding
-        } else {
-            viewportDataSource.overviewPadding = overviewPadding
-        }
-        if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            viewportDataSource.followingPadding = landscapeFollowingPadding
-        } else {
-            viewportDataSource.followingPadding = followingPadding
-        }
-
-        // make sure to use the same DistanceFormatterOptions across different features
-        val distanceFormatterOptions = mapboxNavigation.navigationOptions.distanceFormatterOptions
-            .toBuilder()
-            .unitType(UnitType.METRIC)
-            .locale(Locale.ENGLISH)
-            .build()
-
-        // initialize maneuver api that feeds the data to the top banner maneuver view
-        maneuverApi = MapboxManeuverApi(
-            MapboxDistanceFormatter(distanceFormatterOptions)
-        )
-
-        // initialize bottom progress view
-        tripProgressApi = MapboxTripProgressApi(
-            TripProgressUpdateFormatter.Builder(this)
-                .distanceRemainingFormatter(
-                    DistanceRemainingFormatter(distanceFormatterOptions)
-                )
-                .timeRemainingFormatter(
-                    TimeRemainingFormatter(this)
-                )
-                .percentRouteTraveledFormatter(
-                    PercentDistanceTraveledFormatter()
-                )
-                .estimatedTimeToArrivalFormatter(
-                    EstimatedTimeToArrivalFormatter(this, TimeFormat.TWENTY_FOUR_HOURS)
-                )
+            // initialize route line, the withRouteLineBelowLayerId is specified to place
+            // the route line below road labels layer on the map
+            // the value of this option will depend on the style that you are using
+            // and under which layer the route line should be placed on the map layers stack
+            val mapboxRouteLineOptions = MapboxRouteLineOptions.Builder(this)
+                .withRouteLineBelowLayerId("road-label")
                 .build()
-        )
+            routeLineApi = MapboxRouteLineApi(mapboxRouteLineOptions)
+            routeLineView = MapboxRouteLineView(mapboxRouteLineOptions)
 
-        // initialize voice instructions api and the voice instruction player
-        speechApi = MapboxSpeechApi(
-            this,
-            getString(R.string.mapbox_access_token),
-            Locale.US.language
-        )
-        voiceInstructionsPlayer = MapboxVoiceInstructionsPlayer(
-            this,
-            getString(R.string.mapbox_access_token),
-            Locale.US.language
-        )
+            // initialize maneuver arrow view to draw arrows on the map
+            val routeArrowOptions = RouteArrowOptions.Builder(this).build()
+            routeArrowView = MapboxRouteArrowView(routeArrowOptions)
 
-        // initialize route line, the withRouteLineBelowLayerId is specified to place
-        // the route line below road labels layer on the map
-        // the value of this option will depend on the style that you are using
-        // and under which layer the route line should be placed on the map layers stack
-        val mapboxRouteLineOptions = MapboxRouteLineOptions.Builder(this)
-            .withRouteLineBelowLayerId("road-label")
-            .build()
-        routeLineApi = MapboxRouteLineApi(mapboxRouteLineOptions)
-        routeLineView = MapboxRouteLineView(mapboxRouteLineOptions)
-
-        // initialize maneuver arrow view to draw arrows on the map
-        val routeArrowOptions = RouteArrowOptions.Builder(this).build()
-        routeArrowView = MapboxRouteArrowView(routeArrowOptions)
-
-        mapboxMap.loadStyle(
-            (
-                    style(styleUri = Style.SATELLITE) {
+            mapboxMap.loadStyle(
+                (
+                        style(styleUri = Style.SATELLITE) {
 //                        +geoJsonSource("line") {
 ////                            url("asset://seichsou_trail.geojson")
 //                            url("asset://" + mapInfo?.routeGeoJsonFileName)
@@ -708,129 +702,140 @@ class SampleNavigationActivity : AppCompatActivity() {
 //                            lineWidth(8.0)
 //                            lineColor("#FF0000")
 //                        }
-                        +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
-                            featureCollection(
-                                FeatureCollection.fromFeatures(
-                                    listOf(
-                                        Feature.fromGeometry(
-                                            Point.fromLngLat(
-                                                mapInfo!!.origin.longitude(),
-                                                mapInfo!!.origin.latitude()
-                                            )
-                                        ),
-                                        Feature.fromGeometry(
-                                            Point.fromLngLat(
-                                                mapInfo!!.destination.longitude(),
-                                                mapInfo!!.destination.latitude()
+                            +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
+                                featureCollection(
+                                    FeatureCollection.fromFeatures(
+                                        listOf(
+                                            Feature.fromGeometry(
+                                                Point.fromLngLat(
+                                                    mapInfo!!.origin.longitude(),
+                                                    mapInfo!!.origin.latitude()
+                                                )
+                                            ),
+                                            Feature.fromGeometry(
+                                                Point.fromLngLat(
+                                                    mapInfo!!.destination.longitude(),
+                                                    mapInfo!!.destination.latitude()
+                                                )
                                             )
                                         )
                                     )
                                 )
-                            )
+                            }
+                            +image(GlobalUtils.RED_MARKER_ID) {
+                                bitmap(
+                                    BitmapFactory.decodeResource(
+                                        resources,
+                                        R.drawable.red_marker
+                                    )
+                                )
+                            }
+                            +symbolLayer(
+                                GlobalUtils.SYMBOL_LAYER_ID,
+                                GlobalUtils.SYMBOL_SOURCE_ID
+                            ) {
+                                iconImage(GlobalUtils.RED_MARKER_ID)
+                                iconAllowOverlap(true)
+                                iconSize(0.5)
+                                iconIgnorePlacement(true)
+                            }
                         }
-                        +image(GlobalUtils.RED_MARKER_ID) {
-                            bitmap(BitmapFactory.decodeResource(resources, R.drawable.red_marker))
-                        }
-                        +symbolLayer(GlobalUtils.SYMBOL_LAYER_ID, GlobalUtils.SYMBOL_SOURCE_ID) {
-                            iconImage(GlobalUtils.RED_MARKER_ID)
-                            iconAllowOverlap(true)
-                            iconSize(0.5)
-                            iconIgnorePlacement(true)
-                        }
-                    }
-                    ),
-            {
+                        ),
+                {
 //                mapboxMap.addOnMapLoadedListener {
 //                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
 //                }
-            },
-            object : OnMapLoadErrorListener {
-                override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
-                    Log.e(
-                        SampleNavigationActivity::class.java.simpleName,
-                        "Error loading map: " + eventData.message
-                    )
+                },
+                object : OnMapLoadErrorListener {
+                    override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
+                        Log.e(
+                            SampleNavigationActivity::class.java.simpleName,
+                            "Error loading map: " + eventData.message
+                        )
+                    }
                 }
+            )
+
+            // initialize view interactions
+            binding.stop.setOnClickListener {
+                clearRouteAndStopNavigation()
+                // TODO Go to another Fragment/ Activity (?)
             }
-        )
 
-        // initialize view interactions
-        binding.stop.setOnClickListener {
-            clearRouteAndStopNavigation()
-            // TODO Go to another Fragment/ Activity (?)
-        }
+            // Action which starts the Navigation
+            binding.play.setOnClickListener {
+                if (mapboxNavigation.getRoutes().isEmpty()) {
 
-        // Action which starts the Navigation
-        binding.play.setOnClickListener {
-            if (mapboxNavigation.getRoutes().isEmpty()) {
+                    val routePoints = if (mapInfo!!.jsonRoute is MultiLineString) {
+                        (mapInfo!!.jsonRoute as MultiLineString).coordinates()[0]
+                    } else {
+                        (mapInfo!!.jsonRoute as LineString).coordinates()
+                    }
 
-                val routePoints = if (mapInfo!!.jsonRoute is MultiLineString) {
-                    (mapInfo!!.jsonRoute as MultiLineString).coordinates()[0]
+                    /*  val totalRouteDistance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                          computeTotalDistance(routePoints)
+                      } else {
+                          TODO("VERSION.SDK_INT < N")
+                      }
+    
+                      val modulo = (totalRouteDistance / 300).roundToInt()
+                      val checkPoints = routePoints.withIndex()
+                          .filter { it.index % modulo == 0 && it.index != 0 && it.index != routePoints.size - 1 }
+                          .map { it.index }*/
+
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        defineRoute(routePoints)
+                    }
+
                 } else {
-                    (mapInfo!!.jsonRoute as LineString).coordinates()
+                    resumeNavigation()
                 }
-
-                /*  val totalRouteDistance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                      computeTotalDistance(routePoints)
-                  } else {
-                      TODO("VERSION.SDK_INT < N")
-                  }
-
-                  val modulo = (totalRouteDistance / 300).roundToInt()
-                  val checkPoints = routePoints.withIndex()
-                      .filter { it.index % modulo == 0 && it.index != 0 && it.index != routePoints.size - 1 }
-                      .map { it.index }*/
-
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    defineRoute(routePoints)
-                }
-
-            } else {
-                resumeNavigation()
+                binding.play.visibility = View.GONE
+                binding.pause.visibility = View.VISIBLE
             }
-            binding.play.visibility = View.GONE
-            binding.pause.visibility = View.VISIBLE
-        }
-        binding.pause.setOnClickListener {
-            pauseNavigation()
-            binding.play.visibility = View.VISIBLE
-            binding.pause.visibility = View.GONE
-        }
-        binding.lostButton.setOnClickListener {
-            // TODO Inform Contacts for being lost functionality
-        }
+            binding.pause.setOnClickListener {
+                pauseNavigation()
+                binding.play.visibility = View.VISIBLE
+                binding.pause.visibility = View.GONE
+            }
+            binding.lostButton.setOnClickListener {
+                // TODO Inform Contacts for being lost functionality
+            }
 
-        binding.recenter.setOnClickListener {
-            navigationCamera.requestNavigationCameraToFollowing()
-            binding.routeOverview.showTextAndExtend(BUTTON_ANIMATION_DURATION)
-        }
-        binding.routeOverview.setOnClickListener {
-            navigationCamera.requestNavigationCameraToOverview()
-            binding.recenter.showTextAndExtend(BUTTON_ANIMATION_DURATION)
-        }
-        binding.soundButton.setOnClickListener {
-            // mute/unmute voice instructions
-            isVoiceInstructionsMuted = !isVoiceInstructionsMuted
-        }
-        binding.cameraButton.setOnClickListener {
+            binding.recenter.setOnClickListener {
+                navigationCamera.requestNavigationCameraToFollowing()
+                binding.routeOverview.showTextAndExtend(BUTTON_ANIMATION_DURATION)
+            }
+            binding.routeOverview.setOnClickListener {
+                navigationCamera.requestNavigationCameraToOverview()
+                binding.recenter.showTextAndExtend(BUTTON_ANIMATION_DURATION)
+            }
+            binding.soundButton.setOnClickListener {
+                // mute/unmute voice instructions
+                isVoiceInstructionsMuted = !isVoiceInstructionsMuted
+            }
+            binding.cameraButton.setOnClickListener {
 
-            //TODO change permission granting
-            val cameraRequest = 1888
-            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
-                requestPermissions(arrayOf(Manifest.permission.CAMERA), cameraRequest)
+                //TODO change permission granting
+                val cameraRequest = 1888
+                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
+                    requestPermissions(arrayOf(Manifest.permission.CAMERA), cameraRequest)
 
 
-            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            startActivityForResult(cameraIntent, cameraRequest)
+                val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                startActivityForResult(cameraIntent, cameraRequest)
+            }
+
+            // set initial sounds button state
+            binding.soundButton.unmute()
+
+            // start the trip session to being receiving location updates in free drive
+            // and later when a route is set also receiving route progress updates
+            mapboxNavigation.startTripSession()
+        } else {
+            startActivity(Intent(this, LoginActivity::class.java))
         }
-
-        // set initial sounds button state
-        binding.soundButton.unmute()
-
-        // start the trip session to being receiving location updates in free drive
-        // and later when a route is set also receiving route progress updates
-        mapboxNavigation.startTripSession()
     }
 
     private fun getJson(routeMap: String?): String {
@@ -843,42 +848,46 @@ class SampleNavigationActivity : AppCompatActivity() {
         super.onStart()
         println("INTO START")
 
-        // register event listeners
-        mapboxNavigation.registerRoutesObserver(routesObserver)
-        mapboxNavigation.registerRouteProgressObserver(routeProgressObserver)
-        mapboxNavigation.registerLocationObserver(locationObserver)
-        mapboxNavigation.registerVoiceInstructionsObserver(voiceInstructionsObserver)
-        mapboxNavigation.registerRouteProgressObserver(replayProgressObserver)
-        mapboxNavigation.setArrivalController(arrivalController)
-        mapboxNavigation.registerArrivalObserver(arrivalObserver)
+        if (intent?.extras?.containsKey("authInfo") == true && intent!!.extras!!.get("authInfo") != null) {
+            mapboxNavigation.registerRoutesObserver(routesObserver)
+            mapboxNavigation.registerRouteProgressObserver(routeProgressObserver)
+            mapboxNavigation.registerLocationObserver(locationObserver)
+            mapboxNavigation.registerVoiceInstructionsObserver(voiceInstructionsObserver)
+            mapboxNavigation.registerRouteProgressObserver(replayProgressObserver)
+            mapboxNavigation.setArrivalController(arrivalController)
+            mapboxNavigation.registerArrivalObserver(arrivalObserver)
 
-        if (mapboxNavigation.getRoutes().isEmpty()) {
-            // if simulation is enabled (ReplayLocationEngine set to NavigationOptions)
-            // but we're not simulating yet,
-            // push a single location sample to establish origin
-            mapboxReplayer.pushEvents(
-                listOf(
-                    ReplayRouteMapper.mapToUpdateLocation(
-                        eventTimestamp = 0.0,
-                        point = mapInfo!!.origin
+            if (mapboxNavigation.getRoutes().isEmpty()) {
+                // if simulation is enabled (ReplayLocationEngine set to NavigationOptions)
+                // but we're not simulating yet,
+                // push a single location sample to establish origin
+                mapboxReplayer.pushEvents(
+                    listOf(
+                        ReplayRouteMapper.mapToUpdateLocation(
+                            eventTimestamp = 0.0,
+                            point = mapInfo!!.origin
+                        )
                     )
                 )
-            )
-            mapboxReplayer.playFirstLocation()
+                mapboxReplayer.playFirstLocation()
+            }
         }
+        // register event listeners
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onStop() {
         super.onStop()
+        if (intent?.extras?.containsKey("authInfo") == true && intent!!.extras!!.get("authInfo") != null) {
 
-        // unregister event listeners to prevent leaks or unnecessary resource consumption
-        mapboxNavigation.unregisterRoutesObserver(routesObserver)
-        mapboxNavigation.unregisterRouteProgressObserver(routeProgressObserver)
-        mapboxNavigation.unregisterLocationObserver(locationObserver)
-        mapboxNavigation.unregisterVoiceInstructionsObserver(voiceInstructionsObserver)
-        mapboxNavigation.unregisterRouteProgressObserver(replayProgressObserver)
-        mapboxNavigation.unregisterArrivalObserver(arrivalObserver)
+            // unregister event listeners to prevent leaks or unnecessary resource consumption
+            mapboxNavigation.unregisterRoutesObserver(routesObserver)
+            mapboxNavigation.unregisterRouteProgressObserver(routeProgressObserver)
+            mapboxNavigation.unregisterLocationObserver(locationObserver)
+            mapboxNavigation.unregisterVoiceInstructionsObserver(voiceInstructionsObserver)
+            mapboxNavigation.unregisterRouteProgressObserver(replayProgressObserver)
+            mapboxNavigation.unregisterArrivalObserver(arrivalObserver)
+        }
     }
 
     override fun onDestroy() {
