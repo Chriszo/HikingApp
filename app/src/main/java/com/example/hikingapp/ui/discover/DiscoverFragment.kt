@@ -53,7 +53,6 @@ import kotlin.concurrent.schedule
 
 class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
-    private lateinit var discoverViewModel: DiscoverViewModel
     private var _binding: FragmentDiscoverBinding? = null
 
     private val locationManager by lazy {
@@ -146,17 +145,67 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         progressDialog.setCanceledOnTouchOutside(false)
 
 
+        searchView = root.findViewById(R.id.search_bar) as AutoCompleteTextView
+        searchOptionsFrame = root.findViewById(R.id.search_options_layout) as LinearLayout
+
+
         // TODO Populate with database Data
+        searchView.addTextChangedListener {
+            searchTerm = it.toString()
+        }
 
-        database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                println(snapshot)
+        searchView.setOnItemClickListener { _, view, _, _ ->
+
+            if (searchOptionsFrame.visibility == View.VISIBLE) {
+                searchOptionsFrame.visibility = View.GONE
             }
+            searchRoutes(view.searchItem.text.toString(), currentRoutes)
+        }
 
-            override fun onCancelled(error: DatabaseError) {
+        root.search_icon.setOnTouchListener { v, event ->
+
+            if (event.action == MotionEvent.ACTION_UP) {
+                v.performClick()
+                if (StringUtils.isNotBlank(searchTerm)) {
+                    if (searchOptionsFrame.visibility == View.VISIBLE) {
+                        searchOptionsFrame.visibility = View.GONE
+                    }
+                    searchRoutes(searchTerm, currentRoutes)
+                }
             }
+            true
+        }
 
-        })
+        root.search_menu_icon.setOnTouchListener { v, event ->
+
+            if (event.action == MotionEvent.ACTION_UP) {
+                v.performClick()
+                if (searchOptionsFrame.visibility == View.VISIBLE) {
+                    searchOptionsFrame.visibility = View.GONE
+                    routesRecyclerView.alpha = 1f
+                } else {
+                    searchOptionsFrame.visibility = View.VISIBLE
+                    routesRecyclerView.alpha = 0.4f
+                }
+            }
+            true
+        }
+
+
+        searchView.setOnKeyListener { _, keyCode, _ ->
+
+            when (keyCode) {
+                KeyEvent.KEYCODE_ENTER -> {
+                    if (StringUtils.isNotBlank(searchTerm)) {
+                        if (searchOptionsFrame.visibility == View.VISIBLE) {
+                            searchOptionsFrame.visibility = View.GONE
+                        }
+                        searchRoutes(searchTerm, currentRoutes)
+                    }
+                }
+            }
+            true
+        }
 
 
         database.getReference("routes").addValueEventListener(object : ValueEventListener {
@@ -197,10 +246,6 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
                 setFiltersScreenListeners(root)
 
-                searchView = root.findViewById(R.id.search_bar) as AutoCompleteTextView
-                searchOptionsFrame = root.findViewById(R.id.search_options_layout) as LinearLayout
-
-
                 val routeNames =
                     currentRoutes.stream().map { it.routeName }.collect(Collectors.toList())
 
@@ -208,63 +253,6 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                     ArrayAdapter<String>(requireContext(), R.layout.simple_item, routeNames)
 
                 searchView.setAdapter(routeNamesAdapter)
-
-                searchView.addTextChangedListener {
-                    searchTerm = it.toString()
-                }
-
-                searchView.setOnItemClickListener { _, view, _, _ ->
-
-                    if (searchOptionsFrame.visibility == View.VISIBLE) {
-                        searchOptionsFrame.visibility = View.GONE
-                    }
-                    searchRoutes(view.searchItem.text.toString())
-                }
-
-                root.search_icon.setOnTouchListener { v, event ->
-
-                    if (event.action == MotionEvent.ACTION_UP) {
-                        v.performClick()
-                        if (StringUtils.isNotBlank(searchTerm)) {
-                            if (searchOptionsFrame.visibility == View.VISIBLE) {
-                                searchOptionsFrame.visibility = View.GONE
-                            }
-                            searchRoutes(searchTerm)
-                        }
-                    }
-                    true
-                }
-
-                root.search_menu_icon.setOnTouchListener { v, event ->
-
-                    if (event.action == MotionEvent.ACTION_UP) {
-                        v.performClick()
-                        if (searchOptionsFrame.visibility == View.VISIBLE) {
-                            searchOptionsFrame.visibility = View.GONE
-                            routesRecyclerView.alpha = 1f
-                        } else {
-                            searchOptionsFrame.visibility = View.VISIBLE
-                            routesRecyclerView.alpha = 0.4f
-                        }
-                    }
-                    true
-                }
-
-
-                searchView.setOnKeyListener { _, keyCode, _ ->
-
-                    when (keyCode) {
-                        KeyEvent.KEYCODE_ENTER -> {
-                            if (StringUtils.isNotBlank(searchTerm)) {
-                                if (searchOptionsFrame.visibility == View.VISIBLE) {
-                                    searchOptionsFrame.visibility = View.GONE
-                                }
-                                searchRoutes(searchTerm)
-                            }
-                        }
-                    }
-                    true
-                }
                 progressDialog.dismiss()
 
             }
@@ -280,26 +268,80 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun searchRoutes(searchValue: String) {
-        if (searchValue.length >= 4 && searchType == SearchType.BY_PLACE) {
-            routeSearchResults = SearchUtils.searchByPlace(searchValue)
+    private fun searchRoutes(searchValue: String, routes: List<Route>) {
 
-            if (routeSearchResults.isNullOrEmpty()) {
-                timer.cancel()
-                timer = Timer()
-                timer.schedule(500) {
-                    GlobalScope.launch {
+        database.getReference("keywords").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
 
-                        routeSearchResults = SearchUtils.performGeocodingAPICall(
-                            userLocation,
-                            searchValue
-                        )
+                val keywords = (snapshot.value as HashMap<String, Long>)
+
+                if (searchValue.length >= 4 && searchType == SearchType.BY_PLACE) {
+                    routeSearchResults = SearchUtils.searchByPlace(searchValue, routes, keywords)
+
+                    if (routeSearchResults.isNullOrEmpty()) {
+
+                        database.getReference("mapData")
+                            .addValueEventListener(object : ValueEventListener {
+                                override fun onDataChange(snapshot: DataSnapshot) {
+                                    timer.cancel()
+                                    timer = Timer()
+                                    timer.schedule(500) {
+
+                                        val originsMap = mutableMapOf<String, Point>()
+
+                                        (snapshot.value as HashMap<String, *>).entries
+                                            .forEach { routeEntry ->
+
+                                                val originPoint =
+                                                    (routeEntry.value as HashMap<String, *>).entries
+                                                        .stream()
+                                                        .filter { it.key == "origin" }
+                                                        .map {
+                                                            val point =
+                                                                it.value as HashMap<String, *>
+                                                            Point.fromLngLat(
+                                                                point["longitude"] as Double,
+                                                                point["latitude"] as Double
+                                                            )
+                                                        }
+                                                        .findFirst()
+                                                        .orElse(null)
+                                                originsMap.putIfAbsent(routeEntry.key, originPoint)
+                                            }
+
+
+                                        GlobalScope.launch {
+
+                                            routeSearchResults =
+                                                SearchUtils.performGeocodingAPICall(
+                                                    userLocation,
+                                                    searchValue,
+                                                    routes,
+                                                    originsMap
+                                                )
+                                        }
+                                    }
+                                }
+
+                                override fun onCancelled(error: DatabaseError) {
+                                    TODO("Not yet implemented")
+                                }
+
+                            })
+
+
+                    } else {
+                        navigateToSearchResults()
                     }
                 }
-            } else {
-                navigateToSearchResults()
             }
-        }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+
+        })
+
     }
 
     private fun navigateToSearchResults() {
@@ -315,36 +357,70 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     @RequiresApi(Build.VERSION_CODES.N)
     private fun setButtonListeners(root: View) {
 
-        root.search_by_position.setOnClickListener {
 
-            if (root.search_bar.visibility == View.VISIBLE) {
-                routeSearchResults = SearchUtils.searchByPosition(userLocation)
-                navigateToSearchResults()
-                searchOptionsFrame.visibility = View.GONE
-                routesRecyclerView.alpha = 1f
-            } else {
-                root.search_bar.visibility = View.VISIBLE
+        database.getReference("mapData").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+
+                val originsMap = mutableMapOf<String, Point>()
+
+                (snapshot.value as HashMap<String, *>).entries
+                    .forEach { routeEntry ->
+
+                        val originPoint = (routeEntry.value as HashMap<String, *>).entries
+                            .stream()
+                            .filter { it.key == "origin" }
+                            .map {
+                                val point = it.value as HashMap<String, *>
+                                Point.fromLngLat(
+                                    point["longitude"] as Double,
+                                    point["latitude"] as Double
+                                )
+                            }
+                            .findFirst()
+                            .orElse(null)
+                        originsMap.putIfAbsent(routeEntry.key, originPoint)
+                    }
+
+
+                root.search_by_position.setOnClickListener {
+
+                    if (root.search_bar.visibility == View.VISIBLE) {
+                        routeSearchResults =
+                            SearchUtils.searchByPosition(userLocation, currentRoutes, originsMap)
+                        navigateToSearchResults()
+                        searchOptionsFrame.visibility = View.GONE
+                        routesRecyclerView.alpha = 1f
+                    } else {
+                        root.search_bar.visibility = View.VISIBLE
+                    }
+                }
+
+                root.search_by_filters.setOnClickListener {
+                    BottomSheetBehavior.from(_binding!!.filterSheet).apply {
+                        searchOptionsFrame.visibility = View.GONE
+                        this.state = BottomSheetBehavior.STATE_EXPANDED
+                        searchFiltersWrapperBuilder = SearchFiltersWrapper.Builder()
+                    }
+                }
+
+                root.btn_filters_ok.setOnClickListener {
+                    BottomSheetBehavior.from(_binding!!.filterSheet).apply {
+
+                        this.state = BottomSheetBehavior.STATE_COLLAPSED
+                        val searchFilters = searchFiltersWrapperBuilder.build()
+                        routeSearchResults =
+                            SearchUtils.searchByFilters(searchFilters, currentRoutes)
+                                .toMutableList()
+                        navigateToSearchResults()
+                        routesRecyclerView.alpha = 1f
+                    }
+                }
             }
-        }
 
-        root.search_by_filters.setOnClickListener {
-            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
-                searchOptionsFrame.visibility = View.GONE
-                this.state = BottomSheetBehavior.STATE_EXPANDED
-                searchFiltersWrapperBuilder = SearchFiltersWrapper.Builder()
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
             }
-        }
-
-        root.btn_filters_ok.setOnClickListener {
-            BottomSheetBehavior.from(_binding!!.filterSheet).apply {
-
-                this.state = BottomSheetBehavior.STATE_COLLAPSED
-                val searchFilters = searchFiltersWrapperBuilder.build()
-                routeSearchResults = SearchUtils.searchByFilters(searchFilters).toMutableList()
-                navigateToSearchResults()
-                routesRecyclerView.alpha = 1f
-            }
-        }
+        })
     }
 
     private fun setFiltersScreenListeners(view: View) {

@@ -5,8 +5,8 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.hikingapp.TransliterationRules
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.search.searchResults.SearchResult
+import com.google.firebase.database.FirebaseDatabase
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import com.mapbox.search.*
@@ -21,11 +21,14 @@ import java.util.stream.Collectors
 import kotlin.math.*
 
 
-// TODO Change mock data with Firebase Realtime Database data
 class SearchUtils {
 
 
     companion object {
+
+        private val database: FirebaseDatabase by lazy {
+            FirebaseDatabase.getInstance()
+        }
 
         private const val earthRadius = 6371
 
@@ -47,30 +50,41 @@ class SearchUtils {
         )
 
         @RequiresApi(Build.VERSION_CODES.N)
-        fun searchByPlace(placeName: String): MutableList<Route> {
+        fun searchByPlace(
+            placeName: String,
+            routes: List<Route>,
+            keywords: HashMap<String, Long>
+        ): MutableList<Route> {
 
-            return Optional.ofNullable(MockDatabase.mockSearchResults
+            val foundRouteIds = keywords.entries
                 .stream()
-                .filter { containsKeyword(it.first, placeName) }
-                .map { it.third }
-                .collect(Collectors.toList()))
-                .orElse(listOf())
+                .filter { StringUtils.containsIgnoreCase(it.key, placeName) }
+                .map {
+                    it.value
+                }.distinct().collect(Collectors.toSet())
 
+            return Optional.ofNullable(routes
+                .stream()
+                .filter { foundRouteIds.contains(it.routeId) }
+                .collect(Collectors.toList()).toMutableList()).orElse(
+                mutableListOf()
+            )
         }
 
         @RequiresApi(Build.VERSION_CODES.N)
-        fun searchByPosition(userLocation: Point): MutableList<Route> {
+        fun searchByPosition(
+            userLocation: Point,
+            allRoutes: MutableList<Route>,
+            originsMap: MutableMap<String, Point>
+        ): MutableList<Route> {
 
-            return MockDatabase.mockSearchResults
+            return allRoutes
                 .stream()
+                .filter { originsMap.containsKey("route_${it.routeId}") }
                 .sorted(compareBy {
-                    distance(userLocation, it.second)
+                    distance(userLocation, originsMap["route_${it.routeId}"]!!)
                 })
-                .map {
-                    it.third
-                }
                 .collect(Collectors.toList())
-
         }
 
         private fun distance(point1: Point, point2: Point): Double {
@@ -111,15 +125,11 @@ class SearchUtils {
         }
 
         @RequiresApi(Build.VERSION_CODES.N)
-        private fun containsKeyword(it: Set<String>, keyword: String): Boolean {
-
-            return it.stream().anyMatch { StringUtils.containsIgnoreCase(it, keyword) }
-        }
-
-        @RequiresApi(Build.VERSION_CODES.N)
         suspend fun performGeocodingAPICall(
             usersPoint: Point,
-            keyword: String
+            keyword: String,
+            routes: List<Route>,
+            originsMap: MutableMap<String, Point>
         ): MutableList<Route> {
 
             val client = OkHttpClient()
@@ -176,7 +186,7 @@ class SearchUtils {
                 )
             }
 
-            val routes: MutableList<Route> = mutableListOf()
+            val foundRoutes: MutableList<Route> = mutableListOf()
             if (searchResults.isCompleted) {
                 try {
 
@@ -191,30 +201,33 @@ class SearchUtils {
                         }.forEach { dto ->
 
                             val topResults =
-                                MockDatabase.mockSearchResults // TODO Replace with database call somewhere
+                                routes
                                     .stream()
                                     .map { route ->
                                         val partialDisplayName = dto.displayName.split(",")[0]
                                         val threshold =
-                                            if (partialDisplayName.length > route.third.routeName!!.length) route.third.routeName!!.length / 2 else partialDisplayName.length / 2
+                                            if (partialDisplayName.length > route.routeName!!.length) route.routeName!!.length / 2 else partialDisplayName.length / 2
                                         val levenshteinDistance =
                                             LevenshteinDetailedDistance(threshold)
                                         println("Threshold: " + levenshteinDistance.threshold)
                                         println(
-                                            "Term1: " + dto.displayName.split(",")[0] + " -- Term2: " + route.third.routeName + " = " + levenshteinDistance.apply(
+                                            "Term1: " + dto.displayName.split(",")[0] + " -- Term2: " + route.routeName + " = " + levenshteinDistance.apply(
                                                 dto.displayName.split(",")[0],
-                                                route.third.routeName
+                                                route.routeName
                                             ).distance
                                         )
 
                                         val searchRating = (1.0.div(
                                             levenshteinDistance.apply(
                                                 dto.displayName.split(",")[0],
-                                                route.third.routeName
+                                                route.routeName
                                             ).distance
                                         )).times(
                                             1.0.div(
-                                                distance(dto.point, route.second)
+                                                distance(
+                                                    dto.point,
+                                                    originsMap["route_${route.routeId}"]!!
+                                                )
                                             )
                                         )
                                         dto.searchRating = searchRating
@@ -231,14 +244,14 @@ class SearchUtils {
 
                             topResults.reverse()
                             topResults.forEach {
-                                routes.add(it.third)
+                                foundRoutes.add(it)
                             }
                         }
                 } catch (e: Exception) {
                     println(e)
                 }
             }
-            return routes
+            return foundRoutes
             /*forEach {
 
                 val displayName = it.getStringProperty("display_name")
@@ -273,22 +286,25 @@ class SearchUtils {
         }
 
         @RequiresApi(Build.VERSION_CODES.N)
-        fun searchByFilters(searchFilters: SearchFiltersWrapper): List<Route> {
+        fun searchByFilters(
+            searchFilters: SearchFiltersWrapper,
+            currentRoutes: MutableList<Route>
+        ): List<Route> {
 
             val distanceFilter = if (searchFilters.distance > 0.0) searchFilters.distance else -1.0
             val ratingFilter = if (searchFilters.rating > 0f) searchFilters.rating else -1f
 
-            return MockDatabase.mockSearchResults
+            return currentRoutes
                 .stream()
                 .filter {
-                    (it.third.routeInfo?.distance!! / 1000.0 <= distanceFilter) || (distanceFilter == -1.0) // find routes with distance less than or equal to provided distance filter
+                    (it.routeInfo?.distance!! / 1000.0 <= distanceFilter) || (distanceFilter == -1.0) // find routes with distance less than or equal to provided distance filter
                 }
                 .filter {
-                    (it.third.routeInfo?.rating!! >= ratingFilter) || (ratingFilter == -1f) // find routes with rating greater than or equal to provided rating filter
+                    (it.routeInfo?.rating!! >= ratingFilter) || (ratingFilter == -1f) // find routes with rating greater than or equal to provided rating filter
                 }
-                .filter { it.third.routeInfo?.difficultyLevel == searchFilters.difficultyLevel || searchFilters.difficultyLevel == null }
-                .filter { it.third.routeInfo?.routeType == searchFilters.type || searchFilters.type == null }
-                .map { it.third }
+                .filter { it.routeInfo?.difficultyLevel == searchFilters.difficultyLevel || searchFilters.difficultyLevel == null }
+                .filter { it.routeInfo?.routeType == searchFilters.type || searchFilters.type == null }
+                .map { it }
                 .sorted(compareBy {
                     it.routeInfo!!.rating  // Sorting by rating. Maybe define a sorting for distance from user's location
                 })
