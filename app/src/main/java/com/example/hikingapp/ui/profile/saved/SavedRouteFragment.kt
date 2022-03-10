@@ -107,7 +107,7 @@ class SavedRouteFragment : Fragment() {
                     .map { it.value as String }
                     .findFirst().orElse(null)
 
-                route.mapInfo = mapService.getMapInformation(getJson())
+                route.mapInfo = mapService.getMapInformation(getJson(), routeMap)
 
                 GlobalScope.launch {
 

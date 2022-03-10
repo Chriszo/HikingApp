@@ -329,12 +329,10 @@ class SampleMapActivity : AppCompatActivity() {
 
         //TODO Retrieve current Route Map information
         val route = Route()
-        val routeName =
-            if (intent.extras?.get("routeName") != null) intent.extras!!["routeName"] as String else ""
 
         val routeMap = if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
 
-        val mapInfo = mapService.getMapInformation(getJson(routeMap))
+        val mapInfo = mapService.getMapInformation(getJson(routeMap), routeMap)
         route.mapInfo = mapInfo
 
         /* mapboxMap.addOnMapLoadedListener {

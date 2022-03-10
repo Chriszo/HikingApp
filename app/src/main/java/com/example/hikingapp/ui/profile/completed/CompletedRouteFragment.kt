@@ -103,7 +103,7 @@ class CompletedRouteFragment : Fragment() {
                     if (completedViewModel.elevationData.value.isNullOrEmpty()) {
 
                         if(route.mapInfo == null) {
-                            route.mapInfo = mapService.getMapInformation(getJson())
+                            route.mapInfo = mapService.getMapInformation(getJson(), routeMap)
                         }
 
                         route.routeInfo!!.elevationData = setRouteElevationData(route)

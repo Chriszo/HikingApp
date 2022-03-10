@@ -93,7 +93,7 @@ class RouteFragment : Fragment() {
                     .findFirst().orElse(null)
 
 
-                route.mapInfo = mapService.getMapInformation(getJson())
+                route.mapInfo = mapService.getMapInformation(getJson(), routeMap)
 
                 GlobalScope.launch {
 

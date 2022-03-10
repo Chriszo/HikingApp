@@ -554,13 +554,10 @@ class SampleNavigationActivity : AppCompatActivity() {
 
         mapboxMap = binding.mapView.getMapboxMap()
 
-        val routeName =
-            if (intent.extras?.get("routeName") != null) intent.extras!!["routeName"] as String else ""
-
         val routeMap =
             if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
 
-        mapInfo = mapService.getMapInformation(getJson(routeMap))
+        mapInfo = mapService.getMapInformation(getJson(routeMap), routeMap)
 
         /* mapInfo = if (obj != null) {
              println("Getting mapInfo from Intent")

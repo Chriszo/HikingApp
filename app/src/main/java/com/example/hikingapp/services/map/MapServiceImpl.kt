@@ -1,14 +1,13 @@
 package com.example.hikingapp.services.map
 
+import com.example.hikingapp.domain.enums.MapType
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
-import com.example.hikingapp.domain.enums.MapType
-import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.mapbox.geojson.*
 
-class MapServiceImpl: MapService {
+class MapServiceImpl : MapService {
 
-    override fun getMapInformation(jsonContent: String): MapInfo {
+    override fun getMapInformation(jsonContent: String, routeMap: String): MapInfo {
 
         val routeFeatures = FeatureCollection.fromJson(jsonContent).features()?.get(0)
 
@@ -24,21 +23,31 @@ class MapServiceImpl: MapService {
             }
         }
 
-        return initRouteCoordinates(routeJson as CoordinateContainer<MutableList<out Any>>?)!!
+        return initRouteCoordinates(
+            routeJson as CoordinateContainer<MutableList<out Any>>?,
+            routeMap
+        )!!
     }
 
-    private fun initRouteCoordinates(routeJson: CoordinateContainer<MutableList<out Any>>?): MapInfo? {
+    private fun initRouteCoordinates(
+        routeJson: CoordinateContainer<MutableList<out Any>>?,
+        routeMap: String
+    ): MapInfo? {
 
-        when(routeJson?.javaClass?.simpleName) {
-            MapType.LINE.mapType -> return initializeEdgePoints(routeJson as LineString)
-            MapType.MULTILINE.mapType -> return initializeEdgePoints(routeJson as MultiLineString)
+        when (routeJson?.javaClass?.simpleName) {
+            MapType.LINE.mapType -> return initializeEdgePoints(routeJson as LineString, routeMap)
+            MapType.MULTILINE.mapType -> return initializeEdgePoints(
+                routeJson as MultiLineString,
+                routeMap
+            )
         }
         return null
     }
 
-    private fun initializeEdgePoints(routeContent: MultiLineString): MapInfo {
+    private fun initializeEdgePoints(routeContent: MultiLineString, routeMap: String): MapInfo {
         val origin: Point = routeContent.coordinates()[0][0]
-        val destination: Point = routeContent.coordinates()[0][routeContent.coordinates()[0].size - 1]
+        val destination: Point =
+            routeContent.coordinates()[0][routeContent.coordinates()[0].size - 1]
 
         val mapPoints = getMapPoints(routeContent)
 
@@ -48,14 +57,14 @@ class MapServiceImpl: MapService {
             routeContent.bbox()!!,
             routeContent,
             mapPoints,
-            MockDatabase.routesMap["Philopappou"]?.second!!,
+            routeMap,
             false
         )
     }
 
-    private fun initializeEdgePoints(routeContent: LineString): MapInfo {
+    private fun initializeEdgePoints(routeContent: LineString, routeMap: String): MapInfo {
         val origin: Point = routeContent.coordinates()[0]
-        val destination: Point = routeContent.coordinates()[routeContent.coordinates().size-1]
+        val destination: Point = routeContent.coordinates()[routeContent.coordinates().size - 1]
 
         val mapPoints = getMapPoints(routeContent)
 
@@ -65,7 +74,7 @@ class MapServiceImpl: MapService {
             routeContent.bbox(),
             routeContent,
             mapPoints,
-            MockDatabase.routesMap["Philopappou"]?.second!!,
+            routeMap,
             false
         )
     }
