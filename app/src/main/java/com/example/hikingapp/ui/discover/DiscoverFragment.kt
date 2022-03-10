@@ -147,7 +147,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         progressDialog.setTitle("Please wait...")
         progressDialog.setMessage("Loading Routes...")
         progressDialog.setCanceledOnTouchOutside(false)
-
+        progressDialog.show()
 
         searchView = root.findViewById(R.id.search_bar) as AutoCompleteTextView
         searchOptionsFrame = root.findViewById(R.id.search_options_layout) as LinearLayout
@@ -211,7 +211,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
             true
         }
 
-
+        // LOAD ALL ROUTES
         database.getReference("routes").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 progressDialog.show()

@@ -1,5 +1,6 @@
 package com.example.hikingapp.ui.profile
 
+import android.app.ProgressDialog
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -57,6 +58,8 @@ class ProfileFragment : Fragment() {
     private lateinit var userSavedSightIds: MutableList<Long>
     private lateinit var userCompletedSightIds: MutableList<Long>
 
+    private lateinit var progressDialog: ProgressDialog
+
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -77,6 +80,12 @@ class ProfileFragment : Fragment() {
 //            DBUtils.initializeDatabaseData()
             startActivity(Intent(context, LoginActivity::class.java))
         } else {
+
+            progressDialog = ProgressDialog(context)
+            progressDialog.setTitle("Please wait...")
+            progressDialog.setMessage("Loading Routes...")
+            progressDialog.setCanceledOnTouchOutside(false)
+            progressDialog.show()
 
             _binding = FragmentProfileBinding.inflate(inflater, container, false)
             val root: View = binding.root
@@ -316,6 +325,8 @@ class ProfileFragment : Fragment() {
                                                 }
                                                 .collect(Collectors.toList())
                                         profileViewModel.completedSights.postValue(completedSights)
+
+                                        progressDialog.dismiss()
                                     }
 
                                     override fun onCancelled(error: DatabaseError) {
