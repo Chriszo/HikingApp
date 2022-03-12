@@ -21,7 +21,7 @@
                 android:layout_height="400dp"
                 android:layout_marginTop="0dp"
                 android:scaleType="fitXY"
-                android:src="@drawable/philopappou"
+                android:src="@drawable/sunny"
                 app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

@@ -11,10 +11,12 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.example.hikingapp.app.viewModels.AppViewModel
 import com.example.hikingapp.databinding.ActivityMainBinding
 import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.content_main.view.*
@@ -22,9 +24,15 @@ import kotlinx.android.synthetic.main.content_main.view.*
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+
     private val userViewModel: UserViewModel by viewModels()
+    private val applicationViewModel: AppViewModel by viewModels()
 
     private lateinit var optionsMenu: Menu
+
+    private val storage: FirebaseStorage by lazy {
+        FirebaseStorage.getInstance()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +46,9 @@ class MainActivity : AppCompatActivity() {
                 toolbar.action_bar_user.text = this.email
             }
         }
+
+        applicationViewModel.storage.postValue(storage)
+
 
         setSupportActionBar(toolbar!!)
 
@@ -71,6 +82,7 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+
     }
 
     private fun setMenuItemListeners(optionsMenu: Menu) {

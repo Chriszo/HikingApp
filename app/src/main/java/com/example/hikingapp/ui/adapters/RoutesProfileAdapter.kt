@@ -1,6 +1,9 @@
 package com.example.hikingapp.ui.adapters
 
+import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,14 +11,17 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RatingBar
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.persistence.local.LocalDatabase
 
 class RoutesProfileAdapter(
-    val routes: List<Route>,
+    private val context: Context?,
+    private val routes: List<Route>,
     private val itemClickedListener: OnItemClickedListener,
     private val itemLongClickedListener: OnItemLongClickedListener
 ) : RecyclerView.Adapter<RoutesProfileAdapter.ViewHolder>() {
@@ -129,6 +135,7 @@ class RoutesProfileAdapter(
         return ViewHolder(view, itemClickedListener, itemLongClickedListener)
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         if (selectedItems.contains(position)) {
             holder.view.setBackgroundColor(Color.rgb(0, 82, 204))
@@ -143,7 +150,8 @@ class RoutesProfileAdapter(
         }
 
         val route = routes[position]
-        holder.imageView.setImageResource(route.mainPhoto!!)
+//        holder.imageView.setImageResource(route.mainPhoto!!)
+        holder.imageView.setImageDrawable(BitmapDrawable(context?.resources,LocalDatabase.getMainImage(route.routeId,Route::class.java.simpleName)))
         holder.nameView.text = route.routeName
         holder.stateView.text = route.stateName
         holder.ratingView.rating = route.routeInfo!!.rating!!

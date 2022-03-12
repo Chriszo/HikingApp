@@ -25,7 +25,6 @@ class RouteActivity : AppCompatActivity() {
         bundle.putSerializable("route", route)
         bundle.putParcelable("authInfo", authInfo)
 
-
         action.apply {
             when (this) {
                 "normal" -> {

@@ -18,6 +18,7 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
+import com.example.hikingapp.app.viewModels.AppViewModel
 import com.example.hikingapp.databinding.FragmentProfileBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
@@ -39,6 +40,7 @@ class ProfileFragment : Fragment() {
     private val profileViewModel: ProfileViewModel by activityViewModels()
     private val userViewModel: UserViewModel by activityViewModels()
     private val routeViewModel: RouteViewModel by activityViewModels()
+    private val applicationViewModel: AppViewModel by activityViewModels()
 
     private var _binding: FragmentProfileBinding? = null
 

@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="400dp"
             android:scaleType="fitXY"
-            android:src="@drawable/olympus"
+            android:src="@drawable/sunny"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@id/toolbar"
             app:layout_constraintTop_toTopOf="@id/toolbar" />

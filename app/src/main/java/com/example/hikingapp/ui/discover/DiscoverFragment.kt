@@ -4,12 +4,15 @@ import android.Manifest
 import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
@@ -23,11 +26,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.RouteActivity
+import com.example.hikingapp.app.viewModels.AppViewModel
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
 import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.enums.RouteType
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.route.RouteInfo
+import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.persistence.utils.DBUtils
 import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
@@ -37,11 +42,13 @@ import com.example.hikingapp.ui.adapters.RouteListAdapter
 import com.example.hikingapp.ui.search.results.SearchResultsActivity
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.ui.viewModels.UserViewModel
+import com.example.hikingapp.utils.GlobalUtils
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
 import com.mapbox.geojson.Point
 import kotlinx.android.synthetic.main.fragment_discover.view.*
 import kotlinx.android.synthetic.main.simple_item.view.*
@@ -87,8 +94,14 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         FirebaseDatabase.getInstance()
     }
 
+    private var storage: FirebaseStorage? = null
+    private val sharedPreferences: SharedPreferences by lazy {
+        requireActivity().applicationContext.getSharedPreferences("mainPhotoPrefs", 0)
+    }
+
     private val routeViewModel: RouteViewModel by activityViewModels()
     private val userViewModel: UserViewModel by activityViewModels()
+    private val applicationViewModel: AppViewModel by activityViewModels()
 
     private lateinit var progressDialog: ProgressDialog
 
@@ -145,11 +158,16 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         val root: View = _binding!!.root
 
+        applicationViewModel.storage.observe(viewLifecycleOwner, {
+            storage = it
+        })
+
+        categories = mutableListOf("Top Rated", "Popular", "Easy")
+
         progressDialog = ProgressDialog(context)
         progressDialog.setTitle("Please wait...")
         progressDialog.setMessage("Loading Routes...")
         progressDialog.setCanceledOnTouchOutside(false)
-        progressDialog.show()
 
         searchView = root.findViewById(R.id.search_bar) as AutoCompleteTextView
         searchOptionsFrame = root.findViewById(R.id.search_options_layout) as LinearLayout
@@ -222,7 +240,11 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                     .map { DBUtils.mapToRouteEntity(it.value as HashMap<String, String>) }
                     .map {
                         Route(
-                            it.routeId, it.routeName, it.stateName, it.mainPhoto,
+                            it.routeId,
+                            it.routeName,
+                            it.stateName,
+                            null,
+                            LocalDatabase.getMainImage(it.routeId, Route::class.java.simpleName),
                             RouteInfo(
                                 it.distance,
                                 it.timeEstimation,
@@ -230,26 +252,98 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                                 it.difficultyLevel,
                                 it.rating,
                                 mutableListOf()
-                            ), null, null, null, mutableListOf()
+                            ),
+                            null,
+                            null,
+                            null,
+                            mutableListOf()
                         )
                     }.stream()
                     .sorted(Comparator.comparing(Route::routeId))
                     .collect(Collectors.toList())
 
-                routeViewModel.currentRoutes.postValue(currentRoutes)
+                // Check if main photo of route is defined, otherwise download it for firebase storage.
+                currentRoutes.forEach { route ->
 
-                categories = mutableListOf("Top Rated", "Popular", "Easy")
+                    if (route.mainPhotoBitmap == null) {
 
-                routeListAdapter =
-                    RouteListAdapter(
-                        categories,
-                        currentRoutes,
-                        requireContext(),
-                        itemClickedListener
-                    )
-                routesRecyclerView.adapter = routeListAdapter
-                routesRecyclerView.setHasFixedSize(true)
+                        storage?.reference?.child("routes/mainPhotos/route_${route.routeId}_main.jpg")
+                            ?.getBytes(1024 * 1024)!!.addOnSuccessListener {
 
+
+                                val routeMainPhotoBitmap = BitmapFactory.decodeByteArray(
+                                    it,
+                                    0,
+                                    it.size
+                                )
+
+                                route.mainPhotoBitmap = routeMainPhotoBitmap
+
+                                LocalDatabase.saveImage(
+                                    route.routeId,
+                                    route.javaClass.simpleName,
+                                    "route_${route.routeId}_main.jpg",
+                                    routeMainPhotoBitmap,
+                                    true
+                                )
+
+                                val temp =
+                                    if (applicationViewModel.mainPhotos.value == null) mutableListOf() else applicationViewModel.mainPhotos.value
+                                temp?.add(route.mainPhotoBitmap!!)
+
+                                sharedPreferences.edit().apply {
+                                    this.putString(
+                                        "${route.routeId}",
+                                        "route_${route.routeId}_main.jpg"
+                                    )
+                                        .commit()
+                                }
+                                applicationViewModel.mainPhotos.postValue(temp)
+                            }
+                    }
+                }
+
+                val mainPhotosDefined =
+                    currentRoutes.stream().filter { it.mainPhotoBitmap == null }.count() == 0L
+                if (mainPhotosDefined) {
+                    routeListAdapter =
+                        RouteListAdapter(
+                            categories,
+                            currentRoutes,
+                            requireContext(),
+                            itemClickedListener
+                        )
+                    routesRecyclerView.adapter = routeListAdapter
+                    routesRecyclerView.setHasFixedSize(true)
+
+                    progressDialog.dismiss()
+                    routeViewModel.currentRoutes.postValue(currentRoutes)
+                }
+
+
+                // TODO add categories to DB(?)
+
+                applicationViewModel.mainPhotos.observe(viewLifecycleOwner, {
+
+                    if (it != null && it.size == currentRoutes.size) {
+
+                        Log.i(this.javaClass.simpleName, "Loading main photos to route adapter...")
+
+                        routeListAdapter =
+                            RouteListAdapter(
+                                categories,
+                                currentRoutes,
+                                requireContext(),
+                                itemClickedListener
+                            )
+                        routesRecyclerView.adapter = routeListAdapter
+                        routesRecyclerView.setHasFixedSize(true)
+
+                        progressDialog.dismiss()
+                        routeViewModel.currentRoutes.postValue(currentRoutes)
+
+                    }
+                })
                 setButtonListeners(root)
 
                 setFiltersScreenListeners(root)
@@ -261,8 +355,6 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                     ArrayAdapter<String>(requireContext(), R.layout.simple_item, routeNames)
 
                 searchView.setAdapter(routeNamesAdapter)
-                progressDialog.dismiss()
-
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -355,6 +447,11 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     private fun navigateToSearchResults() {
         val intent = Intent(context, SearchResultsActivity::class.java)
         val bundle = Bundle()
+
+        routeSearchResults.forEach {
+            it.mainPhotoBitmap = null
+        }
+
         bundle.putSerializable("routes", routeSearchResults as Serializable)
         intent.putExtra("routesBundle", bundle)
         searchTerm = ""
@@ -471,11 +568,16 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     override fun onItemClicked(position: Int, bundle: Bundle) {
 
         val intent = Intent(context, RouteActivity::class.java)
+
+//        val routePair = GlobalUtils.getRoutePair(currentRoutes[position])
+        currentRoutes[position].mainPhotoBitmap = null
         intent.putExtra("route", currentRoutes[position])
+
         intent.putExtra("action", "normal")
         intent.putExtra("authInfo", userViewModel.user.value)
         startActivity(intent)
     }
+
 
     override fun onLocationChanged(location: Location) {
         userLocation = Point.fromLngLat(location.longitude, location.latitude)

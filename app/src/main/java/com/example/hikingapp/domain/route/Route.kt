@@ -1,5 +1,7 @@
 package com.example.hikingapp.domain.route
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.weather.WeatherForecast
@@ -11,6 +13,7 @@ class Route(
     var routeName: String?,
     var stateName: String?,
     var mainPhoto: Int?,
+    var mainPhotoBitmap: Bitmap?,
     var routeInfo: RouteInfo?,
     var weatherForecast: WeatherForecast?,
     var mapInfo: MapInfo?,
@@ -18,6 +21,6 @@ class Route(
     var photos: List<Int>?
 ) : Serializable, UIElement {
 
-    constructor() : this(0,null, null, null, null, null, null, null, null)
+    constructor() : this(0,null, null, null, null,null, null, null, null, null)
 
 }

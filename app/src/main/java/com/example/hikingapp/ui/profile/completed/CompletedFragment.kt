@@ -85,7 +85,7 @@ class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedLi
             routes = it as MutableList<Route>
             profileViewModel.user.value?.profileInfo?.completedRoutes =
                 routes.stream().map { it.routeId }.collect(Collectors.toList())
-            routesAdapter = RouteAdapter(routes, this)
+            routesAdapter = RouteAdapter(requireContext(), null,routes, this)
             routesRecyclerView.adapter = routesAdapter
         })
     }
@@ -99,6 +99,7 @@ class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedLi
                 Route::class.java.simpleName -> {
                     val intent = Intent(context, RouteActivity::class.java)
                     // TODO replace with Global Utils ID
+                    routes[position].mainPhotoBitmap = null
                     intent.putExtra("route", routes[position])
                     intent.putExtra("action", "completed")
                     startActivity(intent)

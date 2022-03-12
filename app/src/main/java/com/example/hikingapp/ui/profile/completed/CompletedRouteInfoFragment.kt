@@ -25,7 +25,7 @@ import kotlinx.android.synthetic.main.fragment_completed_route_info.view.*
 
 class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
-    private val viewModel: CompletedViewModel by activityViewModels()
+    private val completedViewModel: CompletedViewModel by activityViewModels()
 
     private lateinit var route: Route
     private lateinit var completedRoutePhotos: MutableList<Int>
@@ -52,7 +52,12 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
         initializeRouteStatistics(view)
 
-        drawElevationGraph(view)
+        
+        completedViewModel.elevationData.observe(viewLifecycleOwner,{
+            if (!it.isNullOrEmpty()) {
+                drawGraph(it as MutableList<Long>?,view.elevation_graph)
+            }
+        })
 
         addRoutePhotos(view)
 
@@ -68,7 +73,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
         // TODO need a NavigationProcess and NavigationResult object to record navigation data
 
-        viewModel.route.observe(viewLifecycleOwner, {
+        completedViewModel.route.observe(viewLifecycleOwner, {
             route = it
             // TODO replace these values with navigation results values for the specific user
             distanceCovered.text = getString(
@@ -88,7 +93,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
         layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         completedPhotosRecyclerView.layoutManager = layoutManager
 
-        viewModel.photos.observe(viewLifecycleOwner, {
+        completedViewModel.photos.observe(viewLifecycleOwner, {
             completedRoutePhotos = it.toMutableList()
             photosAdapter = PhotoAdapter(completedRoutePhotos, this)
             completedPhotosRecyclerView.adapter = photosAdapter
@@ -97,32 +102,17 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun drawElevationGraph(view: View) {
-        elevationGraph = view.elevation_graph as GraphView
-
-        val averageElevation = view.findViewById(R.id.elevation_content) as TextView
+    private fun drawGraph(elevationData: MutableList<Long>?, graph: GraphView?) {
         val series = LineGraphSeries<DataPoint>()
-        // TODO will need to implement a DB retrieve mechanism
-        if (viewModel.elevationData.value.isNullOrEmpty()) {
 
-            viewModel.elevationData.observe(viewLifecycleOwner, {
-                elevationData = it.toMutableList()
-
-                elevationData.withIndex().forEach {
-                    series.appendData(
-                        DataPoint(it.index.toDouble(), it.value.toDouble()),
-                        false,
-                        elevationData.size
-                    )
-                }
-                averageElevation.text = getString(
-                    R.string.completed_elevation_content,
-                    String.format("%.2f", elevationData.average())
-                )
-            })
+        elevationData!!.withIndex().filter { it.value != null }.forEach {
+            series.appendData(
+                DataPoint(it.index.toDouble(), it.value.toDouble()),
+                false,
+                elevationData.size
+            )
         }
-        elevationGraph.addSeries(series)
+        graph?.addSeries(series)
     }
 
     override fun onItemClicked(position: Int, bundle: Bundle) {

@@ -1,6 +1,8 @@
 package com.example.hikingapp.ui.route
 
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -20,19 +22,20 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
+import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.culture.CultureUtils
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.ui.viewModels.RouteViewModel
-import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
@@ -65,6 +68,8 @@ class RouteFragment : Fragment() {
 
     private var authInfo: FirebaseUser? = null
 
+    private var mainPhotoName: String? = null
+
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
     }
@@ -85,6 +90,11 @@ class RouteFragment : Fragment() {
         }
 
         authInfo = requireArguments()["authInfo"] as FirebaseUser?
+
+//        mainPhotoName = requireArguments()["mainPhoto"] as String?
+
+        val prefs = requireActivity().applicationContext.getSharedPreferences("mainPhotoPrefs", 0)
+        mainPhotoName = prefs.getString("${route.routeId}", null)
 
         mapService = MapServiceImpl()
         weatherService = WeatherServiceImpl()
@@ -152,7 +162,21 @@ class RouteFragment : Fragment() {
 
         initializeButtonListeners(view)
 
-        view.route_info_image.setImageResource(route.mainPhoto!!)
+        val mainPhoto = LocalDatabase.getMainImage(route.routeId, Route::class.java.simpleName)
+        if (mainPhoto != null) {
+            view.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhoto))
+        } else {
+            FirebaseStorage.getInstance().getReference("routes/mainPhotos/$mainPhotoName")
+                .getBytes(1024 * 1024).addOnSuccessListener {
+
+                    val photoBitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                    view.route_info_image.setImageDrawable(BitmapDrawable(resources, photoBitmap))
+                }
+        }
+
+
+
+
         view.routeName.text = route.routeName
         view.stateName.text = route.stateName
         view.routeRating.rating = route.routeInfo!!.rating!!
@@ -295,17 +319,19 @@ class RouteFragment : Fragment() {
 
         val pointIndexMap = HashMap<String, Int>()
         var elevationData = mutableListOf<ExtendedMapPoint>()
-        val extendedMapPoints = filterRoutePoints(mapInfo.mapPoints!!, 3)
+        val extendedMapPoints = filterRoutePoints(mapInfo.mapPoints!!, 1)
 
 
-        extendedMapPoints.stream().forEach {
-
+        extendedMapPoints.withIndex().forEach {
+//            if (it.index in 900..999) {
             GlobalScope.launch {
-                pointIndexMap[it.point.longitude().toString() + "," + it.point.latitude()
+                pointIndexMap[it.value.point.longitude()
+                    .toString() + "," + it.value.point.latitude()
                     .toString()] =
                     it.index
-                callElevationDataAPI(it, mapInfo, pointIndexMap, elevationData)
+                callElevationDataAPI(it.value, mapInfo, pointIndexMap, elevationData)
             }
+//            }
 
         }
         while (elevationData.size != extendedMapPoints.size) {
@@ -358,7 +384,9 @@ class RouteFragment : Fragment() {
                             ?.max()
                             ?.ifPresent { max ->
                                 val index = pointIndexMap[pointsMapKey]
-//                                database.getReference("elevationData").child(route.routeId.toString()).child(index.toString()).setValue(max)
+                                database.getReference("elevationData")
+                                    .child(route.routeId.toString()).child(index.toString())
+                                    .setValue(max)
                                 mapInfo.mapPoints?.get(index!!)?.elevation = max
                                 extendedPoint.elevation = max
                                 elevationData.add(extendedPoint)

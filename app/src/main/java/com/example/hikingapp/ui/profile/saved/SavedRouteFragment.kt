@@ -1,6 +1,8 @@
 package com.example.hikingapp.ui.profile.saved
 
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -20,6 +22,7 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
+import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.culture.CultureUtils
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
@@ -31,6 +34,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
@@ -56,6 +60,7 @@ import java.util.stream.Collectors
 
 class SavedRouteFragment : Fragment() {
 
+    private val viewModel: RouteViewModel by activityViewModels()
     private lateinit var routeMap: String
 
     private val routeViewModel: RouteViewModel by activityViewModels()
@@ -160,7 +165,20 @@ class SavedRouteFragment : Fragment() {
 
         initializeButtonListeners(view)
 
-        view.route_info_image.setImageResource(route.mainPhoto!!)
+        val mainPhotoBitmap =
+            LocalDatabase.getMainImage(route.routeId, Route::class.java.simpleName)
+        if (mainPhotoBitmap != null) {
+            view.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhotoBitmap))
+        } else {
+            FirebaseStorage.getInstance()
+                .getReference("routes/mainPhotos/route_${route.routeId}_main.jpg")
+                .getBytes(1024 * 1024).addOnSuccessListener {
+
+                val mainPhotoBitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                view.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhotoBitmap))
+            }
+        }
+
         view.routeName.text = route.routeName
         view.stateName.text = route.stateName
         view.routeRating.rating = route.routeInfo!!.rating!!
@@ -250,9 +268,47 @@ class SavedRouteFragment : Fragment() {
                     ?: emptyList<Long>()) as MutableList<Long>
                 route.routeInfo?.elevationData = elevationData
             } else {
-                // TODO Make a query to DB when implemented
+
+                database.getReference("elevationData").child(route.routeId.toString())
+                    .addValueEventListener(object : ValueEventListener {
+
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value) && (snapshot.value as ArrayList<Long>).size > 0) {
+                                elevationData = snapshot.value as MutableList<Long>
+                                route.routeInfo?.elevationData = elevationData
+                                viewModel.elevationData.postValue(elevationData)
+                            } else {
+                                GlobalScope.launch {
+
+                                    collectionElevData(route.mapInfo!!).collect { elevationDataList ->
+                                        elevationData =
+                                            elevationDataList.stream().map { it.elevation }
+                                                .collect(Collectors.toList())
+                                        route.routeInfo?.elevationData = elevationData
+                                    }
+                                    viewModel.elevationData.postValue(elevationData)
+                                }
+                            }
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            GlobalScope.launch {
+
+                                collectionElevData(route.mapInfo!!).collect { elevationDataList ->
+                                    elevationData =
+                                        elevationDataList.stream().map { it.elevation }
+                                            .collect(Collectors.toList())
+                                    route.routeInfo?.elevationData = elevationData
+                                }
+                                viewModel.elevationData.postValue(elevationData)
+                            }
+                        }
+
+                    })
+
+
                 // Data have not been loaded so need Tilequery async API calls to populate data.
-                GlobalScope.launch {
+                /*GlobalScope.launch {
 
                     collectionElevData(route.mapInfo!!).collect { elevationDataList ->
                         elevationData =
@@ -261,7 +317,7 @@ class SavedRouteFragment : Fragment() {
                         route.routeInfo?.elevationData = elevationData
                     }
                     routeViewModel.elevationData.postValue(elevationData)
-                }
+                }*/
             }
         }
         return elevationData

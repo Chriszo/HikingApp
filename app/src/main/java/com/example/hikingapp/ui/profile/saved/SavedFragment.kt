@@ -84,14 +84,16 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
         })
 
         profileViewModel.selectedRouteItems.observe(viewLifecycleOwner, {
-            allRouteItemsSelected = profileViewModel.selectedRouteItems.value?.size == profileViewModel.savedRoutes.value?.size
+            allRouteItemsSelected =
+                profileViewModel.selectedRouteItems.value?.size == profileViewModel.savedRoutes.value?.size
             if (allRouteItemsSelected) {
                 selectAllRoutesTextView.text = getString(R.string.un_select_all)
             }
         })
 
         profileViewModel.selectedSightItems.observe(viewLifecycleOwner, {
-            allSightItemsSelected = profileViewModel.selectedSightItems.value?.size == profileViewModel.savedSights.value?.size
+            allSightItemsSelected =
+                profileViewModel.selectedSightItems.value?.size == profileViewModel.savedSights.value?.size
             if (allSightItemsSelected) {
                 selectAllSightsTextView.text = getString(R.string.un_select_all)
             }
@@ -171,7 +173,7 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
 
             profileViewModel.user.value?.profileInfo?.savedRoutes =
                 routes.stream().map { it.routeId }.collect(Collectors.toList())
-            routesAdapter = RoutesProfileAdapter(routes, this, this)
+            routesAdapter = RoutesProfileAdapter(context, routes, this, this)
             routesRecyclerView.adapter = routesAdapter
 
             profileViewModel.savedRoutesEnabled.observe(viewLifecycleOwner, {
@@ -186,6 +188,7 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
                 Route::class.java.simpleName -> {
                     val intent = Intent(context, RouteActivity::class.java)
                     // TODO replace with Global Utils ID
+                    routes[position].mainPhotoBitmap = null
                     intent.putExtra("route", routes[position])
                     intent.putExtra("action", "saved")
                     startActivity(intent)

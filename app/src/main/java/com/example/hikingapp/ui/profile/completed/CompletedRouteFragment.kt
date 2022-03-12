@@ -1,6 +1,8 @@
 package com.example.hikingapp.ui.profile.completed
 
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -19,19 +21,25 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
+import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
+import com.jjoe64.graphview.GraphView
+import com.jjoe64.graphview.series.DataPoint
+import com.jjoe64.graphview.series.LineGraphSeries
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
-import com.mapbox.geojson.MultiLineString
 import com.mapbox.geojson.Point
 import kotlinx.android.synthetic.main.fragment_completed_route.view.*
+import kotlinx.android.synthetic.main.fragment_completed_route_info.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.routeName
 import kotlinx.android.synthetic.main.route_fragment.view.routeRating
@@ -52,6 +60,7 @@ import kotlin.collections.HashMap
 
 class CompletedRouteFragment : Fragment() {
 
+    private val viewModel: RouteViewModel by activityViewModels()
     private lateinit var routeMap: String
 
     private val completedViewModel: CompletedViewModel by activityViewModels()
@@ -89,12 +98,12 @@ class CompletedRouteFragment : Fragment() {
             completedViewModel.photos.postValue(route.photos)
         }
 
-        database.getReference("routeMaps").addValueEventListener(object : ValueEventListener{
+        database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
 
-                routeMap = (snapshot.value as HashMap<String,*>).entries
+                routeMap = (snapshot.value as HashMap<String, *>).entries
                     .stream()
-                    .filter { routeMapEntry ->  routeMapEntry.key.split("_")[1].toLong() == route.routeId}
+                    .filter { routeMapEntry -> routeMapEntry.key.split("_")[1].toLong() == route.routeId }
                     .map { it.value as String }
                     .findFirst().orElse(null)
 
@@ -102,7 +111,7 @@ class CompletedRouteFragment : Fragment() {
 
                     if (completedViewModel.elevationData.value.isNullOrEmpty()) {
 
-                        if(route.mapInfo == null) {
+                        if (route.mapInfo == null) {
                             route.mapInfo = mapService.getMapInformation(getJson(), routeMap)
                         }
 
@@ -121,12 +130,29 @@ class CompletedRouteFragment : Fragment() {
         })
 
 
-
         initializeNavigationComponents(view)
 
         initializeButtonListeners(view)
 
-        view.route_info_image.setImageResource(route.mainPhoto!!)
+
+        val mainPhotoBitmap =
+            LocalDatabase.getMainImage(route.routeId, Route::class.java.simpleName)
+        if (mainPhotoBitmap != null) {
+            view.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhotoBitmap))
+        } else {
+            FirebaseStorage.getInstance()
+                .getReference("routes/mainPhotos/route_${route.routeId}_main.jpg")
+                .getBytes(1024 * 1024).addOnSuccessListener {
+
+                    val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                    view.route_info_image.setImageDrawable(
+                        BitmapDrawable(
+                            resources,
+                            bitmap
+                        )
+                    )
+                }
+        }
         view.routeName.text = route.routeName
         view.stateName.text = route.stateName
         view.routeRating.rating = route.routeInfo!!.rating!!
@@ -200,8 +226,44 @@ class CompletedRouteFragment : Fragment() {
                 route.routeInfo?.elevationData = elevationData
             } else {
                 // TODO Make a query to DB when implemented
+                database.getReference("elevationData").child(route.routeId.toString())
+                    .addValueEventListener(object : ValueEventListener {
+
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value) && (snapshot.value as ArrayList<Long>).size > 0) {
+                                elevationData = snapshot.value as MutableList<Long>
+                                route.routeInfo?.elevationData = elevationData
+                                completedViewModel.elevationData.postValue(elevationData)
+                            } else {
+                                GlobalScope.launch {
+
+                                    collectionElevData(route.mapInfo!!).collect { elevationDataList ->
+                                        elevationData =
+                                            elevationDataList.stream().map { it.elevation }
+                                                .collect(Collectors.toList())
+                                        route.routeInfo?.elevationData = elevationData
+                                    }
+                                    completedViewModel.elevationData.postValue(elevationData)
+                                }
+                            }
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            GlobalScope.launch {
+
+                                collectionElevData(route.mapInfo!!).collect { elevationDataList ->
+                                    elevationData =
+                                        elevationDataList.stream().map { it.elevation }
+                                            .collect(Collectors.toList())
+                                    route.routeInfo?.elevationData = elevationData
+                                }
+                                completedViewModel.elevationData.postValue(elevationData)
+                            }
+                        }
+
+                    })
                 // Data have not been loaded so need Tilequery async API calls to populate data.
-                GlobalScope.launch {
+                /*GlobalScope.launch {
 
                     collectionElevData(route.mapInfo!!).collect { elevationDataList ->
                         elevationData =
@@ -210,7 +272,7 @@ class CompletedRouteFragment : Fragment() {
                         route.routeInfo?.elevationData = elevationData
                     }
                     completedViewModel.elevationData.postValue(elevationData)
-                }
+                }*/
             }
         }
         return elevationData
@@ -280,7 +342,7 @@ class CompletedRouteFragment : Fragment() {
 
                         response.body()?.features()
                             ?.stream()
-                            ?.mapToLong{ feature ->
+                            ?.mapToLong { feature ->
                                 feature.properties()?.get("ele")?.asLong!!
                             }
                             ?.max()

@@ -68,7 +68,7 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
     override fun onItemClicked(position: Int, bundle: Bundle) {
         val intent = Intent(context,SightDetailsActivity::class.java)
         val sight = cultureInfo.sights?.get(position)
-        sight?.mainPhoto = R.drawable.thiseion
+        sight?.mainPhoto = R.drawable.sunny
         sight?.photos = viewModel.photos.value?.toMutableList()
         intent.putExtra("sightInfo",sight)
         startActivity(intent)

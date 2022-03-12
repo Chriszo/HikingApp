@@ -8,7 +8,7 @@
 
     <ImageView
         android:id="@+id/photo_id"
-        android:src="@drawable/philopappou"
+        android:src="@drawable/sunny"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
