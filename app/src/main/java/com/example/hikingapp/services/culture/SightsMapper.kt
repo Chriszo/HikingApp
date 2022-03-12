@@ -1,5 +1,6 @@
 package com.example.hikingapp.services.culture
 
+import android.graphics.Bitmap
 import android.os.Build
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.services.culture.results.SightResponseElement
@@ -32,7 +33,7 @@ class SightsMapper {
             )
             sight.name = responseElement.name
             sight.description = responseElement.address
-            sight.photos = emptyList<Int>().toMutableList()
+            sight.photos = emptyList<Bitmap>().toMutableList()
 
             return sight
         }

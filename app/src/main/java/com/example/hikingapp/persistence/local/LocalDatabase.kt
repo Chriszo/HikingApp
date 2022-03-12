@@ -73,15 +73,23 @@ class LocalDatabase {
         }
 
         @RequiresApi(Build.VERSION_CODES.N)
-        fun getImages(id: Long, className: String): List<Bitmap> {
+        fun getAllImages(id: Long, className: String): MutableList<Bitmap>? {
             val mapKey = if (className == "Route") "R_$id" else "S_$id"
             return photosStorage[mapKey]?.stream()?.map { it.imageBitmap }
-                ?.collect(Collectors.toList())!!.toMutableList()
+                ?.collect(Collectors.toList())?.toMutableList()
+        }
+
+        @RequiresApi(Build.VERSION_CODES.N)
+        fun getImages(id: Long, className: String): MutableList<Bitmap>? {
+            val mapKey = if (className == "Route") "R_$id" else "S_$id"
+            return photosStorage[mapKey]?.stream()?.filter { !it.isMainImage }?.map { it.imageBitmap }
+                ?.collect(Collectors.toList())?.toMutableList()
         }
 
         fun containsImages(mapKey: String): Boolean {
             return photosStorage.containsKey(mapKey) && !photosStorage[mapKey].isNullOrEmpty()
         }
+
     }
 
 

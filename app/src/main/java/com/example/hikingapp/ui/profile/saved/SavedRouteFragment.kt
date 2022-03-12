@@ -60,6 +60,10 @@ import java.util.stream.Collectors
 
 class SavedRouteFragment : Fragment() {
 
+    private val storage: FirebaseStorage by lazy {
+        FirebaseStorage.getInstance()
+    }
+
     private val viewModel: RouteViewModel by activityViewModels()
     private lateinit var routeMap: String
 
@@ -177,6 +181,37 @@ class SavedRouteFragment : Fragment() {
                 val mainPhotoBitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                 view.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhotoBitmap))
             }
+        }
+
+        route.photos = LocalDatabase.getImages(route.routeId, Route::class.java.simpleName)
+
+        if (route.photos.isNullOrEmpty()) {
+            storage?.reference?.child("routes/${route.routeId}/photos")?.listAll()!!
+                .addOnSuccessListener { routePhotosFolder ->
+
+                    routePhotosFolder.items.forEach { photoReference ->
+                        photoReference.getBytes(1024 * 1024).addOnSuccessListener {
+                            val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+
+                            if (route.photos.isNullOrEmpty()) {
+                                route.photos = mutableListOf()
+                            }
+                            route.photos!!.add(bitmap)
+                            LocalDatabase.saveImage(
+                                route.routeId,
+                                Route::class.java.simpleName,
+                                photoReference.path.split("/").last(),
+                                bitmap,
+                                false
+                            )
+                            if (route?.photos?.size == routePhotosFolder.items.size) {
+                                viewModel.photos.postValue(route.photos)
+                            }
+                        }
+                    }
+                }
+        } else {
+            viewModel.photos.postValue(route.photos)
         }
 
         view.routeName.text = route.routeName

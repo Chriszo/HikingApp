@@ -1,12 +1,9 @@
 package com.example.hikingapp.ui.route.cultureInfo
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.databinding.ActivitySightDetailsBinding
@@ -27,7 +24,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
     private lateinit var photosAdapter: PhotoAdapter
     private lateinit var routeViewModel: RouteViewModel
 
-    private lateinit var photos:List<Int>
+    private lateinit var photos:List<Bitmap>
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,7 +46,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
 
         photos = sightInfo.photos!!
 
-        photosAdapter = PhotoAdapter(photos,itemClickedListener)
+        photosAdapter = PhotoAdapter(this, photos, itemClickedListener)
         recyclerView.adapter = photosAdapter
 
         /*routeViewModel.photos.observe(this, Observer {

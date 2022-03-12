@@ -1,5 +1,6 @@
 package com.example.hikingapp.domain.culture
 
+import android.graphics.Bitmap
 import com.example.hikingapp.ui.UIElement
 import com.mapbox.geojson.Point
 import java.io.Serializable
@@ -11,7 +12,7 @@ class Sight(
     var description: String?,
     var rating: Float?,
     var mainPhoto: Int?,
-    var photos: MutableList<Int>?
+    var photos: MutableList<Bitmap>?
 ) : Serializable, UIElement {
 
     constructor() : this(0,null, null, null, null, null, null)

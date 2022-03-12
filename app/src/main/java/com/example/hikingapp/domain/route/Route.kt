@@ -18,7 +18,7 @@ class Route(
     var weatherForecast: WeatherForecast?,
     var mapInfo: MapInfo?,
     var cultureInfo: CultureInfo?,
-    var photos: List<Int>?
+    var photos: MutableList<Bitmap>?
 ) : Serializable, UIElement {
 
     constructor() : this(0,null, null, null, null,null, null, null, null, null)

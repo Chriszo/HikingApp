@@ -1,5 +1,6 @@
 package com.example.hikingapp.ui.viewModels
 
+import android.graphics.Bitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.hikingapp.domain.culture.CultureInfo
@@ -16,7 +17,7 @@ class RouteViewModel : ViewModel(), Serializable {
 
     val cultureInfo = MutableLiveData<CultureInfo>()
 
-    val photos = MutableLiveData<List<Int>>()
+    val photos = MutableLiveData<List<Bitmap>>()
 
     /* fun defineRoute(r: Route) {
          route.value = r

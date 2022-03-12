@@ -2,6 +2,7 @@ package com.example.hikingapp.ui.route.photos
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,7 +24,7 @@ class PhotosListFragment : Fragment(), OnItemClickedListener {
     private lateinit var photosAdapter: PhotoAdapter
     private val routeViewModel: RouteViewModel by activityViewModels()
 
-    private lateinit var photos: List<Int>
+    private lateinit var photos: List<Bitmap>
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -49,7 +50,7 @@ class PhotosListFragment : Fragment(), OnItemClickedListener {
         routeViewModel.photos.observe(viewLifecycleOwner, {
             photos = it
 
-            photosAdapter = PhotoAdapter(photos, itemClickedListener)
+            photosAdapter = PhotoAdapter(context, photos, itemClickedListener)
             recyclerView.adapter = photosAdapter
         })
 

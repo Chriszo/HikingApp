@@ -1,6 +1,7 @@
 package com.example.hikingapp.ui.profile.completed
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -18,6 +19,7 @@ import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 import com.example.hikingapp.ui.route.photos.PhotoActivity
+import com.example.hikingapp.ui.utils.PhotoItemDecorator
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -28,7 +30,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
     private val completedViewModel: CompletedViewModel by activityViewModels()
 
     private lateinit var route: Route
-    private lateinit var completedRoutePhotos: MutableList<Int>
+    private lateinit var completedRoutePhotos: MutableList<Bitmap>
     private lateinit var elevationData: MutableList<Long>
 
     private lateinit var completedPhotosRecyclerView: RecyclerView
@@ -95,8 +97,11 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
         completedViewModel.photos.observe(viewLifecycleOwner, {
             completedRoutePhotos = it.toMutableList()
-            photosAdapter = PhotoAdapter(completedRoutePhotos, this)
+            photosAdapter = PhotoAdapter(context,completedRoutePhotos, this)
             completedPhotosRecyclerView.adapter = photosAdapter
+
+            val photoItemSpacing = PhotoItemDecorator(5)
+            completedPhotosRecyclerView.addItemDecoration(photoItemSpacing)
         })
 
 

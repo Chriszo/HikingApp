@@ -32,14 +32,10 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
-import com.jjoe64.graphview.GraphView
-import com.jjoe64.graphview.series.DataPoint
-import com.jjoe64.graphview.series.LineGraphSeries
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import kotlinx.android.synthetic.main.fragment_completed_route.view.*
-import kotlinx.android.synthetic.main.fragment_completed_route_info.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.routeName
 import kotlinx.android.synthetic.main.route_fragment.view.routeRating
@@ -59,6 +55,10 @@ import java.util.stream.Collectors
 import kotlin.collections.HashMap
 
 class CompletedRouteFragment : Fragment() {
+
+    private val storage: FirebaseStorage by lazy {
+        FirebaseStorage.getInstance()
+    }
 
     private val viewModel: RouteViewModel by activityViewModels()
     private lateinit var routeMap: String
@@ -91,11 +91,6 @@ class CompletedRouteFragment : Fragment() {
 
         if (completedViewModel.route.value == null) {
             completedViewModel.route.postValue(route)
-        }
-
-        if (completedViewModel.photos.value.isNullOrEmpty()) {
-//            routeViewModel.photos.postValue(route.photos)
-            completedViewModel.photos.postValue(route.photos)
         }
 
         database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
@@ -153,6 +148,40 @@ class CompletedRouteFragment : Fragment() {
                     )
                 }
         }
+
+
+
+        route.photos = LocalDatabase.getImages(route.routeId, Route::class.java.simpleName)
+
+        if (route.photos.isNullOrEmpty()) {
+            storage?.reference?.child("routes/${route.routeId}/photos")?.listAll()!!
+                .addOnSuccessListener { routePhotosFolder ->
+
+                    routePhotosFolder.items.forEach { photoReference ->
+                        photoReference.getBytes(1024 * 1024).addOnSuccessListener {
+                            val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+
+                            if (route.photos.isNullOrEmpty()) {
+                                route.photos = mutableListOf()
+                            }
+                            route.photos!!.add(bitmap)
+                            LocalDatabase.saveImage(
+                                route.routeId,
+                                Route::class.java.simpleName,
+                                photoReference.path.split("/").last(),
+                                bitmap,
+                                false
+                            )
+                            if (route?.photos?.size == routePhotosFolder.items.size) {
+                                completedViewModel.photos.postValue(route.photos)
+                            }
+                        }
+                    }
+                }
+        } else {
+            completedViewModel.photos.postValue(route.photos)
+        }
+
         view.routeName.text = route.routeName
         view.stateName.text = route.stateName
         view.routeRating.rating = route.routeInfo!!.rating!!

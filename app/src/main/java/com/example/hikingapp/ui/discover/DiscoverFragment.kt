@@ -42,7 +42,6 @@ import com.example.hikingapp.ui.adapters.RouteListAdapter
 import com.example.hikingapp.ui.search.results.SearchResultsActivity
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.ui.viewModels.UserViewModel
-import com.example.hikingapp.utils.GlobalUtils
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -256,7 +255,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                             null,
                             null,
                             null,
-                            mutableListOf()
+                            LocalDatabase.getImages(it.routeId, Route::class.java.simpleName)
                         )
                     }.stream()
                     .sorted(Comparator.comparing(Route::routeId))
@@ -301,6 +300,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                                 applicationViewModel.mainPhotos.postValue(temp)
                             }
                     }
+
                 }
 
                 val mainPhotosDefined =

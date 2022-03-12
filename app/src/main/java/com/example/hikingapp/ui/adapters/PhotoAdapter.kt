@@ -1,5 +1,8 @@
 package com.example.hikingapp.ui.adapters
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,7 +11,11 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 
-class PhotoAdapter(var photos: List<Int>, private val itemClickedListener: OnItemClickedListener) :
+class PhotoAdapter(
+    private val context: Context?,
+    private var photos: List<Bitmap>,
+    private val itemClickedListener: OnItemClickedListener
+) :
     RecyclerView.Adapter<PhotoAdapter.ViewHolder>() {
 
     class ViewHolder(
@@ -37,7 +44,7 @@ class PhotoAdapter(var photos: List<Int>, private val itemClickedListener: OnIte
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.imageView.setImageResource(photos[position])
+        holder.imageView.setImageDrawable(BitmapDrawable(context!!.resources, photos[position]))
     }
 
     override fun getItemCount() = photos.count()

@@ -1,6 +1,7 @@
 package com.example.hikingapp.ui.route
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
@@ -56,6 +57,9 @@ import kotlin.collections.HashMap
 
 class RouteFragment : Fragment() {
 
+    private val storage: FirebaseStorage by lazy {
+        FirebaseStorage.getInstance()
+    }
     private lateinit var routeMap: String
 
     private val viewModel: RouteViewModel by activityViewModels()
@@ -85,9 +89,9 @@ class RouteFragment : Fragment() {
 //        val mapInfo = retrieveMapInformation(routeName)
         route = arguments?.get("route") as Route
 
-        if (viewModel.photos.value.isNullOrEmpty()) {
-            viewModel.photos.postValue(route.photos)
-        }
+//        if (viewModel.photos.value.isNullOrEmpty()) {
+//            viewModel.photos.postValue(route.photos)
+//        }
 
         authInfo = requireArguments()["authInfo"] as FirebaseUser?
 
@@ -175,7 +179,36 @@ class RouteFragment : Fragment() {
         }
 
 
+        route.photos = LocalDatabase.getImages(route.routeId, Route::class.java.simpleName)
 
+        if (route.photos.isNullOrEmpty()) {
+            storage?.reference?.child("routes/${route.routeId}/photos")?.listAll()!!
+                .addOnSuccessListener { routePhotosFolder ->
+
+                    routePhotosFolder.items.forEach { photoReference ->
+                        photoReference.getBytes(1024 * 1024).addOnSuccessListener {
+                            val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+
+                            if (route.photos.isNullOrEmpty()) {
+                                route.photos = mutableListOf()
+                            }
+                            route.photos!!.add(bitmap)
+                            LocalDatabase.saveImage(
+                                route.routeId,
+                                Route::class.java.simpleName,
+                                photoReference.path.split("/").last(),
+                                bitmap,
+                                false
+                            )
+                            if (route?.photos?.size == routePhotosFolder.items.size) {
+                                viewModel.photos.postValue(route.photos)
+                            }
+                        }
+                    }
+                }
+        } else {
+            viewModel.photos.postValue(route.photos)
+        }
 
         view.routeName.text = route.routeName
         view.stateName.text = route.stateName
