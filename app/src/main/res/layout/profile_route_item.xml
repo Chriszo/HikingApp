@@ -15,14 +15,14 @@
         android:layout_margin="10dp"
         android:scaleType="fitXY"
         android:src="@mipmap/olympus_foreground"
+        app:flow_horizontalAlign="center"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:flow_horizontalAlign="center"
         tools:srcCompat="@tools:sample/avatars" />
 
     <TextView
         android:id="@+id/route_name"
-        android:layout_width="130dp"
+        android:layout_width="235dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
         android:ellipsize="none"
@@ -32,6 +32,17 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@id/route_imageView"
         app:layout_constraintTop_toBottomOf="@+id/route_imageView" />
+
+    <TextView
+        android:id="@+id/route_state"
+        android:layout_width="235dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="none"
+        android:singleLine="false"
+        android:text="TextView"
+        android:textSize="13sp"
+        app:layout_constraintStart_toStartOf="@+id/route_name"
+        app:layout_constraintTop_toBottomOf="@id/route_name" />
 
     <RatingBar
         android:id="@+id/routeRating"
@@ -44,51 +55,34 @@
         android:scaleY="0.3"
         android:theme="@style/RatingBar"
         android:transformPivotX="10dp"
-        app:layout_constraintStart_toStartOf="@id/route_name"
-        app:layout_constraintTop_toBottomOf="@id/route_name" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/route_state" />
 
 
-    <RelativeLayout
+    <!--<RelativeLayout
         android:id="@+id/relative_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="16dp">
+        tools:layout_editor_absoluteY="16dp">-->
 
-        <TextView
-            android:id="@+id/route_state"
-            android:layout_width="130dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="260dp"
-            android:ellipsize="none"
-            android:singleLine="false"
-            android:text="TextView"
-            android:textSize="13sp" />
 
-    </RelativeLayout>
+    <!--    </RelativeLayout>-->
 
     <TextView
         android:id="@+id/difficulty_level"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/rounded"
-        android:textColor="@android:color/white"
         android:layout_marginTop="5dp"
+        android:background="@drawable/rounded"
         android:ellipsize="none"
         android:padding="5dp"
         android:singleLine="false"
-        android:textAlignment="textEnd"
         android:text="TextView"
+        android:textAlignment="textEnd"
+        android:textColor="@android:color/white"
         android:textSize="13sp"
         app:layout_constraintEnd_toEndOf="@+id/route_imageView"
         app:layout_constraintTop_toBottomOf="@+id/route_imageView" />
-
-<!--    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="5dp"
-        android:background="@android:color/darker_gray"
-        app:layout_constraintTop_toBottomOf="@+id/relative_layout" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -153,7 +153,7 @@ class RoutesProfileAdapter(
 //        holder.imageView.setImageResource(route.mainPhoto!!)
         holder.imageView.setImageDrawable(BitmapDrawable(context?.resources,LocalDatabase.getMainImage(route.routeId,Route::class.java.simpleName)))
         holder.nameView.text = route.routeName
-        holder.stateView.text = route.stateName
+        holder.stateView.text = context?.getString(R.string.secondary_text, route.stateName)
         holder.ratingView.rating = route.routeInfo!!.rating!!
 
         val difficultyLevelText = route.routeInfo!!.difficultyLevel!!.difficultyLevel

@@ -23,7 +23,6 @@
         android:layout_width="130dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        android:layout_marginStart="10dp"
         android:ellipsize="none"
         android:singleLine="false"
         android:text="TextView"
@@ -31,6 +30,18 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@id/route_imageView"
         app:layout_constraintTop_toBottomOf="@+id/route_imageView" />
+
+    <TextView
+        android:id="@+id/route_state"
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="none"
+        android:singleLine="false"
+        android:text="TextView"
+        android:textSize="13sp"
+        app:layout_constraintStart_toStartOf="@+id/route_name"
+        app:layout_constraintTop_toBottomOf="@+id/route_name" />
+
 
     <RatingBar
         android:id="@+id/routeRating"
@@ -43,9 +54,8 @@
         android:scaleY="0.3"
         android:theme="@style/RatingBar"
         android:transformPivotX="10dp"
-        app:layout_constraintStart_toStartOf="@id/route_name"
-        app:layout_constraintTop_toBottomOf="@id/route_name" />
-
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/route_state" />
 
     <RelativeLayout
         android:id="@+id/relative_layout"
@@ -54,16 +64,7 @@
         tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="16dp">
 
-        <TextView
-            android:id="@+id/route_state"
-            android:layout_width="130dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="260dp"
-            android:ellipsize="none"
-            android:singleLine="false"
-            android:text="TextView"
-            android:textSize="13sp" />
+
     </RelativeLayout>
 
    <!-- <Button

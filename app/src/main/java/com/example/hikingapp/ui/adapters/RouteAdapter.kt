@@ -77,7 +77,7 @@ class RouteAdapter(
             )
         )
         holder.nameView.text = routes[position].routeName
-        holder.stateView.text = routes[position].stateName
+        holder.stateView.text = context.getString(R.string.secondary_text, routes[position].stateName)
         holder.ratingView.rating = routes[position].routeInfo!!.rating!!
 
         val difficultyLevelText = routes[position].routeInfo!!.difficultyLevel!!.difficultyLevel
