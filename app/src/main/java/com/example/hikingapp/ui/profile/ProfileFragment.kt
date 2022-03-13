@@ -2,6 +2,8 @@ package com.example.hikingapp.ui.profile
 
 import android.app.ProgressDialog
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -32,12 +34,19 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
+import io.ktor.http.*
 import kotlinx.android.synthetic.main.fragment_profile.view.*
+import java.util.*
 import java.util.stream.Collectors
 
 class ProfileFragment : Fragment() {
 
 
+    private val storage: FirebaseStorage by lazy {
+        FirebaseStorage.getInstance()
+    }
     private val profileViewModel: ProfileViewModel by activityViewModels()
     private val userViewModel: UserViewModel by activityViewModels()
     private val routeViewModel: RouteViewModel by activityViewModels()
@@ -257,35 +266,55 @@ class ProfileFragment : Fragment() {
                                 .flatMap { (it.value as MutableList<Long>).stream() }
                                 .collect(Collectors.toList())
 
-                            database.getReference("sights")
-                                .addValueEventListener(object : ValueEventListener {
-                                    override fun onDataChange(snapshot: DataSnapshot) {
+                            savedSights =
+                                userSavedSightIds.stream().map { LocalDatabase.getSight(it) }
+                                    .filter { Objects.nonNull(it) }.collect(Collectors.toList())
 
-                                        savedSights = (snapshot.value as HashMap<String, *>).entries
-                                            .stream()
-                                            .filter { sightEntry -> sightEntry.key.split("_")[1].toLong() in userSavedSightIds }
-                                            .map {
-                                                val sightInfo = it.value as HashMap<String, *>
-                                                val sightId = sightInfo["sightId"] as Long
-                                                Sight(
-                                                    sightId,
-                                                    null,
-                                                    sightInfo["name"] as String,
-                                                    sightInfo["description"] as String,
-                                                    (sightInfo["rating"] as Double).toFloat(),
-                                                    LocalDatabase.getMainImage(sightId,Sight::class.java.simpleName),
-                                                    mutableListOf()
-                                                )
-                                            }
-                                            .collect(Collectors.toList())
-                                        profileViewModel.savedSights.postValue(savedSights)
-                                    }
+                            if (!savedSights.isNullOrEmpty()) {
+                                loadSightsMainPhotos(savedSights as MutableList<Sight>, "saved")
+                            } else {
+                                database.getReference("sights")
+                                    .addValueEventListener(object : ValueEventListener {
+                                        override fun onDataChange(snapshot: DataSnapshot) {
 
-                                    override fun onCancelled(error: DatabaseError) {
-                                        TODO("Not yet implemented")
-                                    }
+                                            savedSights =
+                                                (snapshot.value as HashMap<String, *>).entries
+                                                    .stream()
+                                                    .filter { sightEntry ->
+                                                        sightEntry.key.split(
+                                                            "_"
+                                                        )[1].toLong() in userSavedSightIds
+                                                    }
+                                                    .map {
+                                                        val sightInfo =
+                                                            it.value as HashMap<String, *>
+                                                        val sightId =
+                                                            sightInfo["sightId"] as Long
+                                                        Sight(
+                                                            sightId,
+                                                            null,
+                                                            sightInfo["name"] as String,
+                                                            sightInfo["description"] as String,
+                                                            (sightInfo["rating"] as Double).toFloat(),
+                                                            LocalDatabase.getMainImage(
+                                                                sightId,
+                                                                Sight::class.java.simpleName
+                                                            ),
+                                                            mutableListOf()
+                                                        )
+                                                    }
+                                                    .collect(Collectors.toList())
+                                            loadSightsMainPhotos(savedSights, "saved")
+//                                            profileViewModel.savedSights.postValue(savedSights)
+                                        }
 
-                                })
+                                        override fun onCancelled(error: DatabaseError) {
+                                            TODO("Not yet implemented")
+                                        }
+
+                                    })
+                            }
+
 
                         }
 
@@ -305,38 +334,49 @@ class ProfileFragment : Fragment() {
                                 .flatMap { (it.value as MutableList<Long>).stream() }
                                 .collect(Collectors.toList())
 
-                            database.getReference("sights")
-                                .addValueEventListener(object : ValueEventListener {
-                                    override fun onDataChange(snapshot: DataSnapshot) {
+                            completedSights =
+                                userCompletedSightIds.stream().map { LocalDatabase.getSight(it) }
+                                    .filter { Objects.nonNull(it) }.collect(Collectors.toList())
 
-                                        completedSights =
-                                            (snapshot.value as HashMap<String, *>).entries
-                                                .stream()
-                                                .filter { sightEntry -> sightEntry.key.split("_")[1].toLong() in userCompletedSightIds }
-                                                .map {
-                                                    val sightInfo = it.value as HashMap<String, *>
-                                                    val sightId = sightInfo["sightId"] as Long
-                                                    Sight(
-                                                        sightId,
-                                                        null,
-                                                        sightInfo["name"] as String,
-                                                        sightInfo["description"] as String,
-                                                        (sightInfo["rating"] as Double).toFloat(),
-                                                        LocalDatabase.getMainImage(sightId, Sight::class.java.simpleName),
-                                                        mutableListOf()
-                                                    )
-                                                }
-                                                .collect(Collectors.toList())
-                                        profileViewModel.completedSights.postValue(completedSights)
+                            if (!completedSights.isNullOrEmpty()) {
+                                loadSightsMainPhotos(completedSights, "completed")
+                            } else {
+                                database.getReference("sights")
+                                    .addValueEventListener(object : ValueEventListener {
+                                        override fun onDataChange(snapshot: DataSnapshot) {
 
-                                        progressDialog.dismiss()
-                                    }
+                                            completedSights =
+                                                (snapshot.value as HashMap<String, *>).entries
+                                                    .stream()
+                                                    .filter { sightEntry -> sightEntry.key.split("_")[1].toLong() in userCompletedSightIds }
+                                                    .map {
+                                                        val sightInfo =
+                                                            it.value as HashMap<String, *>
+                                                        val sightId = sightInfo["sightId"] as Long
+                                                        Sight(
+                                                            sightId,
+                                                            null,
+                                                            sightInfo["name"] as String,
+                                                            sightInfo["description"] as String,
+                                                            (sightInfo["rating"] as Double).toFloat(),
+                                                            LocalDatabase.getMainImage(
+                                                                sightId,
+                                                                Sight::class.java.simpleName
+                                                            ),
+                                                            mutableListOf()
+                                                        )
+                                                    }
+                                                    .collect(Collectors.toList())
+                                            loadSightsMainPhotos(completedSights, "completed")
+                                            progressDialog.dismiss()
+                                        }
 
-                                    override fun onCancelled(error: DatabaseError) {
-                                        TODO("Not yet implemented")
-                                    }
+                                        override fun onCancelled(error: DatabaseError) {
+                                            TODO("Not yet implemented")
+                                        }
 
-                                })
+                                    })
+                            }
 
                         }
 
@@ -345,12 +385,69 @@ class ProfileFragment : Fragment() {
                         }
 
                     })
+
             })
 
             return root
         }
         return null
     }
+
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun loadSightsMainPhotos(sights: MutableList<Sight>, profileItem: String) {
+
+        val sightMainPhotos = mutableListOf<Bitmap?>()
+        sights?.forEach { sight ->
+
+            sight.mainPhoto =
+                LocalDatabase.getMainImage(sight.sightId, Sight::class.java.simpleName)
+            if (sight.mainPhoto == null) {
+
+                storage.reference.child("sights/mainPhotos/sight_${sight.sightId}_main.jpg")
+                    .getBytes(1024 * 1024 * 5).addOnSuccessListener {
+
+                        val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                        sight.mainPhoto = bitmap
+                        sightMainPhotos.add(bitmap)
+                        LocalDatabase.saveImage(
+                            sight.sightId,
+                            Sight::class.java.simpleName,
+                            "sight_${sight.sightId}_main.jpg",
+                            bitmap,
+                            true
+                        )
+                        if (sightMainPhotos.size == sights?.size ?: mutableListOf<Sight>()) {
+                            when (profileItem) {
+                                "saved" -> profileViewModel.savedSights.postValue(sights)
+                                "completed" -> profileViewModel.completedSights.postValue(sights)
+                            }
+                        }
+                    }
+                    .addOnFailureListener {
+                        if (it is StorageException) {
+                            if (it.httpResultCode == HttpStatusCode.NotFound.value) {
+                                sightMainPhotos.add(null)
+                            }
+                        }
+                        if (sightMainPhotos.size == sights?.size ?: mutableListOf<Sight>()) {
+                            when (profileItem) {
+                                "saved" -> profileViewModel.savedSights.postValue(sights)
+                                "completed" -> profileViewModel.completedSights.postValue(sights)
+                            }
+                        }
+                    }
+
+            } else {
+                when (profileItem) {
+                    "saved" -> profileViewModel.savedSights.postValue(sights)
+                    "completed" -> profileViewModel.completedSights.postValue(sights)
+                }
+            }
+        }
+
+    }
+
 
     private fun handleSightSelectedItems(selectedSightItemsList: MutableList<Int>) {
 
