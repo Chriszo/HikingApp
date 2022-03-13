@@ -30,7 +30,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
     private val completedViewModel: CompletedViewModel by activityViewModels()
 
     private lateinit var route: Route
-    private lateinit var completedRoutePhotos: MutableList<Bitmap>
+    private lateinit var completedRoutePhotos: MutableList<Bitmap?>
     private lateinit var elevationData: MutableList<Long>
 
     private lateinit var completedPhotosRecyclerView: RecyclerView

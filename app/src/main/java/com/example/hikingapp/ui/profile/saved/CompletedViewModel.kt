@@ -8,6 +8,6 @@ import com.example.hikingapp.domain.route.Route
 class CompletedViewModel : ViewModel() {
 
     val route = MutableLiveData<Route>()
-    val photos = MutableLiveData<List<Bitmap>>()
+    val photos = MutableLiveData<List<Bitmap?>>()
     val elevationData = MutableLiveData<List<Long>>()
 }

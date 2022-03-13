@@ -11,8 +11,8 @@ class Sight(
     var name: String?,
     var description: String?,
     var rating: Float?,
-    var mainPhoto: Int?,
-    var photos: MutableList<Bitmap>?
+    @Transient var mainPhoto: Bitmap?,
+    @Transient var photos: MutableList<Bitmap>?
 ) : Serializable, UIElement {
 
     constructor() : this(0,null, null, null, null, null, null)

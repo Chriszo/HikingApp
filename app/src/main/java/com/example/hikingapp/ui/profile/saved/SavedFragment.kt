@@ -154,7 +154,7 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
             sights = sightsList
             profileViewModel.user.value?.profileInfo?.savedSights =
                 sights.stream().map { it.sightId }.collect(Collectors.toList())
-            sightsAdapter = SightsProfileAdapter(sights, this, this)
+            sightsAdapter = SightsProfileAdapter(context, sights, this, this)
             sightsRecyclerView.adapter = sightsAdapter
             profileViewModel.savedSightsEnabled.observe(viewLifecycleOwner, {
                 sightsAdapter.setEnabled(it)

@@ -17,7 +17,9 @@ class RouteViewModel : ViewModel(), Serializable {
 
     val cultureInfo = MutableLiveData<CultureInfo>()
 
-    val photos = MutableLiveData<List<Bitmap>>()
+    val photos = MutableLiveData<List<Bitmap?>>()
+
+//    val sightPhotos = MutableLiveData<List<Bitmap>>()
 
     /* fun defineRoute(r: Route) {
          route.value = r

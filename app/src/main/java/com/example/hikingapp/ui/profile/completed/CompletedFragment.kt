@@ -69,7 +69,7 @@ class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedLi
             sights = it as MutableList<Sight>
             profileViewModel.user.value?.profileInfo?.completedSights =
                 sights.stream().map { it.sightId }.collect(Collectors.toList())
-            sightsAdapter = SightsProfileAdapter(sights, this,this)
+            sightsAdapter = SightsProfileAdapter(context, sights, this,this)
             sightsRecyclerView.adapter = sightsAdapter
         })
     }

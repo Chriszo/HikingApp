@@ -1,6 +1,7 @@
 package com.example.hikingapp.ui.profile.saved
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
@@ -17,6 +18,8 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.R
 import com.example.hikingapp.SampleMapActivity
 import com.example.hikingapp.SampleNavigationActivity
+import com.example.hikingapp.domain.culture.CultureInfo
+import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
@@ -35,9 +38,11 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
+import io.ktor.http.*
 import kotlinx.android.synthetic.main.fragment_saved_route.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.info_nav_view
 import kotlinx.android.synthetic.main.route_fragment.view.navigate
@@ -67,8 +72,6 @@ class SavedRouteFragment : Fragment() {
     private val viewModel: RouteViewModel by activityViewModels()
     private lateinit var routeMap: String
 
-    private val routeViewModel: RouteViewModel by activityViewModels()
-
     private lateinit var mapService: MapService
 
     private lateinit var weatherService: WeatherService
@@ -93,10 +96,6 @@ class SavedRouteFragment : Fragment() {
 
         route = arguments?.get("route") as Route
 
-        if (routeViewModel.photos.value.isNullOrEmpty()) {
-            routeViewModel.photos.postValue(route.photos)
-        }
-
         mapService = MapServiceImpl()
         weatherService = WeatherServiceImpl()
 
@@ -120,26 +119,80 @@ class SavedRouteFragment : Fragment() {
 
                 GlobalScope.launch {
 
-                    if (routeViewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
+                    if (viewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
                         route.routeInfo!!.elevationData = setRouteElevationData(route)
                     }
 
-                    val cultureInfoJob =
-                        if (routeViewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
+                    /*val cultureInfoJob =
+                        if (viewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
                             GlobalScope.launch {
 
-                                if (Objects.isNull(routeViewModel.cultureInfo.value)) {
+                                if (Objects.isNull(viewModel.cultureInfo.value)) {
                                     route.cultureInfo =
                                         CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
-                                    routeViewModel.cultureInfo.postValue(route.cultureInfo)
+                                    viewModel.cultureInfo.postValue(route.cultureInfo)
                                 }
                             }
                         } else {
                             null
-                        }
+                        }*/
+
+                    var persistedSightsFound = false
+                    val sights = LocalDatabase.getSightsOfRoute(route.routeId)
+
+                    if (Objects.nonNull(sights)) {
+                        route.cultureInfo = CultureInfo(sights)
+                        loadSightsMainPhotos()
+                    } else {
+                        database.getReference("route_sights").child("${route.routeId}")
+                            .addValueEventListener(
+                                object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+                                        if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value) && !(snapshot.value as ArrayList<*>).isNullOrEmpty()) {
+                                            persistedSightsFound = true
+
+                                            val sights =
+                                                (snapshot.value as ArrayList<HashMap<String, *>>)
+                                                    .stream()
+                                                    .map { sightEntry ->
+                                                        val sightId = sightEntry["sightId"] as Long
+                                                        val sight = Sight(
+                                                            sightId,
+                                                            null,
+                                                            sightEntry["name"] as String,
+                                                            sightEntry["description"] as String,
+                                                            (sightEntry["rating"] as Double).toFloat(),
+                                                            LocalDatabase.getMainImage(
+                                                                sightId,
+                                                                Sight::class.java.simpleName
+                                                            ),
+                                                            null
+                                                        )
+                                                        LocalDatabase.saveSight(
+                                                            route.routeId,
+                                                            sight
+                                                        )
+                                                        sight
+                                                    }
+                                                    .collect(Collectors.toList())
+
+                                            val persistedCultureInfo = CultureInfo(sights)
+                                            route.cultureInfo = persistedCultureInfo
+                                            loadSightsMainPhotos()
+//                                        viewModel.cultureInfo.postValue(persistedCultureInfo)
+                                        }
+                                    }
+
+                                    override fun onCancelled(error: DatabaseError) {
+                                        TODO("Not yet implemented")
+                                    }
+
+                                })
+                    }
+
 
                     val weatherInfoJob =
-                        if (routeViewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
+                        if (viewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
                             GlobalScope.launch {
                                 val weatherForecast = WeatherForecast()
                                 weatherForecast.weatherForecast = weatherService.getForecastForDays(
@@ -153,10 +206,10 @@ class SavedRouteFragment : Fragment() {
                             null
                         }
 
-                    cultureInfoJob?.join()
+//                    cultureInfoJob?.join()
                     weatherInfoJob?.join()
 
-                    routeViewModel.route.postValue(route)
+                    viewModel.route.postValue(route)
                 }
             }
 
@@ -178,9 +231,14 @@ class SavedRouteFragment : Fragment() {
                 .getReference("routes/mainPhotos/route_${route.routeId}_main.jpg")
                 .getBytes(1024 * 1024).addOnSuccessListener {
 
-                val mainPhotoBitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                view.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhotoBitmap))
-            }
+                    val mainPhotoBitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                    view.route_info_image.setImageDrawable(
+                        BitmapDrawable(
+                            resources,
+                            mainPhotoBitmap
+                        )
+                    )
+                }
         }
 
         route.photos = LocalDatabase.getImages(route.routeId, Route::class.java.simpleName)
@@ -218,6 +276,55 @@ class SavedRouteFragment : Fragment() {
         view.stateName.text = route.stateName
         view.routeRating.rating = route.routeInfo!!.rating!!
         return view
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun loadSightsMainPhotos() {
+
+        val sightMainPhotos = mutableListOf<Bitmap?>()
+        route.cultureInfo?.sights?.forEach { sight ->
+
+            sight.mainPhoto =
+                LocalDatabase.getMainImage(sight.sightId, Sight::class.java.simpleName)
+            if (sight.mainPhoto == null) {
+
+                storage.reference.child("sights/mainPhotos/sight_${sight.sightId}_main.jpg")
+                    .getBytes(1024 * 1024 * 5).addOnSuccessListener {
+
+                        val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                        sight.mainPhoto = bitmap
+                        sightMainPhotos.add(bitmap)
+                        LocalDatabase.saveImage(
+                            sight.sightId,
+                            Sight::class.java.simpleName,
+                            "sight_${sight.sightId}_main.jpg",
+                            bitmap,
+                            true
+                        )
+                        if (sightMainPhotos.size == route.cultureInfo!!.sights?.size ?: mutableListOf<Sight>()) {
+                            viewModel.cultureInfo.postValue(route.cultureInfo)
+                        }
+                    }
+                    .addOnFailureListener {
+                        if (it is StorageException) {
+                            if (it.httpResultCode == HttpStatusCode.NotFound.value) {
+                                sightMainPhotos.add(null)
+                            }
+                        }
+                        if (sightMainPhotos.size == route.cultureInfo!!.sights?.size ?: mutableListOf<Sight>()) {
+                            viewModel.cultureInfo.postValue(route.cultureInfo)
+                        }
+                    }
+
+            } else {
+                sightMainPhotos.add(sight.mainPhoto)
+                if (sightMainPhotos.size == route.cultureInfo!!.sights?.size ?: mutableListOf<Sight>()) {
+                    viewModel.cultureInfo.postValue(route.cultureInfo)
+                }
+            }
+        }
+
     }
 
 

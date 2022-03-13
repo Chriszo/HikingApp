@@ -14,6 +14,8 @@ object GlobalUtils {
     const val TILEQUERY_GEOMETRY_ID = "polygon"
     const val TILEQUERY_ATTRIBUTE_REQUESTED_ID = "contour"
 
+    const val MEGABYTE = 1024L*1024L
+
 
     fun getRoutePair(route: Route): Pair<Route, Bitmap?> {
 

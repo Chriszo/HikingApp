@@ -13,7 +13,7 @@ import com.example.hikingapp.R
 
 class PhotoAdapter(
     private val context: Context?,
-    private var photos: List<Bitmap>,
+    private var photos: List<Bitmap?>,
     private val itemClickedListener: OnItemClickedListener
 ) :
     RecyclerView.Adapter<PhotoAdapter.ViewHolder>() {

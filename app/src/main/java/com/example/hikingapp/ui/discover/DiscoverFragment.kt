@@ -568,11 +568,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     override fun onItemClicked(position: Int, bundle: Bundle) {
 
         val intent = Intent(context, RouteActivity::class.java)
-
-//        val routePair = GlobalUtils.getRoutePair(currentRoutes[position])
-        currentRoutes[position].mainPhotoBitmap = null
         intent.putExtra("route", currentRoutes[position])
-
         intent.putExtra("action", "normal")
         intent.putExtra("authInfo", userViewModel.user.value)
         startActivity(intent)

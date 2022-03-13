@@ -1,6 +1,8 @@
 package com.example.hikingapp.ui.adapters
 
+import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,10 +13,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.culture.Sight
-import com.example.hikingapp.domain.route.Route
 
 class SightsProfileAdapter(
-    val sights: List<Sight>,
+    private val context: Context?,
+    private val sights: List<Sight>,
     private val itemClickedListener: OnItemClickedListener,
     private val itemLongClickedListener: OnItemLongClickedListener
 ) : RecyclerView.Adapter<SightsProfileAdapter.ViewHolder>() {
@@ -142,7 +144,8 @@ class SightsProfileAdapter(
         }
 
         val sight = sights[position]
-        holder.imageView.setImageResource(sight.mainPhoto!!)
+//        holder.imageView.setImageResource(sight.mainPhoto!!)
+        holder.imageView.setImageDrawable(BitmapDrawable(context!!.resources, sight.mainPhoto))
         holder.nameView.text = sight.name
         holder.stateView.text = sight.description
         holder.ratingView.rating = sight.rating!!

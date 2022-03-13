@@ -23,6 +23,7 @@ import com.example.hikingapp.databinding.FragmentProfileBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.users.User
+import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.ui.viewModels.ProfileViewModel
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.ui.viewModels.UserViewModel
@@ -265,13 +266,14 @@ class ProfileFragment : Fragment() {
                                             .filter { sightEntry -> sightEntry.key.split("_")[1].toLong() in userSavedSightIds }
                                             .map {
                                                 val sightInfo = it.value as HashMap<String, *>
+                                                val sightId = sightInfo["sightId"] as Long
                                                 Sight(
-                                                    sightInfo["sightId"] as Long,
+                                                    sightId,
                                                     null,
                                                     sightInfo["name"] as String,
                                                     sightInfo["description"] as String,
                                                     (sightInfo["rating"] as Double).toFloat(),
-                                                    (sightInfo["mainPhoto"] as Long).toInt(),
+                                                    LocalDatabase.getMainImage(sightId,Sight::class.java.simpleName),
                                                     mutableListOf()
                                                 )
                                             }
@@ -313,13 +315,14 @@ class ProfileFragment : Fragment() {
                                                 .filter { sightEntry -> sightEntry.key.split("_")[1].toLong() in userCompletedSightIds }
                                                 .map {
                                                     val sightInfo = it.value as HashMap<String, *>
+                                                    val sightId = sightInfo["sightId"] as Long
                                                     Sight(
-                                                        sightInfo["sightId"] as Long,
+                                                        sightId,
                                                         null,
                                                         sightInfo["name"] as String,
                                                         sightInfo["description"] as String,
                                                         (sightInfo["rating"] as Double).toFloat(),
-                                                        (sightInfo["mainPhoto"] as Long).toInt(),
+                                                        LocalDatabase.getMainImage(sightId, Sight::class.java.simpleName),
                                                         mutableListOf()
                                                     )
                                                 }

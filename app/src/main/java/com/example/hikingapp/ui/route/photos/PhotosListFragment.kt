@@ -24,7 +24,7 @@ class PhotosListFragment : Fragment(), OnItemClickedListener {
     private lateinit var photosAdapter: PhotoAdapter
     private val routeViewModel: RouteViewModel by activityViewModels()
 
-    private lateinit var photos: List<Bitmap>
+    private lateinit var photos: List<Bitmap?>
 
     override fun onAttach(context: Context) {
         super.onAttach(context)

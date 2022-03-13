@@ -16,6 +16,7 @@ import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.SightsAdapter
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.ui.viewModels.SightsViewModel
+import com.google.gson.Gson
 
 class SightsListFragment : Fragment(), OnItemClickedListener {
 
@@ -26,7 +27,7 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
 
     private lateinit var cultureInfoView: View
 
-    private lateinit var cultureInfo: CultureInfo
+    private var cultureInfo: CultureInfo? = null
 
     private lateinit var linearLayoutManager: LinearLayoutManager
 
@@ -58,7 +59,7 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
         viewModel.cultureInfo.observe(viewLifecycleOwner, { updatedCultureInfo ->
             cultureInfo = updatedCultureInfo
 
-            sightsAdapter = SightsAdapter(cultureInfo.sights!!, itemClickedListener)
+            sightsAdapter = SightsAdapter(context, cultureInfo?.sights!!, itemClickedListener)
             recyclerView.adapter = sightsAdapter
         })
 
@@ -67,9 +68,7 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
         val intent = Intent(context,SightDetailsActivity::class.java)
-        val sight = cultureInfo.sights?.get(position)
-        sight?.mainPhoto = R.drawable.sunny
-        sight?.photos = viewModel.photos.value?.toMutableList()
+        val sight = cultureInfo?.sights?.get(position)
         intent.putExtra("sightInfo",sight)
         startActivity(intent)
     }

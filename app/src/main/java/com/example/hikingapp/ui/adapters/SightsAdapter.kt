@@ -1,5 +1,7 @@
 package com.example.hikingapp.ui.adapters
 
+import android.content.Context
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,14 +13,21 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.culture.Sight
 
-class SightsAdapter(var sights: List<Sight>, var itemClicked: OnItemClickedListener?): RecyclerView.Adapter<SightsAdapter.ViewHolder>() {
+class SightsAdapter(
+    private val context: Context?,
+    private var sights: List<Sight>,
+    private var itemClicked: OnItemClickedListener?
+) : RecyclerView.Adapter<SightsAdapter.ViewHolder>() {
 
-    class ViewHolder(view: View, itemClicked: OnItemClickedListener): RecyclerView.ViewHolder(view), View.OnClickListener {
+    class ViewHolder(view: View, itemClicked: OnItemClickedListener) :
+        RecyclerView.ViewHolder(view), View.OnClickListener {
 
         private val mView = view
         private val itemClickListener = itemClicked
+        val imageView: ImageView = view.findViewById(R.id.imageView)
         val sightNameView: TextView = view.findViewById(R.id.sight_name)
         val sightDescriptionView: TextView = view.findViewById(R.id.sight_description)
+        val ratingView: RatingBar = view.findViewById(R.id.routeRating)
         private val bundle = Bundle()
 
         init {
@@ -40,8 +49,15 @@ class SightsAdapter(var sights: List<Sight>, var itemClicked: OnItemClickedListe
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
+        holder.imageView.setImageDrawable(
+            BitmapDrawable(
+                context!!.resources,
+                sights[position].mainPhoto
+            )
+        )
         holder.sightNameView.text = sights[position].name
         holder.sightDescriptionView.text = sights[position].description
+        holder.ratingView.rating = sights[position].rating!!
     }
 
     override fun getItemCount() = sights.count()
