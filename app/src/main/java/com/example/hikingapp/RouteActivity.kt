@@ -24,10 +24,11 @@ class RouteActivity : AppCompatActivity() {
         val bundle = Bundle()
         bundle.putSerializable("route", route)
         bundle.putParcelable("authInfo", authInfo)
+        bundle.putString("action", action)
 
         action.apply {
             when (this) {
-                "normal" -> {
+                "discover" -> {
                     val routeFragment = RouteFragment()
                     routeFragment.arguments = bundle
                     supportFragmentManager.beginTransaction()

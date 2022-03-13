@@ -24,7 +24,6 @@ import com.example.hikingapp.app.viewModels.AppViewModel
 import com.example.hikingapp.databinding.FragmentProfileBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.domain.users.User
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.ui.viewModels.ProfileViewModel
 import com.example.hikingapp.ui.viewModels.RouteViewModel
@@ -59,12 +58,11 @@ class ProfileFragment : Fragment() {
     private lateinit var savedSights: MutableList<Sight>
     private lateinit var completedSights: MutableList<Sight>
 
-    private lateinit var userAuthInfo: FirebaseUser
+    private var userAuthInfo: FirebaseUser? = null
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
     }
 
-    private lateinit var user: User
     private lateinit var userSavedRouteIds: MutableList<Long>
     private lateinit var userCompletedRouteIds: MutableList<Long>
     private lateinit var userSavedSightIds: MutableList<Long>
@@ -93,6 +91,10 @@ class ProfileFragment : Fragment() {
             startActivity(Intent(context, LoginActivity::class.java))
         } else {
 
+            userViewModel.user.observe(viewLifecycleOwner, {
+                userAuthInfo = it
+            })
+
             progressDialog = ProgressDialog(context)
             progressDialog.setTitle("Please wait...")
             progressDialog.setMessage("Loading Routes...")
@@ -102,9 +104,9 @@ class ProfileFragment : Fragment() {
             _binding = FragmentProfileBinding.inflate(inflater, container, false)
             val root: View = binding.root
 
-            if (inProdMode) {
+            /*if (inProdMode) {
                 userAuthInfo = userViewModel.user.value!!
-            }
+            }*/
 
             val navHost =
                 childFragmentManager.findFragmentById(R.id.profileFragmentContainer) as NavHostFragment
@@ -162,11 +164,11 @@ class ProfileFragment : Fragment() {
                 val selectedSightItemsList = profileViewModel.selectedSightItems.value
 
 
-                if (!selectedRouteItemsList.isNullOrEmpty()) {
+                if (Objects.nonNull(userAuthInfo) && !selectedRouteItemsList.isNullOrEmpty()) {
                     handleRouteSelectedItems(selectedRouteItemsList)
                 }
 
-                if (!selectedSightItemsList.isNullOrEmpty()) {
+                if (Objects.nonNull(userAuthInfo) && !selectedSightItemsList.isNullOrEmpty()) {
                     handleSightSelectedItems(selectedSightItemsList)
                 }
             }
@@ -177,7 +179,7 @@ class ProfileFragment : Fragment() {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         userSavedSightIds = (snapshot.value as HashMap<String, *>).entries
                             .stream()
-                            .filter { it.key == userAuthInfo.uid }
+                            .filter { it.key == userAuthInfo!!.uid }
                             .flatMap { (it.value as MutableList<Long>).stream() }
                             .collect(Collectors.toList())
                     }
@@ -194,7 +196,7 @@ class ProfileFragment : Fragment() {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         userCompletedSightIds = (snapshot.value as HashMap<String, *>).entries
                             .stream()
-                            .filter { it.key == userAuthInfo.uid }
+                            .filter { it.key == userAuthInfo!!.uid }
                             .flatMap { (it.value as MutableList<Long>).stream() }
                             .collect(Collectors.toList())
                     }
@@ -213,7 +215,7 @@ class ProfileFragment : Fragment() {
                         override fun onDataChange(snapshot: DataSnapshot) {
                             userSavedRouteIds = (snapshot.value as HashMap<String, *>).entries
                                 .stream()
-                                .filter { it.key == userAuthInfo.uid }
+                                .filter { it.key == userAuthInfo!!.uid }
                                 .flatMap { (it.value as MutableList<Long>).stream() }
                                 .collect(Collectors.toList())
 
@@ -238,7 +240,7 @@ class ProfileFragment : Fragment() {
                         override fun onDataChange(snapshot: DataSnapshot) {
                             userCompletedRouteIds = (snapshot.value as HashMap<String, *>).entries
                                 .stream()
-                                .filter { it.key == userAuthInfo.uid }
+                                .filter { it.key == userAuthInfo!!.uid }
                                 .flatMap { (it.value as MutableList<Long>).stream() }
                                 .collect(Collectors.toList())
 
@@ -262,7 +264,7 @@ class ProfileFragment : Fragment() {
                         override fun onDataChange(snapshot: DataSnapshot) {
                             userSavedSightIds = (snapshot.value as HashMap<String, *>).entries
                                 .stream()
-                                .filter { it.key == userAuthInfo.uid }
+                                .filter { it.key == userAuthInfo!!.uid }
                                 .flatMap { (it.value as MutableList<Long>).stream() }
                                 .collect(Collectors.toList())
 
@@ -330,7 +332,7 @@ class ProfileFragment : Fragment() {
                         override fun onDataChange(snapshot: DataSnapshot) {
                             userCompletedSightIds = (snapshot.value as HashMap<String, *>).entries
                                 .stream()
-                                .filter { it.key == userAuthInfo.uid }
+                                .filter { it.key == userAuthInfo!!.uid }
                                 .flatMap { (it.value as MutableList<Long>).stream() }
                                 .collect(Collectors.toList())
 
@@ -340,6 +342,7 @@ class ProfileFragment : Fragment() {
 
                             if (!completedSights.isNullOrEmpty()) {
                                 loadSightsMainPhotos(completedSights, "completed")
+                                progressDialog.dismiss()
                             } else {
                                 database.getReference("sights")
                                     .addValueEventListener(object : ValueEventListener {
@@ -482,9 +485,93 @@ class ProfileFragment : Fragment() {
         profileViewModel.isRoutesLongClickPressed.postValue(false)
     }
 
+
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onDestroyView() {
         super.onDestroyView()
-        println(profileViewModel.user.value)
+
+        if (Objects.nonNull(userAuthInfo)) {
+
+            persistSavedRoutes()
+            persistCompletedRoutes()
+            persistSavedSights()
+            persistCompletedSights()
+
+        }
+
         _binding = null
+    }
+
+    private fun persistCompletedSights() {
+        database.getReference("completedSightAssociations").child(userAuthInfo!!.uid)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                @RequiresApi(Build.VERSION_CODES.N)
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val completedSightIds =
+                        completedSights.stream().map { it.sightId }.collect(Collectors.toList())
+                    database.getReference("completedSightAssociations").child(userAuthInfo!!.uid)
+                        .setValue(completedSightIds)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            })
+    }
+
+    private fun persistSavedSights() {
+        database.getReference("savedSightAssociations").child(userAuthInfo!!.uid)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                @RequiresApi(Build.VERSION_CODES.N)
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val savedSightIds =
+                        savedSights.stream().map { it.sightId }.collect(Collectors.toList())
+                    database.getReference("savedSightAssociations").child(userAuthInfo!!.uid)
+                        .setValue(savedSightIds)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            })
+    }
+
+    private fun persistCompletedRoutes() {
+        database.getReference("completedRouteAssociations").child(userAuthInfo!!.uid)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                @RequiresApi(Build.VERSION_CODES.N)
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val completedRouteIds =
+                        completedRoutes.stream().map { it.routeId }.collect(Collectors.toList())
+
+                    database.getReference("completedRouteAssociations").child(userAuthInfo!!.uid)
+                        .setValue(completedRouteIds)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            })
+    }
+
+    private fun persistSavedRoutes() {
+        database.getReference("savedRouteAssociations").child(userAuthInfo!!.uid)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                @RequiresApi(Build.VERSION_CODES.N)
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val savedRouteIds =
+                        savedRoutes.stream().map { it.routeId }.collect(Collectors.toList())
+                    database.getReference("savedRouteAssociations").child(userAuthInfo!!.uid)
+                        .setValue(savedRouteIds)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            })
     }
 }

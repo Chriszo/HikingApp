@@ -16,12 +16,15 @@ import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.SightsAdapter
 import com.example.hikingapp.ui.viewModels.RouteViewModel
 import com.example.hikingapp.ui.viewModels.SightsViewModel
+import com.example.hikingapp.ui.viewModels.UserViewModel
+import com.google.firebase.auth.FirebaseUser
 import com.google.gson.Gson
 
 class SightsListFragment : Fragment(), OnItemClickedListener {
 
+    private var user: FirebaseUser? = null
     private val viewModel: RouteViewModel by activityViewModels()
-    private val sightsViewModel: SightsViewModel by activityViewModels()
+    private val userViewModel: UserViewModel by activityViewModels()
 
     private lateinit var sightsAdapter: SightsAdapter
 
@@ -63,6 +66,10 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
             recyclerView.adapter = sightsAdapter
         })
 
+        userViewModel.user.observe(viewLifecycleOwner, {
+            user = it
+        })
+
         return cultureInfoView
     }
 
@@ -70,6 +77,8 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
         val intent = Intent(context,SightDetailsActivity::class.java)
         val sight = cultureInfo?.sights?.get(position)
         intent.putExtra("sightInfo",sight)
+        intent.putExtra("action", "discover")
+        intent.putExtra("authInfo", user)
         startActivity(intent)
     }
 

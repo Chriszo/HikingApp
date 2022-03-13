@@ -19,11 +19,14 @@ import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.adapters.*
 import com.example.hikingapp.ui.route.cultureInfo.SightDetailsActivity
 import com.example.hikingapp.ui.viewModels.ProfileViewModel
+import com.example.hikingapp.ui.viewModels.UserViewModel
+import com.google.firebase.auth.FirebaseUser
 import java.util.stream.Collectors
 
 class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListener {
 
     private val profileViewModel: ProfileViewModel by activityViewModels()
+    private val userViewModel: UserViewModel by activityViewModels()
 
     private lateinit var routes: MutableList<Route>
     private lateinit var sights: MutableList<Sight>
@@ -41,6 +44,8 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
     private var allRouteItemsSelected = false
     private var allSightItemsSelected = false
 
+    private var user: FirebaseUser? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +61,11 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
 
         val selectAllRoutesTextView = view.findViewById(R.id.select_all_route_items) as TextView
         val selectAllSightsTextView = view.findViewById(R.id.select_all_sight_items) as TextView
+
+
+        userViewModel.user.observe(viewLifecycleOwner, {
+            user = it
+        })
 
 
         profileViewModel.isRoutesLongClickPressed.observe(viewLifecycleOwner, {
@@ -191,12 +201,14 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
                     routes[position].mainPhotoBitmap = null
                     intent.putExtra("route", routes[position])
                     intent.putExtra("action", "saved")
+                    intent.putExtra("authInfo", user)
                     startActivity(intent)
                 }
                 Sight::class.java.simpleName -> {
                     val intent = Intent(context, SightDetailsActivity::class.java)
                     // TODO replace with Global Utils ID
                     intent.putExtra("sightInfo", sights[position])
+                    intent.putExtra("authInfo", user)
                     intent.putExtra("action", "saved")
                     startActivity(intent)
                 }

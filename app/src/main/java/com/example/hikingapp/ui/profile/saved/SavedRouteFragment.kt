@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
 import com.example.hikingapp.SampleMapActivity
 import com.example.hikingapp.SampleNavigationActivity
@@ -31,7 +32,9 @@ import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -43,6 +46,7 @@ import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import io.ktor.http.*
 import kotlinx.android.synthetic.main.fragment_saved_route.view.*
+import kotlinx.android.synthetic.main.route_fragment.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.info_nav_view
 import kotlinx.android.synthetic.main.route_fragment.view.navigate
 import kotlinx.android.synthetic.main.route_fragment.view.routeName
@@ -64,11 +68,13 @@ import java.util.stream.Collectors
 
 class SavedRouteFragment : Fragment() {
 
+    private var authInfo: FirebaseUser? = null
     private val storage: FirebaseStorage by lazy {
         FirebaseStorage.getInstance()
     }
 
     private val viewModel: RouteViewModel by activityViewModels()
+
     private lateinit var routeMap: String
 
     private lateinit var mapService: MapService
@@ -96,16 +102,12 @@ class SavedRouteFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_saved_route, container, false)
 
         route = arguments?.get("route") as Route
+        authInfo = arguments?.get("authInfo") as FirebaseUser?
 
         mapService = MapServiceImpl()
         weatherService = WeatherServiceImpl()
 
-        val removeBookmarkButton = view.route_remove_bookmark
 
-        removeBookmarkButton.setOnClickListener {
-
-            requireArguments().putSerializable("removeSaved", route)
-        }
 
         database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -351,7 +353,72 @@ class SavedRouteFragment : Fragment() {
         println("on destroy")
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun initializeButtonListeners(view: View) {
+
+        val removeBookmarkButton = view.route_remove_bookmark
+
+        if (requireArguments().containsKey("action")) {
+            when (requireArguments()["action"] as String) {
+                "discover" -> {
+                    removeBookmarkButton!!.setImageResource(R.drawable.bookmark_outlined_icon_foreground)
+                    removeBookmarkButton!!.setOnClickListener {
+                        if (Objects.nonNull(authInfo)) {
+                            database.getReference("savedRouteAssociations").child(authInfo!!.uid)
+                                .addListenerForSingleValueEvent(object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+                                        if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value)) {
+                                            val savedUserRoutes =
+                                                snapshot.value as MutableList<Long>
+                                            savedUserRoutes.add(route.routeId)
+                                            database.getReference("savedRouteAssociations")
+                                                .child(authInfo!!.uid).setValue(savedUserRoutes)
+                                        } else {
+                                            database.getReference("savedRouteAssociations")
+                                                .child(authInfo!!.uid).setValue(
+                                                    mutableListOf(route.routeId)
+                                                )
+                                        }
+                                    }
+
+                                    override fun onCancelled(error: DatabaseError) {
+                                        TODO("Not yet implemented")
+                                    }
+
+                                })
+                        } else {
+                            startActivity(Intent(context, LoginActivity::class.java))
+                        }
+                    }
+                }
+                "saved" -> {
+                    removeBookmarkButton!!.setImageResource(R.drawable.remove_bookmark_icon_foreground)
+                    removeBookmarkButton!!.setOnClickListener {
+                        if (Objects.nonNull(authInfo)) {
+                            database.getReference("savedRouteAssociations").child(authInfo!!.uid)
+                                .addListenerForSingleValueEvent(object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+                                        if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value)) {
+                                            val savedUserRoutes =
+                                                snapshot.value as MutableList<Long>
+                                            savedUserRoutes.remove(route.routeId)
+                                            database.getReference("savedRouteAssociations")
+                                                .child(authInfo!!.uid).setValue(savedUserRoutes)
+                                        }
+                                    }
+
+                                    override fun onCancelled(error: DatabaseError) {
+                                        TODO("Not yet implemented")
+                                    }
+
+                                })
+                        } else {
+                            startActivity(Intent(context, LoginActivity::class.java))
+                        }
+                    }
+                }
+            }
+        }
 
 
         val showMapButton = view.show_map

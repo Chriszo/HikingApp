@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
 import com.example.hikingapp.SampleMapActivity
 import com.example.hikingapp.SampleNavigationActivity
@@ -31,7 +32,9 @@ import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -66,6 +69,7 @@ class RouteFragment : Fragment() {
     private lateinit var routeMap: String
 
     private val viewModel: RouteViewModel by activityViewModels()
+    private val userViewModel: UserViewModel by activityViewModels()
 
     private lateinit var mapService: MapService
 
@@ -95,6 +99,8 @@ class RouteFragment : Fragment() {
 
 
         authInfo = requireArguments()["authInfo"] as FirebaseUser?
+
+        userViewModel.user.postValue(authInfo)
 
         val prefs = requireActivity().applicationContext.getSharedPreferences("mainPhotoPrefs", 0)
         mainPhotoName = prefs.getString("${route.routeId}", null)
@@ -340,7 +346,109 @@ class RouteFragment : Fragment() {
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun initializeButtonListeners(view: View?) {
+
+        val bookmarkButton = view?.route_bookmark
+
+        if (Objects.nonNull(authInfo)) {
+            database.getReference("savedRouteAssociations").child(authInfo!!.uid)
+                .addValueEventListener(object : ValueEventListener {
+
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value)) {
+                            val savedRouteIds = snapshot.value as MutableList<Long>
+                            if (savedRouteIds.contains(route.routeId)) {
+                                setRemoveBookmarkListener(bookmarkButton)
+                            } else {
+                                setAddBookmarkListener(bookmarkButton)
+                            }
+
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
+
+                })
+        } else {
+            bookmarkButton?.setImageResource(R.drawable.bookmark_outlined_icon_foreground)
+        }
+
+
+        if (requireArguments().containsKey("action")) {
+            when (requireArguments()["action"] as String) {
+                "discover" -> {
+                    bookmarkButton!!.setOnClickListener {
+                        if (Objects.nonNull(authInfo)) {
+                            database.getReference("savedRouteAssociations").child(authInfo!!.uid)
+                                .addListenerForSingleValueEvent(object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+                                        if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value)) {
+                                            val savedUserRoutes =
+                                                snapshot.value as MutableList<Long>
+                                            if (!savedUserRoutes.contains(route.routeId)) {
+                                                savedUserRoutes.add(route.routeId)
+                                                bookmarkButton.setImageResource(R.drawable.remove_bookmark_icon_foreground)
+                                            } else {
+                                                savedUserRoutes.remove(route.routeId)
+                                                bookmarkButton.setImageResource(R.drawable.bookmark_outlined_icon_foreground)
+                                            }
+                                            database.getReference("savedRouteAssociations")
+                                                .child(authInfo!!.uid).setValue(savedUserRoutes)
+                                        } else {
+                                            database.getReference("savedRouteAssociations")
+                                                .child(authInfo!!.uid).setValue(
+                                                    mutableListOf(route.routeId)
+                                                )
+                                            bookmarkButton.setImageResource(R.drawable.remove_bookmark_icon_foreground)
+                                        }
+                                    }
+
+                                    override fun onCancelled(error: DatabaseError) {
+                                        TODO("Not yet implemented")
+                                    }
+
+                                })
+                        } else {
+                            startActivity(Intent(context, LoginActivity::class.java))
+                        }
+                    }
+                }
+                "saved" -> {
+                    bookmarkButton!!.setOnClickListener {
+                        if (Objects.nonNull(authInfo)) {
+                            database.getReference("savedRouteAssociations")
+                                .child(authInfo!!.uid)
+                                .addListenerForSingleValueEvent(object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+                                        if (Objects.nonNull(snapshot) && Objects.nonNull(
+                                                snapshot.value
+                                            )
+                                        ) {
+                                            val savedUserRoutes =
+                                                snapshot.value as MutableList<Long>
+                                            savedUserRoutes.remove(route.routeId)
+                                            database.getReference("savedRouteAssociations")
+                                                .child(authInfo!!.uid).setValue(savedUserRoutes)
+                                            bookmarkButton.setImageResource(R.drawable.bookmark_outlined_icon_foreground)
+                                        }
+                                    }
+
+                                    override fun onCancelled(error: DatabaseError) {
+                                        TODO("Not yet implemented")
+                                    }
+
+                                })
+                        } else {
+                            startActivity(Intent(context, LoginActivity::class.java))
+                        }
+                    }
+                }
+            }
+        }
+
         val showMapButton = view?.show_map
         showMapButton?.setOnClickListener {
             activity?.let {
@@ -361,6 +469,71 @@ class RouteFragment : Fragment() {
                 it.startActivity(intent)
             }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun setAddBookmarkListener(bookmarkButton: FloatingActionButton?) {
+        bookmarkButton?.setImageResource(R.drawable.bookmark_outlined_icon_foreground)
+        /*if (Objects.nonNull(authInfo)) {
+            database.getReference("savedRouteAssociations").child(authInfo!!.uid)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value)) {
+                            val savedUserRoutes =
+                                snapshot.value as MutableList<Long>
+                            if (!savedUserRoutes.contains(route.routeId)) {
+                                savedUserRoutes.add(route.routeId)
+                                database.getReference("savedRouteAssociations")
+                                    .child(authInfo!!.uid).setValue(savedUserRoutes)
+                                bookmarkButton?.setImageResource(R.drawable.remove_bookmark_icon_foreground)
+                            }
+                        } else {
+                            database.getReference("savedRouteAssociations")
+                                .child(authInfo!!.uid).setValue(
+                                    mutableListOf(route.routeId)
+                                )
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
+
+                })
+        } else {
+            startActivity(Intent(context, LoginActivity::class.java))
+        }*/
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun setRemoveBookmarkListener(bookmarkButton: FloatingActionButton?) {
+        bookmarkButton?.setImageResource(R.drawable.remove_bookmark_icon_foreground)
+        /* bookmarkButton?.setOnClickListener {
+             if (Objects.nonNull(authInfo)) {
+                 database.getReference("savedRouteAssociations").child(authInfo!!.uid)
+                     .addListenerForSingleValueEvent(object : ValueEventListener {
+                         override fun onDataChange(snapshot: DataSnapshot) {
+                             if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value)) {
+                                 val savedUserRoutes =
+                                     snapshot.value as MutableList<Long>
+                                 if (savedUserRoutes.contains(route.routeId)) {
+                                     savedUserRoutes.remove(route.routeId)
+                                     database.getReference("savedRouteAssociations")
+                                         .child(authInfo!!.uid).setValue(savedUserRoutes)
+                                 }
+
+                             }
+                         }
+
+                         override fun onCancelled(error: DatabaseError) {
+                             TODO("Not yet implemented")
+                         }
+
+                     })
+             } else {
+                 startActivity(Intent(context, LoginActivity::class.java))
+             }
+         }*/
     }
 
     private fun initializeNavigationComponents(view: View) {

@@ -569,7 +569,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         val intent = Intent(context, RouteActivity::class.java)
         intent.putExtra("route", currentRoutes[position])
-        intent.putExtra("action", "normal")
+        intent.putExtra("action", "discover")
         intent.putExtra("authInfo", userViewModel.user.value)
         startActivity(intent)
     }
