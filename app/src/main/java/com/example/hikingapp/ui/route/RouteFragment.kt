@@ -123,9 +123,12 @@ class RouteFragment : Fragment() {
                     var persistedSightsFound = false
 
                     val sights = sightRetrieveLimit?.let {
-                        LocalDatabase.getSightsOfRoute(route.routeId)?.reversed()?.subList(0, it)
+                        LocalDatabase.getSightsOfRoute(route.routeId)
+                            ?.sortedBy { comparator -> comparator.rating }?.reversed()
+                            ?.subList(0, it)
                             ?.toMutableList()
-                    } ?: LocalDatabase.getSightsOfRoute(route.routeId)?.reversed()?.toMutableList()
+                    } ?: LocalDatabase.getSightsOfRoute(route.routeId)
+                        ?.sortedBy { comparator -> comparator.rating }?.reversed()?.toMutableList()
 
                     if (Objects.nonNull(sights)) {
                         route.cultureInfo = CultureInfo(sights)

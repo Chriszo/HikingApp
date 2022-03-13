@@ -26,7 +26,6 @@ import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
 import com.example.hikingapp.persistence.local.LocalDatabase
-import com.example.hikingapp.services.culture.CultureUtils
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
@@ -81,6 +80,8 @@ class SavedRouteFragment : Fragment() {
     }
 
     private lateinit var route: Route
+
+    private val sightRetrieveLimit: Int? = 5
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -138,7 +139,14 @@ class SavedRouteFragment : Fragment() {
                         }*/
 
                     var persistedSightsFound = false
-                    val sights = LocalDatabase.getSightsOfRoute(route.routeId)
+
+                    val sights = sightRetrieveLimit?.let {
+                        LocalDatabase.getSightsOfRoute(route.routeId)
+                            ?.sortedBy { comparator -> comparator.rating }?.reversed()
+                            ?.subList(0, it)
+                            ?.toMutableList()
+                    } ?: LocalDatabase.getSightsOfRoute(route.routeId)
+                        ?.sortedBy { comparator -> comparator.rating }?.reversed()?.toMutableList()
 
                     if (Objects.nonNull(sights)) {
                         route.cultureInfo = CultureInfo(sights)
@@ -176,10 +184,15 @@ class SavedRouteFragment : Fragment() {
                                                     }
                                                     .collect(Collectors.toList())
 
-                                            val persistedCultureInfo = CultureInfo(sights)
+                                            val persistedCultureInfo =
+                                                CultureInfo(sightRetrieveLimit?.let {
+                                                    sights.reversed().subList(
+                                                        0,
+                                                        sightRetrieveLimit
+                                                    ).toMutableList()
+                                                } ?: sights.reversed().toMutableList())
                                             route.cultureInfo = persistedCultureInfo
                                             loadSightsMainPhotos()
-//                                        viewModel.cultureInfo.postValue(persistedCultureInfo)
                                         }
                                     }
 
