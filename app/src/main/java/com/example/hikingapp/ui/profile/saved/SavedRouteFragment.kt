@@ -17,8 +17,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
-import com.example.hikingapp.SampleMapActivity
-import com.example.hikingapp.SampleNavigationActivity
+import com.example.hikingapp.MapActivity
+import com.example.hikingapp.NavigationActivity
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.map.ExtendedMapPoint
@@ -32,7 +32,6 @@ import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.ui.viewModels.RouteViewModel
-import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
@@ -46,7 +45,6 @@ import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import io.ktor.http.*
 import kotlinx.android.synthetic.main.fragment_saved_route.view.*
-import kotlinx.android.synthetic.main.route_fragment.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.info_nav_view
 import kotlinx.android.synthetic.main.route_fragment.view.navigate
 import kotlinx.android.synthetic.main.route_fragment.view.routeName
@@ -424,7 +422,7 @@ class SavedRouteFragment : Fragment() {
         val showMapButton = view.show_map
         showMapButton?.setOnClickListener {
             activity?.let {
-                val intent = Intent(it, SampleMapActivity::class.java)
+                val intent = Intent(it, MapActivity::class.java)
                 intent.putExtra("routeName", route.routeName)
                 intent.putExtra("routeMap", routeMap)
                 it.startActivity(intent)
@@ -434,7 +432,7 @@ class SavedRouteFragment : Fragment() {
         val showNavButton = view.navigate
         showNavButton?.setOnClickListener {
             activity?.let {
-                val intent = Intent(it, SampleNavigationActivity::class.java)
+                val intent = Intent(it, NavigationActivity::class.java)
                 intent.putExtra("routeName", route.routeName)
                 intent.putExtra("routeMap", routeMap)
                 it.startActivity(intent)

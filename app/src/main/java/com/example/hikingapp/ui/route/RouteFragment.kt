@@ -17,8 +17,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
-import com.example.hikingapp.SampleMapActivity
-import com.example.hikingapp.SampleNavigationActivity
+import com.example.hikingapp.MapActivity
+import com.example.hikingapp.NavigationActivity
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.map.ExtendedMapPoint
@@ -452,7 +452,7 @@ class RouteFragment : Fragment() {
         val showMapButton = view?.show_map
         showMapButton?.setOnClickListener {
             activity?.let {
-                val intent = Intent(it, SampleMapActivity::class.java)
+                val intent = Intent(it, MapActivity::class.java)
                 intent.putExtra("routeName", route.routeName)
                 intent.putExtra("routeMap", routeMap)
                 it.startActivity(intent)
@@ -462,7 +462,7 @@ class RouteFragment : Fragment() {
         val showNavButton = view?.navigate
         showNavButton?.setOnClickListener {
             activity?.let {
-                val intent = Intent(it, SampleNavigationActivity::class.java)
+                val intent = Intent(it, NavigationActivity::class.java)
                 intent.putExtra("routeName", route.routeName)
                 intent.putExtra("routeMap", routeMap)
                 intent.putExtra("authInfo", authInfo)

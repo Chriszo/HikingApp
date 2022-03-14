@@ -18,7 +18,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.hikingapp.databinding.ActivitySampleNavigationBinding
+import com.example.hikingapp.databinding.ActivityNavigationBinding
 import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.services.map.MapService
@@ -118,7 +118,7 @@ import java.util.stream.Collectors
  * - At any point in time you can finish guidance or select a new destination.
  * - You can use buttons to mute/unmute voice instructions, recenter the camera, or show the route overview.
  */
-class SampleNavigationActivity : AppCompatActivity() {
+class NavigationActivity : AppCompatActivity() {
 
     private var mapInfo: MapInfo? = null
 
@@ -176,7 +176,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         override fun onFinalDestinationArrival(routeProgress: RouteProgress) {
             println("FINAL DESTINATION REACHED!")
             val mainIntent =
-                Intent(this@SampleNavigationActivity, EndOfNavigationActivity::class.java)
+                Intent(this@NavigationActivity, EndOfNavigationActivity::class.java)
             startActivity(mainIntent)
         }
 
@@ -188,7 +188,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         override fun onWaypointArrival(routeProgress: RouteProgress) {
             println("CHECKPOINT ${checkpointCounter.get()} reached")
             Toast.makeText(
-                this@SampleNavigationActivity,
+                this@NavigationActivity,
                 "You have arrived at ${checkpointCounter.get()}",
                 Toast.LENGTH_LONG
             ).show()
@@ -218,7 +218,7 @@ class SampleNavigationActivity : AppCompatActivity() {
     /**
      * Bindings to the example layout.
      */
-    private lateinit var binding: ActivitySampleNavigationBinding
+    private lateinit var binding: ActivityNavigationBinding
 
     /**
      * Mapbox Maps entry point obtained from the [MapView].
@@ -444,7 +444,7 @@ class SampleNavigationActivity : AppCompatActivity() {
         maneuvers.fold(
             { error ->
                 Toast.makeText(
-                    this@SampleNavigationActivity,
+                    this@NavigationActivity,
                     error.errorMessage,
                     Toast.LENGTH_SHORT
                 ).show()
@@ -552,7 +552,7 @@ class SampleNavigationActivity : AppCompatActivity() {
 
         if (intent?.extras?.containsKey("authInfo") == true && intent!!.extras!!.get("authInfo") != null) {
 
-            binding = ActivitySampleNavigationBinding.inflate(layoutInflater)
+            binding = ActivityNavigationBinding.inflate(layoutInflater)
             setContentView(binding.root)
 
             mapboxMap = binding.mapView.getMapboxMap()
@@ -572,7 +572,7 @@ class SampleNavigationActivity : AppCompatActivity() {
             binding.mapView.location.apply {
                 this.locationPuck = LocationPuck2D(
                     bearingImage = ContextCompat.getDrawable(
-                        this@SampleNavigationActivity,
+                        this@NavigationActivity,
                         R.drawable.mapbox_navigation_puck_icon
                     )
                 )
@@ -749,7 +749,7 @@ class SampleNavigationActivity : AppCompatActivity() {
                 object : OnMapLoadErrorListener {
                     override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
                         Log.e(
-                            SampleNavigationActivity::class.java.simpleName,
+                            NavigationActivity::class.java.simpleName,
                             "Error loading map: " + eventData.message
                         )
                     }

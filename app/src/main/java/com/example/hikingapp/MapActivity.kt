@@ -10,7 +10,7 @@ import android.util.Log
 import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import com.example.hikingapp.databinding.ActivitySampleMapBinding
+import com.example.hikingapp.databinding.ActivityMapBinding
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
@@ -58,7 +58,7 @@ import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineOptions
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLine
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
-import kotlinx.android.synthetic.main.activity_sample_map.*
+import kotlinx.android.synthetic.main.activity_map.*
 import kotlinx.coroutines.*
 
 /**
@@ -89,7 +89,7 @@ import kotlinx.coroutines.*
  * - Click on start navigation.
  * - You should now be able to navigate to the destination with the route line and route arrows drawn.
  */
-class SampleMapActivity : AppCompatActivity() {
+class MapActivity : AppCompatActivity() {
 
     private val weatherService: WeatherService by lazy {
         WeatherServiceImpl()
@@ -123,8 +123,8 @@ class SampleMapActivity : AppCompatActivity() {
     /**
      * Bindings to the example layout.
      */
-    private val viewBinding: ActivitySampleMapBinding by lazy {
-        ActivitySampleMapBinding.inflate(layoutInflater)
+    private val viewBinding: ActivityMapBinding by lazy {
+        ActivityMapBinding.inflate(layoutInflater)
     }
 
     /**
@@ -330,7 +330,8 @@ class SampleMapActivity : AppCompatActivity() {
         //TODO Retrieve current Route Map information
         val route = Route()
 
-        val routeMap = if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
+        val routeMap =
+            if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
 
         val mapInfo = mapService.getMapInformation(getJson(routeMap), routeMap)
         route.mapInfo = mapInfo
@@ -423,7 +424,7 @@ class SampleMapActivity : AppCompatActivity() {
             object : OnMapLoadErrorListener {
                 override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
                     Log.e(
-                        SampleMapActivity::class.java.simpleName,
+                        MapActivity::class.java.simpleName,
                         "Error loading map: " + eventData.message
                     )
                 }
@@ -448,7 +449,7 @@ private fun initNavigation() {
         viewBinding.startNavigation.setOnClickListener {
             viewBinding.startNavigation.visibility = View.INVISIBLE
             this.let {
-                val navigationIntent = Intent(this, SampleNavigationActivity::class.java)
+                val navigationIntent = Intent(this, NavigationActivity::class.java)
                 navigationIntent.putExtra("mapInfo", mapInfo)
                 it.startActivity(navigationIntent)
             }
@@ -505,7 +506,7 @@ private fun initNavigation() {
         mapboxReplayer.run {
             stop()
             clearEvents()
-            pushRealLocation(this@SampleMapActivity, 0.0)
+            pushRealLocation(this@MapActivity, 0.0)
             val replayEvents = ReplayRouteMapper().mapDirectionsRouteGeometry(route)
             pushEvents(replayEvents)
             seekTo(replayEvents.first())
