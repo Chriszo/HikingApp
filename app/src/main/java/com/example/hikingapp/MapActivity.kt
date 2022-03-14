@@ -15,6 +15,7 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
@@ -328,12 +329,15 @@ class MapActivity : AppCompatActivity() {
         setContentView(viewBinding.root)
 
         //TODO Retrieve current Route Map information
-        val route = Route()
+        val route =
+            if (intent.extras!!.containsKey("route")) intent.extras?.get("route") as Route else Route()
 
-        val routeMap =
-            if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
+        val routeMapEntity = LocalDatabase.getRouteMapContent(route.routeId)
 
-        val mapInfo = mapService.getMapInformation(getJson(routeMap), routeMap)
+        val mapInfo = mapService.getMapInformation(
+            routeMapEntity!!.routeMapContent,
+            routeMapEntity.routeMapName
+        )
         route.mapInfo = mapInfo
 
         /* mapboxMap.addOnMapLoadedListener {
@@ -359,11 +363,6 @@ class MapActivity : AppCompatActivity() {
                 ExtendedMapPoint(mapPoint.point, mapPoint.elevation, coordinates.indexOf(mapPoint))
             }
             .toMutableList()
-    }
-
-    private fun getJson(routeMap: String?): String {
-        return assets.open(routeMap!!).readBytes()
-            .toString(Charsets.UTF_8)
     }
 
     private fun init(mapInfo: MapInfo) {

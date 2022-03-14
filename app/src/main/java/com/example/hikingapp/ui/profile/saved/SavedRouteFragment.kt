@@ -16,9 +16,9 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.LoginActivity
-import com.example.hikingapp.R
 import com.example.hikingapp.MapActivity
 import com.example.hikingapp.NavigationActivity
+import com.example.hikingapp.R
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.map.ExtendedMapPoint
@@ -26,6 +26,7 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
+import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
@@ -106,130 +107,261 @@ class SavedRouteFragment : Fragment() {
         weatherService = WeatherServiceImpl()
 
 
+        val routeMapEntity = LocalDatabase.getRouteMapContent(route.routeId)
 
-        database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
+        if (Objects.isNull(routeMapEntity)) {
+            database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
 
-                routeMap = (snapshot.value as HashMap<String, *>).entries
-                    .stream()
-                    .filter { routeMapEntry -> routeMapEntry.key.split("_")[1].toLong() == route.routeId }
-                    .map { it.value as String }
-                    .findFirst().orElse(null)
+                    routeMap = (snapshot.value as HashMap<String, *>).entries
+                        .stream()
+                        .filter { routeMapEntry -> routeMapEntry.key.split("_")[1].toLong() == route.routeId }
+                        .map { it.value as String }
+                        .findFirst().orElse(null)
 
-                route.mapInfo = mapService.getMapInformation(getJson(), routeMap)
+                    storage.getReference("routeMaps/").child(routeMap)
+                        .getBytes(5 * GlobalUtils.MEGABYTE).addOnSuccessListener {
 
-                GlobalScope.launch {
+                            route.mapInfo = mapService.getMapInformation(String(it), routeMap)
+                            LocalDatabase.saveRouteMapContent(
+                                route.routeId,
+                                RouteMapEntity(routeMap, String(it))
+                            )
 
-                    if (viewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
-                        route.routeInfo!!.elevationData = setRouteElevationData(route)
-                    }
-
-                    /*val cultureInfoJob =
-                        if (viewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
                             GlobalScope.launch {
 
-                                if (Objects.isNull(viewModel.cultureInfo.value)) {
-                                    route.cultureInfo =
-                                        CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
-                                    viewModel.cultureInfo.postValue(route.cultureInfo)
+                                if (viewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
+                                    route.routeInfo!!.elevationData = setRouteElevationData(route)
                                 }
-                            }
-                        } else {
-                            null
-                        }*/
 
-                    var persistedSightsFound = false
+                                /*val cultureInfoJob =
+                                    if (viewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
+                                        GlobalScope.launch {
 
-                    val sights = sightRetrieveLimit?.let {
-                        LocalDatabase.getSightsOfRoute(route.routeId)
-                            ?.sortedBy { comparator -> comparator.rating }?.reversed()
-                            ?.subList(0, it)
-                            ?.toMutableList()
-                    } ?: LocalDatabase.getSightsOfRoute(route.routeId)
-                        ?.sortedBy { comparator -> comparator.rating }?.reversed()?.toMutableList()
-
-                    if (Objects.nonNull(sights)) {
-                        route.cultureInfo = CultureInfo(sights)
-                        loadSightsMainPhotos()
-                    } else {
-                        database.getReference("route_sights").child("${route.routeId}")
-                            .addValueEventListener(
-                                object : ValueEventListener {
-                                    override fun onDataChange(snapshot: DataSnapshot) {
-                                        if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value) && !(snapshot.value as ArrayList<*>).isNullOrEmpty()) {
-                                            persistedSightsFound = true
-
-                                            val sights =
-                                                (snapshot.value as ArrayList<HashMap<String, *>>)
-                                                    .stream()
-                                                    .map { sightEntry ->
-                                                        val sightId = sightEntry["sightId"] as Long
-                                                        val sight = Sight(
-                                                            sightId,
-                                                            null,
-                                                            sightEntry["name"] as String,
-                                                            sightEntry["description"] as String,
-                                                            (sightEntry["rating"] as Double).toFloat(),
-                                                            LocalDatabase.getMainImage(
-                                                                sightId,
-                                                                Sight::class.java.simpleName
-                                                            ),
-                                                            null
-                                                        )
-                                                        LocalDatabase.saveSight(
-                                                            route.routeId,
-                                                            sight
-                                                        )
-                                                        sight
-                                                    }
-                                                    .collect(Collectors.toList())
-
-                                            val persistedCultureInfo =
-                                                CultureInfo(sightRetrieveLimit?.let {
-                                                    sights.reversed().subList(
-                                                        0,
-                                                        sightRetrieveLimit
-                                                    ).toMutableList()
-                                                } ?: sights.reversed().toMutableList())
-                                            route.cultureInfo = persistedCultureInfo
-                                            loadSightsMainPhotos()
+                                            if (Objects.isNull(viewModel.cultureInfo.value)) {
+                                                route.cultureInfo =
+                                                    CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+                                                viewModel.cultureInfo.postValue(route.cultureInfo)
+                                            }
                                         }
+                                    } else {
+                                        null
+                                    }*/
+
+                                var persistedSightsFound = false
+
+                                val sights = sightRetrieveLimit?.let {
+                                    LocalDatabase.getSightsOfRoute(route.routeId)
+                                        ?.sortedBy { comparator -> comparator.rating }?.reversed()
+                                        ?.subList(0, it)
+                                        ?.toMutableList()
+                                } ?: LocalDatabase.getSightsOfRoute(route.routeId)
+                                    ?.sortedBy { comparator -> comparator.rating }?.reversed()
+                                    ?.toMutableList()
+
+                                if (Objects.nonNull(sights)) {
+                                    route.cultureInfo = CultureInfo(sights)
+                                    loadSightsMainPhotos()
+                                } else {
+                                    database.getReference("route_sights").child("${route.routeId}")
+                                        .addValueEventListener(
+                                            object : ValueEventListener {
+                                                override fun onDataChange(snapshot: DataSnapshot) {
+                                                    if (Objects.nonNull(snapshot) && Objects.nonNull(
+                                                            snapshot.value
+                                                        ) && !(snapshot.value as ArrayList<*>).isNullOrEmpty()
+                                                    ) {
+                                                        persistedSightsFound = true
+
+                                                        val sights =
+                                                            (snapshot.value as ArrayList<HashMap<String, *>>)
+                                                                .stream()
+                                                                .map { sightEntry ->
+                                                                    val sightId =
+                                                                        sightEntry["sightId"] as Long
+                                                                    val sight = Sight(
+                                                                        sightId,
+                                                                        null,
+                                                                        sightEntry["name"] as String,
+                                                                        sightEntry["description"] as String,
+                                                                        (sightEntry["rating"] as Double).toFloat(),
+                                                                        LocalDatabase.getMainImage(
+                                                                            sightId,
+                                                                            Sight::class.java.simpleName
+                                                                        ),
+                                                                        null
+                                                                    )
+                                                                    LocalDatabase.saveSight(
+                                                                        route.routeId,
+                                                                        sight
+                                                                    )
+                                                                    sight
+                                                                }
+                                                                .collect(Collectors.toList())
+
+                                                        val persistedCultureInfo =
+                                                            CultureInfo(sightRetrieveLimit?.let {
+                                                                sights.reversed().subList(
+                                                                    0,
+                                                                    sightRetrieveLimit
+                                                                ).toMutableList()
+                                                            } ?: sights.reversed().toMutableList())
+                                                        route.cultureInfo = persistedCultureInfo
+                                                        loadSightsMainPhotos()
+                                                    }
+                                                }
+
+                                                override fun onCancelled(error: DatabaseError) {
+                                                    TODO("Not yet implemented")
+                                                }
+
+                                            })
+                                }
+
+
+                                val weatherInfoJob =
+                                    if (viewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
+                                        GlobalScope.launch {
+                                            val weatherForecast = WeatherForecast()
+                                            weatherForecast.weatherForecast =
+                                                weatherService.getForecastForDays(
+                                                    route.mapInfo!!.origin,
+                                                    4,
+                                                    getString(R.string.prodMode).toBooleanStrict()
+                                                ) //TODO remove this test flag when in PROD
+                                            route.weatherForecast = weatherForecast
+                                        }
+                                    } else {
+                                        null
                                     }
-
-                                    override fun onCancelled(error: DatabaseError) {
-                                        TODO("Not yet implemented")
-                                    }
-
-                                })
-                    }
-
-
-                    val weatherInfoJob =
-                        if (viewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
-                            GlobalScope.launch {
-                                val weatherForecast = WeatherForecast()
-                                weatherForecast.weatherForecast = weatherService.getForecastForDays(
-                                    route.mapInfo!!.origin,
-                                    4,
-                                    getString(R.string.prodMode).toBooleanStrict()
-                                ) //TODO remove this test flag when in PROD
-                                route.weatherForecast = weatherForecast
-                            }
-                        } else {
-                            null
-                        }
 
 //                    cultureInfoJob?.join()
-                    weatherInfoJob?.join()
+                                weatherInfoJob?.join()
 
-                    viewModel.route.postValue(route)
+                                viewModel.route.postValue(route)
+                            }
+                        }
+
+
                 }
-            }
 
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+            })
+        } else {
+            routeMap = routeMapEntity!!.routeMapName
+            route.mapInfo = mapService.getMapInformation(routeMapEntity!!.routeMapContent, routeMap)
+
+            GlobalScope.launch {
+
+                if (viewModel.route.value?.routeInfo?.elevationData.isNullOrEmpty()) {
+                    route.routeInfo!!.elevationData = setRouteElevationData(route)
+                }
+
+                /*val cultureInfoJob =
+                    if (viewModel.route.value?.cultureInfo?.sights.isNullOrEmpty()) {
+                        GlobalScope.launch {
+
+                            if (Objects.isNull(viewModel.cultureInfo.value)) {
+                                route.cultureInfo =
+                                    CultureUtils.retrieveSightInformation(route.mapInfo!!.origin)
+                                viewModel.cultureInfo.postValue(route.cultureInfo)
+                            }
+                        }
+                    } else {
+                        null
+                    }*/
+
+                var persistedSightsFound = false
+
+                val sights = sightRetrieveLimit?.let {
+                    LocalDatabase.getSightsOfRoute(route.routeId)
+                        ?.sortedBy { comparator -> comparator.rating }?.reversed()
+                        ?.subList(0, it)
+                        ?.toMutableList()
+                } ?: LocalDatabase.getSightsOfRoute(route.routeId)
+                    ?.sortedBy { comparator -> comparator.rating }?.reversed()?.toMutableList()
+
+                if (Objects.nonNull(sights)) {
+                    route.cultureInfo = CultureInfo(sights)
+                    loadSightsMainPhotos()
+                } else {
+                    database.getReference("route_sights").child("${route.routeId}")
+                        .addValueEventListener(
+                            object : ValueEventListener {
+                                override fun onDataChange(snapshot: DataSnapshot) {
+                                    if (Objects.nonNull(snapshot) && Objects.nonNull(snapshot.value) && !(snapshot.value as ArrayList<*>).isNullOrEmpty()) {
+                                        persistedSightsFound = true
+
+                                        val sights =
+                                            (snapshot.value as ArrayList<HashMap<String, *>>)
+                                                .stream()
+                                                .map { sightEntry ->
+                                                    val sightId = sightEntry["sightId"] as Long
+                                                    val sight = Sight(
+                                                        sightId,
+                                                        null,
+                                                        sightEntry["name"] as String,
+                                                        sightEntry["description"] as String,
+                                                        (sightEntry["rating"] as Double).toFloat(),
+                                                        LocalDatabase.getMainImage(
+                                                            sightId,
+                                                            Sight::class.java.simpleName
+                                                        ),
+                                                        null
+                                                    )
+                                                    LocalDatabase.saveSight(
+                                                        route.routeId,
+                                                        sight
+                                                    )
+                                                    sight
+                                                }
+                                                .collect(Collectors.toList())
+
+                                        val persistedCultureInfo =
+                                            CultureInfo(sightRetrieveLimit?.let {
+                                                sights.reversed().subList(
+                                                    0,
+                                                    sightRetrieveLimit
+                                                ).toMutableList()
+                                            } ?: sights.reversed().toMutableList())
+                                        route.cultureInfo = persistedCultureInfo
+                                        loadSightsMainPhotos()
+                                    }
+                                }
+
+                                override fun onCancelled(error: DatabaseError) {
+                                    TODO("Not yet implemented")
+                                }
+
+                            })
+                }
+
+
+                val weatherInfoJob =
+                    if (viewModel.route.value?.weatherForecast?.weatherForecast.isNullOrEmpty()) {
+                        GlobalScope.launch {
+                            val weatherForecast = WeatherForecast()
+                            weatherForecast.weatherForecast = weatherService.getForecastForDays(
+                                route.mapInfo!!.origin,
+                                4,
+                                getString(R.string.prodMode).toBooleanStrict()
+                            ) //TODO remove this test flag when in PROD
+                            route.weatherForecast = weatherForecast
+                        }
+                    } else {
+                        null
+                    }
+
+//                    cultureInfoJob?.join()
+                weatherInfoJob?.join()
+
+                viewModel.route.postValue(route)
             }
-        })
+        }
+
+
 
         initializeNavigationComponents(view)
 
@@ -423,8 +555,7 @@ class SavedRouteFragment : Fragment() {
         showMapButton?.setOnClickListener {
             activity?.let {
                 val intent = Intent(it, MapActivity::class.java)
-                intent.putExtra("routeName", route.routeName)
-                intent.putExtra("routeMap", routeMap)
+                intent.putExtra("route", route)
                 it.startActivity(intent)
             }
         }
@@ -433,8 +564,8 @@ class SavedRouteFragment : Fragment() {
         showNavButton?.setOnClickListener {
             activity?.let {
                 val intent = Intent(it, NavigationActivity::class.java)
-                intent.putExtra("routeName", route.routeName)
-                intent.putExtra("routeMap", routeMap)
+                intent.putExtra("route", route)
+                intent.putExtra("authInfo", authInfo)
                 it.startActivity(intent)
             }
         }
@@ -447,11 +578,6 @@ class SavedRouteFragment : Fragment() {
 
         val navView = view.info_nav_view
         navView?.setupWithNavController(navController)
-    }
-
-    private fun getJson(): String {
-        return requireContext().assets.open(routeMap).readBytes()
-            .toString(Charsets.UTF_8)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

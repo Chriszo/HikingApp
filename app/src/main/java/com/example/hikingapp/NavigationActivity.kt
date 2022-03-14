@@ -658,11 +658,12 @@ class NavigationActivity : AppCompatActivity() {
 
             mapboxMap = binding.mapView.getMapboxMap()
 
-            val routeMap =
-                if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
+            val routeMapEntity = LocalDatabase.getRouteMapContent(currentRoute!!.routeId)
 
-
-            mapInfo = mapService.getMapInformation(getJson(routeMap), routeMap)
+            mapInfo = mapService.getMapInformation(
+                routeMapEntity!!.routeMapContent,
+                routeMapEntity!!.routeMapName
+            )
 
             binding.textDistanceRemaining.text = getString(R.string.distance_remaining_empty)
 
@@ -973,11 +974,6 @@ class NavigationActivity : AppCompatActivity() {
                 }
 
             })
-    }
-
-    private fun getJson(routeMap: String?): String {
-        return assets.open(routeMap!!).readBytes()
-            .toString(Charsets.UTF_8)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)

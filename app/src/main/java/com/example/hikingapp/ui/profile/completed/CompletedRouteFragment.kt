@@ -21,6 +21,7 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
@@ -93,36 +94,71 @@ class CompletedRouteFragment : Fragment() {
             completedViewModel.route.postValue(route)
         }
 
-        database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
+        val routeMapEntity = LocalDatabase.getRouteMapContent(route.routeId)
 
-                routeMap = (snapshot.value as HashMap<String, *>).entries
-                    .stream()
-                    .filter { routeMapEntry -> routeMapEntry.key.split("_")[1].toLong() == route.routeId }
-                    .map { it.value as String }
-                    .findFirst().orElse(null)
+        if (Objects.isNull(routeMapEntity)) {
+            database.getReference("routeMaps").addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
 
-                GlobalScope.launch {
+                    routeMap = (snapshot.value as HashMap<String, *>).entries
+                        .stream()
+                        .filter { routeMapEntry -> routeMapEntry.key.split("_")[1].toLong() == route.routeId }
+                        .map { it.value as String }
+                        .findFirst().orElse(null)
 
-                    if (completedViewModel.elevationData.value.isNullOrEmpty()) {
+                    storage.getReference("routeMaps/").child(routeMap)
+                        .getBytes(GlobalUtils.MEGABYTE * 5).addOnSuccessListener {
 
-                        if (route.mapInfo == null) {
-                            route.mapInfo = mapService.getMapInformation(getJson(), routeMap)
+                            val routeMapEntity = RouteMapEntity(routeMap, String(it))
+
+                            GlobalScope.launch {
+
+                                if (completedViewModel.elevationData.value.isNullOrEmpty()) {
+
+                                    if (route.mapInfo == null) {
+                                        route.mapInfo = mapService.getMapInformation(
+                                            routeMapEntity.routeMapContent,
+                                            routeMap
+                                        )
+                                        LocalDatabase.saveRouteMapContent(
+                                            route.routeId,
+                                            routeMapEntity
+                                        )
+                                    }
+
+                                    route.routeInfo!!.elevationData = setRouteElevationData(route)
+
+                                    completedViewModel.route.postValue(route)
+                                    completedViewModel.elevationData.postValue(route.routeInfo!!.elevationData)
+                                }
+                            }
                         }
+                }
 
-                        route.routeInfo!!.elevationData = setRouteElevationData(route)
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
 
-                        completedViewModel.route.postValue(route)
-                        completedViewModel.elevationData.postValue(route.routeInfo!!.elevationData)
+            })
+        } else {
+            routeMap = routeMapEntity!!.routeMapName
+            GlobalScope.launch {
+
+                if (completedViewModel.elevationData.value.isNullOrEmpty()) {
+
+                    if (route.mapInfo == null) {
+                        route.mapInfo =
+                            mapService.getMapInformation(routeMapEntity!!.routeMapContent, routeMap)
                     }
+
+                    route.routeInfo!!.elevationData = setRouteElevationData(route)
+
+                    completedViewModel.route.postValue(route)
+                    completedViewModel.elevationData.postValue(route.routeInfo!!.elevationData)
                 }
             }
 
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-
-        })
+        }
 
 
         initializeNavigationComponents(view)
@@ -216,11 +252,6 @@ class CompletedRouteFragment : Fragment() {
 
         val navView = view.info_nav_view
         navView?.setupWithNavController(navController)
-    }
-
-    private fun getJson(): String {
-        return requireContext().assets.open(routeMap).readBytes()
-            .toString(Charsets.UTF_8)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
