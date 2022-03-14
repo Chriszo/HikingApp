@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -48,6 +49,12 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
         layoutManager = LinearLayoutManager(this)
         recyclerView = binding.searchResultsRecyclerview
         recyclerView.layoutManager = layoutManager
+
+        val noResultsView = binding.noResultsText
+
+        if (!routes.isNullOrEmpty()) {
+            noResultsView.visibility = View.GONE
+        }
 
         routes.forEach { route ->
             storageRef.child(

@@ -147,7 +147,7 @@ class SightsProfileAdapter(
 //        holder.imageView.setImageResource(sight.mainPhoto!!)
         holder.imageView.setImageDrawable(BitmapDrawable(context!!.resources, sight.mainPhoto))
         holder.nameView.text = sight.name
-        holder.stateView.text = sight.description
+        holder.stateView.text = context.getString(R.string.secondary_text, sight.description)
         holder.ratingView.rating = sight.rating!!
         holder.difficultyLevelView.visibility = View.GONE
 

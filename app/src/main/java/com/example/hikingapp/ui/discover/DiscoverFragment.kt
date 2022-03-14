@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.graphics.Color.green
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -18,7 +19,9 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.LinearLayout
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.graphics.Color
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -512,6 +515,9 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                     BottomSheetBehavior.from(_binding!!.filterSheet).apply {
 
                         this.state = BottomSheetBehavior.STATE_COLLAPSED
+
+                        resetFilterListenersLayouts(root)
+
                         val searchFilters = searchFiltersWrapperBuilder.build()
                         routeSearchResults =
                             SearchUtils.searchByFilters(searchFilters, currentRoutes)
@@ -528,26 +534,72 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         })
     }
 
+    private fun resetFilterListenersLayouts(view: View) {
+
+        view.btn_linear.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+        view.btn_linear.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.btn_cyclic.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+        view.btn_cyclic.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.btn_easy.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+        view.btn_easy.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.btn_moderate.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+        view.btn_moderate.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.btn_hard.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+        view.btn_hard.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.ratingBar.rating = 0f
+    }
+
     private fun setFiltersScreenListeners(view: View) {
         view.btn_linear.setOnClickListener {
-
             searchFiltersWrapperBuilder.withType(RouteType.LINEAR)
+            view.btn_linear.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_linear.setTextColor(context?.resources?.getColor(R.color.white)!!)
+
+            view.btn_cyclic.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+            view.btn_cyclic.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
         }
 
         view.btn_cyclic.setOnClickListener {
             searchFiltersWrapperBuilder.withType(RouteType.CYCLIC)
+            view.btn_cyclic.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_cyclic.setTextColor(context?.resources?.getColor(R.color.white)!!)
+
+            view.btn_linear.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+            view.btn_linear.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
         }
 
         view.btn_easy.setOnClickListener {
             searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.EASY)
+            view.btn_easy.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_easy.setTextColor(context?.resources?.getColor(R.color.white)!!)
+
+            view.btn_moderate.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+            view.btn_moderate.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_hard.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+            view.btn_hard.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+
         }
 
         view.btn_moderate.setOnClickListener {
             searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.MODERATE)
+            view.btn_moderate.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_moderate.setTextColor(context?.resources?.getColor(R.color.white)!!)
+
+            view.btn_easy.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+            view.btn_easy.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_hard.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+            view.btn_hard.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
         }
 
         view.btn_hard.setOnClickListener {
             searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.HARD)
+            view.btn_hard.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_hard.setTextColor(context?.resources?.getColor(R.color.white)!!)
+
+            view.btn_moderate.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+            view.btn_moderate.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_easy.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
+            view.btn_easy.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
         }
 
         view.ratingBar.setOnRatingBarChangeListener { _, rating, _ ->
