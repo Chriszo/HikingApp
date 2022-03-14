@@ -9,4 +9,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="mapboxRed">#E55E5E</color>
     <color name="colorAccent">@color/mapboxRed</color>
+    <color name="colorPrimary">#00695C</color>
 </resources>
