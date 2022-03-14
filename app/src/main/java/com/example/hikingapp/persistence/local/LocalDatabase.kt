@@ -114,7 +114,8 @@ class LocalDatabase {
 
         @RequiresApi(Build.VERSION_CODES.N)
         fun getSightOfRoute(routeId: Long, sightId: Long): Sight? {
-            return associationsLocalStorage[routeId]?.stream()?.filter { it.sightId == sightId }?.findFirst()?.orElse(null)
+            return associationsLocalStorage[routeId]?.stream()?.filter { it.sightId == sightId }
+                ?.findFirst()?.orElse(null)
         }
 
         @RequiresApi(Build.VERSION_CODES.N)
@@ -122,9 +123,17 @@ class LocalDatabase {
             return associationsLocalStorage[routeId]?.toMutableList()
         }
 
-        @RequiresApi(Build.VERSION_CODES.N)
-        fun saveNavigationData(uid: String, userNavigationData: UserNavigationData) {
-            userNavigationStorage.computeIfAbsent(uid) { mutableListOf<UserNavigationData>() }.add(userNavigationData)
+        fun saveNavigationDataLocally(uid: String, userNavigationData: UserNavigationData) {
+            if (userNavigationStorage.containsKey(uid)) {
+                if (userNavigationStorage[uid].isNullOrEmpty()) {
+                    userNavigationStorage[uid] = mutableListOf(userNavigationData)
+                } else {
+                    userNavigationStorage[uid]!!.add(userNavigationData)
+                }
+            } else {
+                userNavigationStorage[uid] = mutableListOf(userNavigationData)
+            }
+
         }
 
         fun saveRouteMapContent(routeId: Long, routeMapEntity: RouteMapEntity) {

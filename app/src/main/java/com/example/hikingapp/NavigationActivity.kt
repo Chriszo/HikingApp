@@ -23,15 +23,13 @@ import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.navigation.UserNavigationData
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.persistence.firebase.FirebaseUtils
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
@@ -193,6 +191,7 @@ class NavigationActivity : AppCompatActivity() {
 
     private val arrivalObserver = object : ArrivalObserver {
 
+        @RequiresApi(Build.VERSION_CODES.N)
         override fun onFinalDestinationArrival(routeProgress: RouteProgress) {
             println("FINAL DESTINATION REACHED!")
 
@@ -203,7 +202,9 @@ class NavigationActivity : AppCompatActivity() {
                 Intent(this@NavigationActivity, EndOfNavigationActivity::class.java)
             mainIntent.putExtra("userNavigationData", userNavigationData)
 
-            persistNavigationData(userNavigationData)
+            LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
+            FirebaseUtils.persistNavigation(userAuthInfo!!.uid, userNavigationData!!)
+
             startActivity(mainIntent)
         }
 
@@ -869,7 +870,13 @@ class NavigationActivity : AppCompatActivity() {
                 val intent = Intent(this, EndOfNavigationActivity::class.java)
                 userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
                 intent.putExtra("userNavigationData", userNavigationData)
-                persistNavigationData(userNavigationData)
+
+                LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
+                FirebaseUtils.persistUserInCompletedRoute(
+                    userAuthInfo!!.uid,
+                    userNavigationData!!.routeId
+                )
+
                 startActivity(intent)
             }
 
@@ -947,33 +954,6 @@ class NavigationActivity : AppCompatActivity() {
         } else {
             startActivity(Intent(this, LoginActivity::class.java))
         }
-    }
-
-    private fun persistNavigationData(userNavigationData: UserNavigationData?) {
-        database.getReference("users_navigations").child(userAuthInfo!!.uid)
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    if (snapshot.exists()) {
-                        val persistedUserNavigations =
-                            snapshot.value as MutableList<UserNavigationData>
-                        userNavigationData?.let { data ->
-                            persistedUserNavigations.add(data)
-                            database.getReference("users_navigations").child(userAuthInfo!!.uid)
-                                .setValue(persistedUserNavigations)
-                        }
-                    } else {
-                        database.getReference("users_navigations").child(userAuthInfo!!.uid)
-                            .setValue(
-                                mutableListOf(userNavigationData)
-                            )
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
-                }
-
-            })
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -1213,8 +1193,6 @@ class NavigationActivity : AppCompatActivity() {
         userNavigationData!!.timeSpent = System.currentTimeMillis() - timeCounter
         // stop simulation
         mapboxReplayer.stop()
-
-        LocalDatabase.saveNavigationData(userAuthInfo!!.uid, userNavigationData!!)
 
         // hide UI elements
         binding.soundButton.visibility = View.INVISIBLE
