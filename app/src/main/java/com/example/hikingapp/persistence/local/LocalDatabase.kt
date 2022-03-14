@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.hikingapp.domain.culture.Sight
-import com.example.hikingapp.domain.navigation.NavigationResult
+import com.example.hikingapp.domain.navigation.UserNavigationData
 import com.example.hikingapp.persistence.entities.ImageEntity
 import java.util.stream.Collectors
 
@@ -15,7 +15,7 @@ class LocalDatabase {
         private val photosLocalStorage = mutableMapOf<String, List<ImageEntity>>()
         private val sightsLocalStorage = mutableMapOf<Long, Sight>()
         private val associationsLocalStorage = mutableMapOf<Long, MutableList<Sight>>()
-        private val userNavigationStorage = mutableMapOf<String, List<NavigationResult>>()
+        private val userNavigationStorage = mutableMapOf<String, MutableList<UserNavigationData>>()
 
         @RequiresApi(Build.VERSION_CODES.N)
         fun saveImage(
@@ -118,6 +118,11 @@ class LocalDatabase {
         @RequiresApi(Build.VERSION_CODES.N)
         fun getSightsOfRoute(routeId: Long): MutableList<Sight>? {
             return associationsLocalStorage[routeId]?.toMutableList()
+        }
+
+        @RequiresApi(Build.VERSION_CODES.N)
+        fun saveNavigationData(uid: String, userNavigationData: UserNavigationData) {
+            userNavigationStorage.computeIfAbsent(uid) { mutableListOf<UserNavigationData>() }.add(userNavigationData)
         }
     }
 

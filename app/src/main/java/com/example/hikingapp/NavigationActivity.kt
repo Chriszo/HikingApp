@@ -21,10 +21,17 @@ import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivityNavigationBinding
 import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
-import com.example.hikingapp.domain.map.MapPoint
+import com.example.hikingapp.domain.navigation.UserNavigationData
+import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
@@ -124,7 +131,15 @@ import java.util.stream.Collectors
  */
 class NavigationActivity : AppCompatActivity() {
 
-    private var pointsCoordinatesSet = mutableSetOf<String>()
+    private val database: FirebaseDatabase by lazy {
+        FirebaseDatabase.getInstance()
+    }
+    private var userAuthInfo: FirebaseUser? = null
+    private var currentRoute: Route? = null
+    private var userNavigationData: UserNavigationData? = null
+    private var timeCounter: Long = 0L
+
+
     private var mapInfo: MapInfo? = null
 
     private val mapService: MapService by lazy {
@@ -180,8 +195,15 @@ class NavigationActivity : AppCompatActivity() {
 
         override fun onFinalDestinationArrival(routeProgress: RouteProgress) {
             println("FINAL DESTINATION REACHED!")
+
+            userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
+            userNavigationData?.distanceCovered = routeProgress.distanceTraveled.toDouble()
+
             val mainIntent =
                 Intent(this@NavigationActivity, EndOfNavigationActivity::class.java)
+            mainIntent.putExtra("userNavigationData", userNavigationData)
+
+            persistNavigationData(userNavigationData)
             startActivity(mainIntent)
         }
 
@@ -464,9 +486,11 @@ class NavigationActivity : AppCompatActivity() {
                 binding.maneuverView.renderManeuvers(maneuvers)
             }
         )
+        // update user navigation data
+        userNavigationData!!.distanceCovered = routeProgress.distanceTraveled.toDouble()
+//        userNavigationData.timeSpent = System.currentTimeMillis() - timeCounter
 
         // update bottom trip progress summary
-
 
         binding.textDistanceRemaining.text = getString(
             R.string.distance_remaining_content, getTwoDigitsDistance(
@@ -474,9 +498,11 @@ class NavigationActivity : AppCompatActivity() {
                 DistanceUnitType.KILOMETERS
             )
         )
+
+
         binding.textDistanceCovered.text = getString(
             R.string.distance_covered_content, getTwoDigitsDistance(
-                routeProgress.distanceTraveled.toDouble(),
+                userNavigationData!!.distanceCovered,
                 DistanceUnitType.KILOMETERS
             )
         )
@@ -486,6 +512,7 @@ class NavigationActivity : AppCompatActivity() {
                 getTimeInMinutes(routeProgress.durationRemaining)
             )
         )
+
     }
 
     private fun callElevationDataAPI(
@@ -500,6 +527,7 @@ class NavigationActivity : AppCompatActivity() {
                 call: Call<FeatureCollection>,
                 response: Response<FeatureCollection>
             ) {
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 
                     if (response.isSuccessful) {
@@ -511,6 +539,10 @@ class NavigationActivity : AppCompatActivity() {
                             }
                             ?.max()
                             ?.ifPresent { max ->
+                                if (Objects.isNull(userNavigationData)) {
+                                    userNavigationData = UserNavigationData(currentRoute!!.routeId)
+                                }
+                                userNavigationData?.currentElevation?.add(max)
                                 binding.currentElevation.text =
                                     getString(
                                         R.string.elevation_content,
@@ -618,6 +650,9 @@ class NavigationActivity : AppCompatActivity() {
 
         if (intent?.extras?.containsKey("authInfo") == true && intent!!.extras!!.get("authInfo") != null) {
 
+            userAuthInfo = intent!!.extras!!.get("authInfo") as FirebaseUser?
+            currentRoute = intent!!.extras!!.get("route") as Route?
+
             binding = ActivityNavigationBinding.inflate(layoutInflater)
             setContentView(binding.root)
 
@@ -626,10 +661,8 @@ class NavigationActivity : AppCompatActivity() {
             val routeMap =
                 if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
 
+
             mapInfo = mapService.getMapInformation(getJson(routeMap), routeMap)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                populateLocationSet(mapInfo!!.mapPoints)
-            }
 
             binding.textDistanceRemaining.text = getString(R.string.distance_remaining_empty)
 
@@ -829,8 +862,14 @@ class NavigationActivity : AppCompatActivity() {
 
             // initialize view interactions
             binding.stop.setOnClickListener {
-                clearRouteAndStopNavigation()
-                // TODO Go to another Fragment/ Activity (?)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    clearRouteAndStopNavigation()
+                }
+                val intent = Intent(this, EndOfNavigationActivity::class.java)
+                userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
+                intent.putExtra("userNavigationData", userNavigationData)
+                persistNavigationData(userNavigationData)
+                startActivity(intent)
             }
 
             // Action which starts the Navigation
@@ -909,11 +948,31 @@ class NavigationActivity : AppCompatActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun populateLocationSet(mapPoints: List<MapPoint>?) {
-        pointsCoordinatesSet =
-            mapPoints?.stream()?.map { mp -> "${mp.point.latitude()}_${mp.point.longitude()}" }!!
-                .collect(Collectors.toSet())
+    private fun persistNavigationData(userNavigationData: UserNavigationData?) {
+        database.getReference("users_navigations").child(userAuthInfo!!.uid)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+                        val persistedUserNavigations =
+                            snapshot.value as MutableList<UserNavigationData>
+                        userNavigationData?.let { data ->
+                            persistedUserNavigations.add(data)
+                            database.getReference("users_navigations").child(userAuthInfo!!.uid)
+                                .setValue(persistedUserNavigations)
+                        }
+                    } else {
+                        database.getReference("users_navigations").child(userAuthInfo!!.uid)
+                            .setValue(
+                                mutableListOf(userNavigationData)
+                            )
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            })
     }
 
     private fun getJson(routeMap: String?): String {
@@ -1137,6 +1196,8 @@ class NavigationActivity : AppCompatActivity() {
         mapboxNavigation.setRoutes(routes)
         println("Total route distance: " + mapboxNavigation.getRoutes()[0].distance())
 
+        userNavigationData = UserNavigationData(currentRoute!!.routeId)
+        timeCounter = System.currentTimeMillis()
         // start location simulation along the primary route
         startSimulation(routes.first())
 
@@ -1149,12 +1210,15 @@ class NavigationActivity : AppCompatActivity() {
         navigationCamera.requestNavigationCameraToOverview()
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun clearRouteAndStopNavigation() {
         // clear
         mapboxNavigation.setRoutes(listOf())
-
+        userNavigationData!!.timeSpent = System.currentTimeMillis() - timeCounter
         // stop simulation
         mapboxReplayer.stop()
+
+        LocalDatabase.saveNavigationData(userAuthInfo!!.uid, userNavigationData!!)
 
         // hide UI elements
         binding.soundButton.visibility = View.INVISIBLE
@@ -1167,7 +1231,7 @@ class NavigationActivity : AppCompatActivity() {
 
         if (TripSessionState.STARTED == mapboxNavigation.getTripSessionState()) {
             mapboxNavigation.stopTripSession()
-
+            userNavigationData!!.timeSpent = System.currentTimeMillis() - timeCounter
             // stop simulation
             mapboxReplayer.stop()
         }

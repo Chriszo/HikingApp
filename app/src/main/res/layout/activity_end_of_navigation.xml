@@ -16,4 +16,23 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/distance_covered"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/nav_completed_success"
+        android:textColor="#0fab3b"
+        app:layout_constraintStart_toStartOf="@id/textView3"
+        app:layout_constraintTop_toBottomOf="@+id/textView3"/>
+
+    <TextView
+        android:id="@+id/elevation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#0fab3b"
+        android:text="@string/nav_completed_success"
+        app:layout_constraintTop_toBottomOf="@id/distance_covered"
+        app:layout_constraintStart_toStartOf="@id/distance_covered"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

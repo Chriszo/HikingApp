@@ -453,7 +453,7 @@ class RouteFragment : Fragment() {
         showMapButton?.setOnClickListener {
             activity?.let {
                 val intent = Intent(it, MapActivity::class.java)
-                intent.putExtra("routeName", route.routeName)
+                intent.putExtra("route", route)
                 intent.putExtra("routeMap", routeMap)
                 it.startActivity(intent)
             }
@@ -463,7 +463,7 @@ class RouteFragment : Fragment() {
         showNavButton?.setOnClickListener {
             activity?.let {
                 val intent = Intent(it, NavigationActivity::class.java)
-                intent.putExtra("routeName", route.routeName)
+                intent.putExtra("route", route)
                 intent.putExtra("routeMap", routeMap)
                 intent.putExtra("authInfo", authInfo)
                 it.startActivity(intent)

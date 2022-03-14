@@ -73,7 +73,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
         val routeType = view.findViewById(R.id.type_content) as TextView
         val time = view.findViewById(R.id.time_content) as TextView
 
-        // TODO need a NavigationProcess and NavigationResult object to record navigation data
+        // TODO need a NavigationProcess and UserNavigationData object to record navigation data
 
         completedViewModel.route.observe(viewLifecycleOwner, {
             route = it
