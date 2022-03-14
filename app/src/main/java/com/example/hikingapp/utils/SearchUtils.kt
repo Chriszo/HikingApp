@@ -1,10 +1,12 @@
-package com.example.hikingapp.search
+package com.example.hikingapp.utils
 
 import android.icu.text.Transliterator
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.hikingapp.TransliterationRules
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.search.SearchFiltersWrapper
+import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.search.searchResults.SearchResult
 import com.google.firebase.database.FirebaseDatabase
 import com.mapbox.geojson.FeatureCollection

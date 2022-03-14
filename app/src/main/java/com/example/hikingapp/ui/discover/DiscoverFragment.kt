@@ -36,7 +36,7 @@ import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.persistence.utils.DBUtils
 import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
-import com.example.hikingapp.search.SearchUtils
+import com.example.hikingapp.utils.SearchUtils
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteListAdapter
 import com.example.hikingapp.ui.search.results.SearchResultsActivity

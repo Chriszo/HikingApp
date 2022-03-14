@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivityNavigationBinding
 import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
+import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.utils.GlobalUtils
@@ -29,6 +30,7 @@ import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.api.matching.v5.MapboxMapMatching
 import com.mapbox.api.matching.v5.models.MapMatchingResponse
+import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.bindgen.Expected
 import com.mapbox.geojson.*
 import com.mapbox.maps.EdgeInsets
@@ -86,6 +88,8 @@ import com.mapbox.navigation.ui.voice.model.SpeechAnnouncement
 import com.mapbox.navigation.ui.voice.model.SpeechError
 import com.mapbox.navigation.ui.voice.model.SpeechValue
 import com.mapbox.navigation.ui.voice.model.SpeechVolume
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -120,6 +124,7 @@ import java.util.stream.Collectors
  */
 class NavigationActivity : AppCompatActivity() {
 
+    private var pointsCoordinatesSet = mutableSetOf<String>()
     private var mapInfo: MapInfo? = null
 
     private val mapService: MapService by lazy {
@@ -406,6 +411,11 @@ class NavigationActivity : AppCompatActivity() {
                 keyPoints = locationMatcherResult.keyPoints,
             )
 
+
+            GlobalScope.launch {
+                callElevationDataAPI(enhancedLocation) // Update elevation data value
+            }
+
             // update camera position to account for new location
             viewportDataSource.onLocationChanged(enhancedLocation)
             viewportDataSource.evaluate()
@@ -457,6 +467,7 @@ class NavigationActivity : AppCompatActivity() {
 
         // update bottom trip progress summary
 
+
         binding.textDistanceRemaining.text = getString(
             R.string.distance_remaining_content, getTwoDigitsDistance(
                 routeProgress.distanceRemaining.toDouble(),
@@ -475,6 +486,62 @@ class NavigationActivity : AppCompatActivity() {
                 getTimeInMinutes(routeProgress.durationRemaining)
             )
         )
+    }
+
+    private fun callElevationDataAPI(
+        currentLocation: Location
+    ) {
+
+        val elevationQuery = formElevationRequestQuery(currentLocation)
+
+        elevationQuery.enqueueCall(object : Callback<FeatureCollection> {
+
+            override fun onResponse(
+                call: Call<FeatureCollection>,
+                response: Response<FeatureCollection>
+            ) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+
+                    if (response.isSuccessful) {
+
+                        response.body()?.features()
+                            ?.stream()
+                            ?.mapToLong { feature ->
+                                feature.properties()?.get("ele")?.asLong!!
+                            }
+                            ?.max()
+                            ?.ifPresent { max ->
+                                binding.currentElevation.text =
+                                    getString(
+                                        R.string.elevation_content,
+                                        max.toString()
+                                    )
+                            }
+                        call.cancel()
+                    } else {
+                        println("handle wrong")
+                    }
+                } else {
+                    //TODO add implementation for backwards compatibility
+                }
+            }
+
+            override fun onFailure(call: Call<FeatureCollection>, t: Throwable) {
+                Log.e(Log.ERROR.toString(), "An error occured " + t.message)
+                elevationQuery.cancelCall()
+                return
+            }
+        })
+    }
+
+    private fun formElevationRequestQuery(currentLocation: Location): MapboxTilequery {
+        return MapboxTilequery.builder()
+            .accessToken(getString(R.string.mapbox_access_token))
+            .tilesetIds(GlobalUtils.TERRAIN_ID)
+            .limit(50)
+            .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
+            .query(Point.fromLngLat(currentLocation.longitude, currentLocation.latitude))
+            .build()
     }
 
     private fun getTwoDigitsDistance(
@@ -521,7 +588,6 @@ class NavigationActivity : AppCompatActivity() {
                     routeLineView.renderRouteDrawData(this, value)
                 }
             }
-
             // update the camera position to account for the new route
             viewportDataSource.onRouteChanged(routeUpdateResult.routes.first())
             viewportDataSource.evaluate()
@@ -561,12 +627,17 @@ class NavigationActivity : AppCompatActivity() {
                 if (intent.extras!!.containsKey("routeMap")) intent.extras?.get("routeMap") as String else ""
 
             mapInfo = mapService.getMapInformation(getJson(routeMap), routeMap)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                populateLocationSet(mapInfo!!.mapPoints)
+            }
 
             binding.textDistanceRemaining.text = getString(R.string.distance_remaining_empty)
 
             binding.textDistanceCovered.text = getString(R.string.distance_covered_empty)
 
             binding.textTimeEstimated.text = getString(R.string.estimated_time_empty)
+
+            binding.currentElevation.text = ""
 
             // initialize the location puck
             binding.mapView.location.apply {
@@ -836,6 +907,13 @@ class NavigationActivity : AppCompatActivity() {
         } else {
             startActivity(Intent(this, LoginActivity::class.java))
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun populateLocationSet(mapPoints: List<MapPoint>?) {
+        pointsCoordinatesSet =
+            mapPoints?.stream()?.map { mp -> "${mp.point.latitude()}_${mp.point.longitude()}" }!!
+                .collect(Collectors.toSet())
     }
 
     private fun getJson(routeMap: String?): String {
