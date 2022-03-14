@@ -5,12 +5,17 @@ import android.os.Build
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.services.culture.results.SightResponseElement
 import com.example.hikingapp.services.culture.results.SightResponseWrapper
+import com.google.firebase.database.FirebaseDatabase
 import com.mapbox.geojson.Point
+import java.util.*
 import java.util.stream.Collectors
+import kotlin.random.Random
 
 class SightsMapper {
 
     companion object {
+
+        var sightIdCounter = 0L
 
         fun map(responseWrapper: SightResponseWrapper): MutableList<Sight>? {
 
@@ -27,14 +32,13 @@ class SightsMapper {
         private fun mapToSight(responseElement: SightResponseElement): Sight {
 
             val sight = Sight()
-            sight.point = Point.fromLngLat(
-                responseElement.location!!.lng!!.toDouble(),
-                responseElement.location.lat!!.toDouble()
-            )
+            sight.sightId = ++sightIdCounter
+            sight.point = responseElement.location!!
             sight.name = responseElement.name
             sight.description = responseElement.address
             sight.photos = emptyList<Bitmap>().toMutableList()
-
+            sight.rating = Random.nextDouble(0.0, 5.0).toFloat()
+            FirebaseDatabase.getInstance().getReference("sights").child("sight_${sight.sightId}").setValue(sight)
             return sight
         }
     }

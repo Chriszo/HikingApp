@@ -1,6 +1,8 @@
 package com.example.hikingapp.services.culture.results
 
-data class LocationElement(val lat:Double?, val lng: Double?) {
+import java.io.Serializable
+
+data class LocationElement(val lat:Double?, val lng: Double?): Serializable {
 
     constructor(): this(null,null)
 
