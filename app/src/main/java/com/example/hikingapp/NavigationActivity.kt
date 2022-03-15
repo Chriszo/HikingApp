@@ -68,6 +68,8 @@ import com.mapbox.navigation.core.replay.MapboxReplayer
 import com.mapbox.navigation.core.replay.ReplayLocationEngine
 import com.mapbox.navigation.core.replay.route.ReplayProgressObserver
 import com.mapbox.navigation.core.replay.route.ReplayRouteMapper
+import com.mapbox.navigation.core.reroute.RerouteController
+import com.mapbox.navigation.core.reroute.RerouteState
 import com.mapbox.navigation.core.trip.session.*
 import com.mapbox.navigation.ui.base.util.MapboxNavigationConsumer
 import com.mapbox.navigation.ui.maneuver.api.MapboxManeuverApi
@@ -139,6 +141,7 @@ class NavigationActivity : AppCompatActivity() {
     private var currentRoute: Route? = null
     private var userNavigationData: UserNavigationData? = null
     private var timeCounter: Long = 0L
+    private var isOutOfRoute = false
 
 
     private var mapInfo: MapInfo? = null
@@ -442,18 +445,27 @@ class NavigationActivity : AppCompatActivity() {
                 callElevationDataAPI(enhancedLocation) // Update elevation data value
             }
 
-            associatedSights?.forEach { sight ->
-                GlobalScope.launch {
-                    val currentLocation = Point.fromLngLat(enhancedLocation.longitude,enhancedLocation.latitude)
-                    val sightLocation = sight?.let { Point.fromLngLat(it!!.point?.lng!!,it!!.point?.lat!!) }
-                    if (TurfMeasurement.distance(currentLocation,sightLocation) <0.075) {
-                        runOnUiThread {
-                            Toast.makeText(this@NavigationActivity,"You are approaching sight: " + sight.name, Toast.LENGTH_LONG).show()
-                        }
+            if (!isOutOfRoute) {
+                associatedSights?.forEach { sight ->
+                    GlobalScope.launch {
+                        val currentLocation =
+                            Point.fromLngLat(enhancedLocation.longitude, enhancedLocation.latitude)
+                        val sightLocation =
+                            sight?.let { Point.fromLngLat(it!!.point?.lng!!, it!!.point?.lat!!) }
+                        if (TurfMeasurement.distance(currentLocation, sightLocation) < 0.075) {
+                            runOnUiThread {
+                                Toast.makeText(
+                                    this@NavigationActivity,
+                                    "You are approaching sight: " + sight.name,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
 
+                        }
                     }
                 }
             }
+
 
             // update camera position to account for new location
             viewportDataSource.onLocationChanged(enhancedLocation)
@@ -531,6 +543,23 @@ class NavigationActivity : AppCompatActivity() {
         )
 
     }
+
+    private val offRouteObserver = OffRouteObserver { offRoute ->
+        if (offRoute) {
+            isOutOfRoute = true
+            runOnUiThread {
+                Toast.makeText(
+                    this@NavigationActivity,
+                    "You are out of your route.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            binding.lostButton.visibility = View.VISIBLE
+
+        }
+    }
+
+
 
     private fun callElevationDataAPI(
         currentLocation: Location
@@ -936,7 +965,9 @@ class NavigationActivity : AppCompatActivity() {
                 binding.pause.visibility = View.GONE
             }
             binding.lostButton.setOnClickListener {
-                // TODO Inform Contacts for being lost functionality
+                // TODO define functionality for lost mode.
+
+                Toast.makeText(this,"A message has been sent to your Contacts.",Toast.LENGTH_LONG).show()
             }
 
             binding.recenter.setOnClickListener {
@@ -981,6 +1012,7 @@ class NavigationActivity : AppCompatActivity() {
 
         if (intent?.extras?.containsKey("authInfo") == true && intent!!.extras!!.get("authInfo") != null) {
             mapboxNavigation.registerRoutesObserver(routesObserver)
+            mapboxNavigation.registerOffRouteObserver(offRouteObserver)
             mapboxNavigation.registerRouteProgressObserver(routeProgressObserver)
             mapboxNavigation.registerLocationObserver(locationObserver)
             mapboxNavigation.registerVoiceInstructionsObserver(voiceInstructionsObserver)
@@ -1013,6 +1045,7 @@ class NavigationActivity : AppCompatActivity() {
 
             // unregister event listeners to prevent leaks or unnecessary resource consumption
             mapboxNavigation.unregisterRoutesObserver(routesObserver)
+            mapboxNavigation.unregisterOffRouteObserver(offRouteObserver)
             mapboxNavigation.unregisterRouteProgressObserver(routeProgressObserver)
             mapboxNavigation.unregisterLocationObserver(locationObserver)
             mapboxNavigation.unregisterVoiceInstructionsObserver(voiceInstructionsObserver)
