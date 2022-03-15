@@ -118,9 +118,12 @@ class LocalDatabase {
                 ?.findFirst()?.orElse(null)
         }
 
-        @RequiresApi(Build.VERSION_CODES.N)
         fun getSightsOfRoute(routeId: Long): MutableList<Sight>? {
-            return associationsLocalStorage[routeId]?.toMutableList()
+            return if (associationsLocalStorage.containsKey(routeId) && associationsLocalStorage.get(routeId) != null) {
+                associationsLocalStorage.get(routeId) as MutableList<Sight>
+            } else{
+                null
+            }
         }
 
         fun saveNavigationDataLocally(uid: String, userNavigationData: UserNavigationData) {

@@ -28,6 +28,7 @@ import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.weather.WeatherForecast
 import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
+import com.example.hikingapp.persistence.utils.DBUtils
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
@@ -181,7 +182,9 @@ class SavedRouteFragment : Fragment() {
                                                                         sightEntry["sightId"] as Long
                                                                     val sight = Sight(
                                                                         sightId,
-                                                                        null,
+                                                                        DBUtils.loadLocation(
+                                                                            sightEntry["point"] as HashMap<String, *>?
+                                                                        ),
                                                                         sightEntry["name"] as String,
                                                                         sightEntry["description"] as String,
                                                                         (sightEntry["rating"] as Double).toFloat(),
@@ -301,7 +304,7 @@ class SavedRouteFragment : Fragment() {
                                                     val sightId = sightEntry["sightId"] as Long
                                                     val sight = Sight(
                                                         sightId,
-                                                        null,
+                                                        DBUtils.loadLocation(sightEntry["point"] as HashMap<String, *>?),
                                                         sightEntry["name"] as String,
                                                         sightEntry["description"] as String,
                                                         (sightEntry["rating"] as Double).toFloat(),

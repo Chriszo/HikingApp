@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivityNavigationBinding
+import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.navigation.UserNavigationData
@@ -93,6 +94,7 @@ import com.mapbox.navigation.ui.voice.model.SpeechAnnouncement
 import com.mapbox.navigation.ui.voice.model.SpeechError
 import com.mapbox.navigation.ui.voice.model.SpeechValue
 import com.mapbox.navigation.ui.voice.model.SpeechVolume
+import com.mapbox.turf.TurfMeasurement
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -129,6 +131,7 @@ import java.util.stream.Collectors
  */
 class NavigationActivity : AppCompatActivity() {
 
+    private var associatedSights: MutableList<Sight>? = null
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
     }
@@ -439,6 +442,19 @@ class NavigationActivity : AppCompatActivity() {
                 callElevationDataAPI(enhancedLocation) // Update elevation data value
             }
 
+            associatedSights?.forEach { sight ->
+                GlobalScope.launch {
+                    val currentLocation = Point.fromLngLat(enhancedLocation.longitude,enhancedLocation.latitude)
+                    val sightLocation = sight?.let { Point.fromLngLat(it!!.point?.lng!!,it!!.point?.lat!!) }
+                    if (TurfMeasurement.distance(currentLocation,sightLocation) <0.075) {
+                        runOnUiThread {
+                            Toast.makeText(this@NavigationActivity,"You are approaching sight: " + sight.name, Toast.LENGTH_LONG).show()
+                        }
+
+                    }
+                }
+            }
+
             // update camera position to account for new location
             viewportDataSource.onLocationChanged(enhancedLocation)
             viewportDataSource.evaluate()
@@ -665,6 +681,8 @@ class NavigationActivity : AppCompatActivity() {
                 routeMapEntity!!.routeMapContent,
                 routeMapEntity!!.routeMapName
             )
+
+            associatedSights = LocalDatabase.getSightsOfRoute(currentRoute!!.routeId)
 
             binding.textDistanceRemaining.text = getString(R.string.distance_remaining_empty)
 
