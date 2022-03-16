@@ -15,4 +15,9 @@
         android:title="Logout"
         android:id="@+id/logoutActivity"
         />
+    <item
+        android:title="Login"
+        android:id="@+id/loginActivity"
+        android:visible="false"
+        />
 </menu>

@@ -13,7 +13,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (intent.extras?.containsKey("user") == true && intent.extras!!["user"] != null) {
+        if (intent.extras?.containsKey("authInfo") == true && intent.extras!!["authInfo"] != null) {
             binding = ActivitySettingsBinding.inflate(layoutInflater)
 
             setContentView(binding.root)

@@ -22,7 +22,7 @@ class LogoutActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        val mail = (intent?.extras?.get("user") as FirebaseUser).email
+        val mail = (intent?.extras?.get("authInfo") as FirebaseUser).email
 
         val mailView = findViewById<TextView>(R.id.userMail)
         mailView.text = mail ?: ""
