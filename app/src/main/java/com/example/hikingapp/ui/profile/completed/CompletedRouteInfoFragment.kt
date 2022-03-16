@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
@@ -54,11 +55,15 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
         initializeRouteStatistics(view)
 
-        
+        val elevationProgressBar = view.progress_bar
+
+        elevationProgressBar.visibility = View.VISIBLE
         completedViewModel.elevationData.observe(viewLifecycleOwner,{
             if (!it.isNullOrEmpty()) {
                 drawGraph(it as MutableList<Long>?,view.elevation_graph)
+                view.elevation_graph.visibility = View.VISIBLE
             }
+            elevationProgressBar.visibility = View.GONE
         })
 
         addRoutePhotos(view)
@@ -91,6 +96,10 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
     }
 
     private fun addRoutePhotos(view: View) {
+
+        val progressBar = view.findViewById(R.id.progress_bar) as ProgressBar
+        progressBar.visibility = View.VISIBLE
+
         completedPhotosRecyclerView = view.findViewById(R.id.sight_photos_recycler_view)
         layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         completedPhotosRecyclerView.layoutManager = layoutManager
@@ -102,6 +111,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
             val photoItemSpacing = PhotoItemDecorator(5)
             completedPhotosRecyclerView.addItemDecoration(photoItemSpacing)
+            progressBar.visibility = View.GONE
         })
 
 

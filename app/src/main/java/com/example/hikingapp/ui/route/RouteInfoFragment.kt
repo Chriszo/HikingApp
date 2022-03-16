@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -58,6 +59,8 @@ class RouteInfoFragment : Fragment() {
         val dayOfWeek2 = view.dom_2
         val dayOfWeek3 = view.dom_3
 
+        val elevationProgressBar = view.findViewById(R.id.elevation_progress_bar) as ProgressBar
+        val weatherProgressBar = view.findViewById(R.id.weather_progress_bar) as ProgressBar
 
 
         viewModel.route.observe(viewLifecycleOwner, { it ->
@@ -71,35 +74,51 @@ class RouteInfoFragment : Fragment() {
             elevation.text = "0"
             estimatedTime.text = it.routeInfo?.timeEstimation.toString()
 
+            weatherProgressBar.visibility = View.VISIBLE
+
             it.weatherForecast?.weatherForecast?.withIndex()?.forEach { weatherData ->
                 when (weatherData.index) {
                     0 -> {
 //                        println(Date(it.value.time!! * 1000))
                         dayOfWeek1.text = setDayName(weatherData.value.time!!)
-                        temperatureDay1.text = getString(R.string.celsius_symbol, weatherData.value.temperatureHigh.toString())
+                        temperatureDay1.text = getString(
+                            R.string.celsius_symbol,
+                            weatherData.value.temperatureHigh.toString()
+                        )
 //                            weatherData.value.temperatureHigh.toString() + " \u2103" // TODO check when condition for Fahrenheit is applied
                         setImage(conditionsDay1, weatherData.value.icon!!)
                     }
                     1 -> {
 //                        println(Date(it.value.time!! * 1000))
                         dayOfWeek2.text = setDayName(weatherData.value.time!!)
-                        temperatureDay2.text = getString(R.string.celsius_symbol, weatherData.value.temperatureHigh.toString())
+                        temperatureDay2.text = getString(
+                            R.string.celsius_symbol,
+                            weatherData.value.temperatureHigh.toString()
+                        )
 //                            weatherData.value.temperatureHigh.toString() + " \u2103"
                         setImage(conditionsDay2, weatherData.value.icon!!)
                     }
                     2 -> {
 //                        println(Date(it.value.time!! * 1000))
                         dayOfWeek3.text = setDayName(weatherData.value.time!!)
-                        temperatureDay3.text = getString(R.string.celsius_symbol, weatherData.value.temperatureHigh.toString())
+                        temperatureDay3.text = getString(
+                            R.string.celsius_symbol,
+                            weatherData.value.temperatureHigh.toString()
+                        )
 //                            weatherData.value.temperatureHigh.toString() + getString(R.string.celsius_symbol)
                         setImage(conditionsDay3, weatherData.value.icon!!)
                     }
                 }
             }
+            weatherProgressBar.visibility = View.GONE
+            view.weather_info.visibility = View.VISIBLE
         })
 
+        elevationProgressBar.visibility = View.VISIBLE
         viewModel.elevationData.observe(viewLifecycleOwner, {
             drawGraph(it as MutableList<Long>?, view.elevation_graph)
+            elevationProgressBar.visibility = View.GONE
+            view.elevation_graph.visibility = View.VISIBLE
         })
 
 

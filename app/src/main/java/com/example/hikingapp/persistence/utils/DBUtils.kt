@@ -1,11 +1,11 @@
 package com.example.hikingapp.persistence.utils
 
+//import com.example.hikingapp.persistence.mock.db.MockDatabase
 import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.enums.RouteType
 import com.example.hikingapp.persistence.entities.RouteEntity
 import com.example.hikingapp.persistence.entities.SightEntity
-import com.example.hikingapp.persistence.entities.UserEntity
-//import com.example.hikingapp.persistence.mock.db.MockDatabase
+import com.example.hikingapp.services.culture.results.LocationElement
 import com.google.firebase.database.FirebaseDatabase
 
 object DBUtils {
@@ -133,4 +133,27 @@ object DBUtils {
 
     }
 
+    fun loadLocation(hashMap: HashMap<String, *>?): LocationElement? {
+
+        var sightLocation: LocationElement? = null
+        hashMap?.entries?.forEach {
+            when (it.key) {
+                "lat" -> {
+                    if (sightLocation == null) {
+                        sightLocation = LocationElement(it.value as Double?, null)
+                    } else {
+                        sightLocation!!.lat = it.value as Double?
+                    }
+                }
+                "lng" -> {
+                    if (sightLocation == null) {
+                        sightLocation = LocationElement(null, it.value as Double?)
+                    } else {
+                        sightLocation!!.lng = it.value as Double?
+                    }
+                }
+            }
+        }
+        return sightLocation
+    }
 }

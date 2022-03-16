@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
@@ -46,12 +47,16 @@ class PhotosListFragment : Fragment(), OnItemClickedListener {
         recyclerView = view.findViewById(R.id.sight_photos_recycler_view)
         recyclerView.layoutManager = linearLayoutManager
 
+        val progressBar = view.findViewById(R.id.progress_bar) as ProgressBar
+
+        progressBar.visibility = View.VISIBLE
 
         routeViewModel.photos.observe(viewLifecycleOwner, {
             photos = it
-
             photosAdapter = PhotoAdapter(context, photos, itemClickedListener)
             recyclerView.adapter = photosAdapter
+
+            progressBar.visibility = View.GONE
         })
 
         return view

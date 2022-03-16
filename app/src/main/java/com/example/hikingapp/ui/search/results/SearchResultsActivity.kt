@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.hikingapp.MainActivity
 import com.example.hikingapp.RouteActivity
 import com.example.hikingapp.app.viewModels.AppViewModel
 import com.example.hikingapp.databinding.ActivitySearchResultsBinding
@@ -41,6 +42,9 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
         binding = ActivitySearchResultsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val progressBar = binding.progressBar
+        val confirmButton = binding.confirmButton
+
         appViewModel = ViewModelProvider(this).get(AppViewModel::class.java)
 
         val bundle = intent.extras?.get("routesBundle") as Bundle
@@ -54,6 +58,9 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
 
         if (!routes.isNullOrEmpty()) {
             noResultsView.visibility = View.GONE
+            progressBar.visibility = View.VISIBLE
+        } else {
+            confirmButton.visibility = View.VISIBLE
         }
 
         routes.forEach { route ->
@@ -78,8 +85,15 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
             if (photoBitmaps.size == routes.size) {
                 routesAdapter = RouteAdapter(this, null, routes, this)
                 recyclerView.adapter = routesAdapter
+
+                progressBar.visibility = View.GONE
+                confirmButton.visibility = View.VISIBLE
             }
         })
+
+        confirmButton.setOnClickListener {
+            startActivity(Intent(this, MainActivity::class.java))
+        }
 
 
     }

@@ -71,7 +71,8 @@ object FirebaseUtils {
             .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
-                        val completedNavigations = snapshot.value as MutableList<UserNavigationData>
+                        val completedNavigations =
+                            extractNavigationData(snapshot.value as MutableList<HashMap<String, *>>)
                         var routeAlreadyExists = false
                         for (navigation in completedNavigations) {
                             if (navigation.routeId == userNavigationData.routeId) {
@@ -96,6 +97,20 @@ object FirebaseUtils {
                 }
 
             })
+    }
+
+    private fun extractNavigationData(mutableList: MutableList<HashMap<String, *>>): MutableList<UserNavigationData> {
+        val navigationDataList = mutableListOf<UserNavigationData>()
+        for (navigation in mutableList) {
+            val navigationData = UserNavigationData(
+                navigation["routeId"] as Long,
+                navigation["distanceCovered"] as Double,
+                navigation["timeSpent"] as Long,
+                navigation["currentElevation"] as MutableList<Long>
+            )
+            navigationDataList.add(navigationData)
+        }
+        return navigationDataList
     }
 
     fun persistNavigation(uid: String, userNavigationData: UserNavigationData) {
