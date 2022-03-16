@@ -72,7 +72,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     }
 
     private val searchType = SearchType.BY_PLACE
-    private lateinit var searchTerm: String
+    private var searchTerm: String = ""
     private lateinit var searchView: AutoCompleteTextView
     private lateinit var searchOptionsFrame: LinearLayout
 
@@ -197,6 +197,10 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                         searchOptionsFrame.visibility = View.GONE
                     }
                     searchRoutes(searchTerm, currentRoutes)
+                } else {
+                    routeSearchResults = currentRoutes
+                    routeSearchResults.sortBy { it.routeName }
+                    navigateToSearchResults()
                 }
             }
             true
@@ -227,6 +231,10 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                             searchOptionsFrame.visibility = View.GONE
                         }
                         searchRoutes(searchTerm, currentRoutes)
+                    } else {
+                        routeSearchResults = currentRoutes
+                        routeSearchResults.sortBy { it.routeName }
+                        navigateToSearchResults()
                     }
                 }
             }
