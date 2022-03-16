@@ -18,8 +18,8 @@ import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.adapters.*
 import com.example.hikingapp.ui.route.cultureInfo.SightDetailsActivity
-import com.example.hikingapp.ui.viewModels.ProfileViewModel
-import com.example.hikingapp.ui.viewModels.UserViewModel
+import com.example.hikingapp.viewModels.ProfileViewModel
+import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
 import java.util.stream.Collectors
 

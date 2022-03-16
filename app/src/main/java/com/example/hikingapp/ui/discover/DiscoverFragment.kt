@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
-import android.graphics.Color.green
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -19,7 +18,6 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.LinearLayout
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.graphics.Color
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
@@ -29,7 +27,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.RouteActivity
-import com.example.hikingapp.app.viewModels.AppViewModel
+import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
 import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.enums.RouteType
@@ -43,8 +41,8 @@ import com.example.hikingapp.utils.SearchUtils
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteListAdapter
 import com.example.hikingapp.ui.search.results.SearchResultsActivity
-import com.example.hikingapp.ui.viewModels.RouteViewModel
-import com.example.hikingapp.ui.viewModels.UserViewModel
+import com.example.hikingapp.viewModels.RouteViewModel
+import com.example.hikingapp.viewModels.UserViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError

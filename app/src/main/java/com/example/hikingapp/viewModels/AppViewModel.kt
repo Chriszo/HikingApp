@@ -1,4 +1,4 @@
-package com.example.hikingapp.app.viewModels
+package com.example.hikingapp.viewModels
 
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable

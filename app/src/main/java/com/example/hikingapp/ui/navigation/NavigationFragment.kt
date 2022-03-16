@@ -8,11 +8,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.databinding.FragmentNavigationBinding
-import com.example.hikingapp.ui.viewModels.UserViewModel
+import com.example.hikingapp.viewModels.UserViewModel
 
 class NavigationFragment : Fragment() {
 

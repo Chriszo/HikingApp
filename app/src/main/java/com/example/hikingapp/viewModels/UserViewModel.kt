@@ -1,4 +1,4 @@
-package com.example.hikingapp.ui.viewModels
+package com.example.hikingapp.viewModels
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel

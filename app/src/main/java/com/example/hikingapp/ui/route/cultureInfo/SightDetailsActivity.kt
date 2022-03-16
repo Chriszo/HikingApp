@@ -20,8 +20,8 @@ import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
 import com.example.hikingapp.ui.route.photos.PhotoActivity
-import com.example.hikingapp.ui.utils.PhotoItemDecorator
-import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.utils.PhotoItemDecorator
+import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot

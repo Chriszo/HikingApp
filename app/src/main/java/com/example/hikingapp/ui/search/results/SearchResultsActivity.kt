@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.MainActivity
 import com.example.hikingapp.RouteActivity
-import com.example.hikingapp.app.viewModels.AppViewModel
+import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.databinding.ActivitySearchResultsBinding
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.adapters.OnItemClickedListener

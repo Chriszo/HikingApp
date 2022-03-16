@@ -11,9 +11,9 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import com.example.hikingapp.app.viewModels.AppViewModel
+import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.databinding.ActivityMainBinding
-import com.example.hikingapp.ui.viewModels.UserViewModel
+import com.example.hikingapp.viewModels.UserViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.storage.FirebaseStorage

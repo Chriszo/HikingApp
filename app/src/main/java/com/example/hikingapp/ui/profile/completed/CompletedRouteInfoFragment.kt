@@ -20,7 +20,7 @@ import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 import com.example.hikingapp.ui.route.photos.PhotoActivity
-import com.example.hikingapp.ui.utils.PhotoItemDecorator
+import com.example.hikingapp.utils.PhotoItemDecorator
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries

@@ -11,7 +11,7 @@ import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.hikingapp.R
-import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.viewModels.RouteViewModel
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries

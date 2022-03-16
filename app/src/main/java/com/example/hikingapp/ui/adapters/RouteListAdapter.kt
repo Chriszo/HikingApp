@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.route.Route
-import com.example.hikingapp.ui.utils.PhotoItemDecorator
+import com.example.hikingapp.utils.PhotoItemDecorator
 
 class RouteListAdapter(
     var categories: List<String>,

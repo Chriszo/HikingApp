@@ -33,7 +33,7 @@ import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
-import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot

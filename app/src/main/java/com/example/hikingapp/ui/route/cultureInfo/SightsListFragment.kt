@@ -15,8 +15,8 @@ import com.example.hikingapp.R
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.SightsAdapter
-import com.example.hikingapp.ui.viewModels.RouteViewModel
-import com.example.hikingapp.ui.viewModels.UserViewModel
+import com.example.hikingapp.viewModels.RouteViewModel
+import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
 
 class SightsListFragment : Fragment(), OnItemClickedListener {

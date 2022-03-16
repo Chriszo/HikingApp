@@ -15,8 +15,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
-import com.example.hikingapp.ui.utils.PhotoItemDecorator
-import com.example.hikingapp.ui.viewModels.RouteViewModel
+import com.example.hikingapp.utils.PhotoItemDecorator
+import com.example.hikingapp.viewModels.RouteViewModel
 
 class RoutePhotosFragment : Fragment(), OnItemClickedListener {
 

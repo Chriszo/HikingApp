@@ -1,4 +1,4 @@
-package com.example.hikingapp.ui.utils
+package com.example.hikingapp.utils
 
 import android.graphics.Rect
 import android.view.View
