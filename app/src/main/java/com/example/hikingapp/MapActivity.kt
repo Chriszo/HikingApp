@@ -1,15 +1,22 @@
 package com.example.hikingapp
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivityMapBinding
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
@@ -32,6 +39,7 @@ import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
 import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.style
+import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
@@ -90,7 +98,13 @@ import kotlinx.coroutines.*
  * - Click on start navigation.
  * - You should now be able to navigate to the destination with the route line and route arrows drawn.
  */
-class MapActivity : AppCompatActivity() {
+class MapActivity : AppCompatActivity(), LocationListener {
+
+    private var currentLocation: Location? = null
+
+    private val locationManager: LocationManager by lazy {
+        getSystemService(Service.LOCATION_SERVICE) as LocationManager
+    }
 
     private val weatherService: WeatherService by lazy {
         WeatherServiceImpl()
@@ -328,6 +342,25 @@ class MapActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(viewBinding.root)
 
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0L,0f, this)
+
         //TODO Retrieve current Route Map information
         val route =
             if (intent.extras!!.containsKey("route")) intent.extras?.get("route") as Route else Route()
@@ -366,6 +399,19 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun init(mapInfo: MapInfo) {
+
+        viewBinding.mapView.location.apply {
+            this.locationPuck = LocationPuck2D(
+                bearingImage = ContextCompat.getDrawable(
+                    this@MapActivity,
+                    R.drawable.mapbox_navigation_puck_icon
+                )
+            )
+            setLocationProvider(navigationLocationProvider)
+            enabled = true
+        }
+
+
         initStyle(mapInfo)
         initListeners(mapInfo)
     }
@@ -460,6 +506,9 @@ private fun initNavigation() {
 //            startSimulation(hardCodedRoute)
         }
 
+        viewBinding.currentUserLocation.setOnClickListener {
+            updateCamera(Point.fromLngLat(currentLocation!!.longitude,currentLocation!!.latitude),null)
+        }
 
         viewBinding.switchMapStyle.setOnClickListener {
             viewBinding.mapStyleOptions.visibility = View.VISIBLE
@@ -610,5 +659,9 @@ private fun initNavigation() {
             unregisterRouteProgressObserver(replayProgressObserver)
         }
         mapboxNavigation.onDestroy()
+    }
+
+    override fun onLocationChanged(location: Location) {
+        currentLocation = location
     }
 }
