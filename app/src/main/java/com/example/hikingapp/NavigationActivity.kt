@@ -68,8 +68,6 @@ import com.mapbox.navigation.core.replay.MapboxReplayer
 import com.mapbox.navigation.core.replay.ReplayLocationEngine
 import com.mapbox.navigation.core.replay.route.ReplayProgressObserver
 import com.mapbox.navigation.core.replay.route.ReplayRouteMapper
-import com.mapbox.navigation.core.reroute.RerouteController
-import com.mapbox.navigation.core.reroute.RerouteState
 import com.mapbox.navigation.core.trip.session.*
 import com.mapbox.navigation.ui.base.util.MapboxNavigationConsumer
 import com.mapbox.navigation.ui.maneuver.api.MapboxManeuverApi
@@ -133,6 +131,10 @@ import java.util.stream.Collectors
  */
 class NavigationActivity : AppCompatActivity() {
 
+    private var currentLocation: Point? = null
+    private var routePoints: MutableList<Point> = mutableListOf()
+    private var checkPoints: List<Int> = mutableListOf()
+    private var checkPointsIndex = 0
     private var associatedSights: MutableList<Sight>? = null
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
@@ -220,6 +222,7 @@ class NavigationActivity : AppCompatActivity() {
         }
 
         override fun onWaypointArrival(routeProgress: RouteProgress) {
+            routeProgress.route.geometry()
             println("CHECKPOINT ${checkpointCounter.get()} reached")
             Toast.makeText(
                 this@NavigationActivity,
@@ -440,6 +443,8 @@ class NavigationActivity : AppCompatActivity() {
                 keyPoints = locationMatcherResult.keyPoints,
             )
 
+            currentLocation =
+                Point.fromLngLat(enhancedLocation.longitude, enhancedLocation.latitude)
 
             GlobalScope.launch {
                 callElevationDataAPI(enhancedLocation) // Update elevation data value
@@ -544,6 +549,7 @@ class NavigationActivity : AppCompatActivity() {
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private val offRouteObserver = OffRouteObserver { offRoute ->
         if (offRoute) {
             isOutOfRoute = true
@@ -554,12 +560,18 @@ class NavigationActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             }
-            binding.lostButton.visibility = View.VISIBLE
 
+            // TODO need to test somehow
+            // Re-define a new Route to the last passed checkpoint???
+            val lastCheckPointRouteIndex =
+                if (checkPoints.isNullOrEmpty()) 0 else checkPoints[checkPointsIndex]
+            if (!routePoints.isNullOrEmpty()) {
+                routePoints[lastCheckPointRouteIndex]?.let {
+                    defineRoute(mutableListOf(currentLocation!!, it!!))
+                }
+            }
         }
     }
-
-
 
     private fun callElevationDataAPI(
         currentLocation: Location
@@ -931,7 +943,7 @@ class NavigationActivity : AppCompatActivity() {
             binding.play.setOnClickListener {
                 if (mapboxNavigation.getRoutes().isEmpty()) {
 
-                    val routePoints = if (mapInfo!!.jsonRoute is MultiLineString) {
+                    routePoints = if (mapInfo!!.jsonRoute is MultiLineString) {
                         (mapInfo!!.jsonRoute as MultiLineString).coordinates()[0]
                     } else {
                         (mapInfo!!.jsonRoute as LineString).coordinates()
@@ -967,7 +979,8 @@ class NavigationActivity : AppCompatActivity() {
             binding.lostButton.setOnClickListener {
                 // TODO define functionality for lost mode.
 
-                Toast.makeText(this,"A message has been sent to your Contacts.",Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "A message has been sent to your Contacts.", Toast.LENGTH_LONG)
+                    .show()
             }
 
             binding.recenter.setOnClickListener {
@@ -1020,6 +1033,7 @@ class NavigationActivity : AppCompatActivity() {
             mapboxNavigation.setArrivalController(arrivalController)
             mapboxNavigation.registerArrivalObserver(arrivalObserver)
 
+
             if (mapboxNavigation.getRoutes().isEmpty()) {
                 // if simulation is enabled (ReplayLocationEngine set to NavigationOptions)
                 // but we're not simulating yet,
@@ -1050,6 +1064,7 @@ class NavigationActivity : AppCompatActivity() {
             mapboxNavigation.unregisterLocationObserver(locationObserver)
             mapboxNavigation.unregisterVoiceInstructionsObserver(voiceInstructionsObserver)
             mapboxNavigation.unregisterRouteProgressObserver(replayProgressObserver)
+            mapboxNavigation.setArrivalController(null)
             mapboxNavigation.unregisterArrivalObserver(arrivalObserver)
         }
     }
@@ -1077,7 +1092,7 @@ class NavigationActivity : AppCompatActivity() {
             TODO("VERSION.SDK_INT < N")
         }
 
-        val checkPoints = defineCheckPoints(coordinates, modulo)
+        checkPoints = defineCheckPoints(coordinates, modulo)
 
         requestCustomRoute(coordinates, checkPoints)
 
