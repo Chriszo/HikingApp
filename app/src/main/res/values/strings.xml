@@ -41,5 +41,6 @@
     <string name="action_bar_login_text"><u>Login</u></string>
     <string name="secondary_text">(%s)</string>
     <string name="no_results_found">No Results Found...</string>
+    <string name="switch_map_style">Switch Map Style</string>
 
 </resources>

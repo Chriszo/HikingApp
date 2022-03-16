@@ -45,7 +45,10 @@ import com.mapbox.maps.MapboxMap
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
 import com.mapbox.maps.extension.style.image.image
+import com.mapbox.maps.extension.style.layers.generated.lineLayer
 import com.mapbox.maps.extension.style.layers.generated.symbolLayer
+import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
+import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
@@ -133,7 +136,8 @@ class NavigationActivity : AppCompatActivity() {
 
     private var currentLocation: Point? = null
     private var routePoints: MutableList<Point> = mutableListOf()
-    private var checkPoints: List<Int> = mutableListOf()
+    private var checkPoints: MutableList<Int> = mutableListOf()
+    private var nearbyPointsOfInterest = mutableSetOf<Long>()
     private var checkPointsIndex = 0
     private var associatedSights: MutableList<Sight>? = null
     private val database: FirebaseDatabase by lazy {
@@ -456,14 +460,17 @@ class NavigationActivity : AppCompatActivity() {
                         val currentLocation =
                             Point.fromLngLat(enhancedLocation.longitude, enhancedLocation.latitude)
                         val sightLocation =
-                            sight?.let { Point.fromLngLat(it!!.point?.lng!!, it!!.point?.lat!!) }
+                            sight.let { Point.fromLngLat(it.point?.lng!!, it.point?.lat!!) }
                         if (TurfMeasurement.distance(currentLocation, sightLocation) < 0.075) {
                             runOnUiThread {
-                                Toast.makeText(
-                                    this@NavigationActivity,
-                                    "You are approaching sight: " + sight.name,
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                if (!nearbyPointsOfInterest.contains(sight.sightId)) {
+                                    nearbyPointsOfInterest.add(sight.sightId)
+                                    Toast.makeText(
+                                        this@NavigationActivity,
+                                        "You are approaching sight: " + sight.name,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
                             }
 
                         }
@@ -1007,6 +1014,25 @@ class NavigationActivity : AppCompatActivity() {
                 startActivityForResult(cameraIntent, cameraRequest)
             }
 
+            binding.switchMapStyle.setOnClickListener {
+                binding.mapStyleOptions.visibility = View.VISIBLE
+            }
+
+            binding.trafficMapStyle.setOnClickListener {
+                setMapStyle(Style.TRAFFIC_DAY, currentRoute!!.mapInfo!!)
+                binding.mapStyleOptions.visibility = View.GONE
+            }
+
+            binding.satelliteMapStyle.setOnClickListener {
+                setMapStyle(Style.SATELLITE, currentRoute!!.mapInfo!!)
+                binding.mapStyleOptions.visibility = View.GONE
+            }
+
+            binding.terrainMapStyle.setOnClickListener {
+                setMapStyle(Style.OUTDOORS, currentRoute!!.mapInfo!!)
+                binding.mapStyleOptions.visibility = View.GONE
+            }
+
             // set initial sounds button state
             binding.soundButton.unmute()
 
@@ -1017,6 +1043,91 @@ class NavigationActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
         }
     }
+
+
+    private fun setMapStyle(mapStyle: String, mapInfo: MapInfo) {
+        mapboxMap.loadStyle(
+            (
+                    style(styleUri = mapStyle) {
+                        +geoJsonSource(GlobalUtils.LINE_SOURCE_ID) {
+                            url("asset://" + mapInfo.routeGeoJsonFileName)
+                        }
+                        +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
+                            featureCollection(
+                                FeatureCollection.fromFeatures(
+                                    listOf(
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo.origin.longitude(),
+                                                mapInfo.origin.latitude()
+                                            )
+                                        ),
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo.destination.longitude(),
+                                                mapInfo.destination.latitude()
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                        +lineLayer(GlobalUtils.LINE_LAYER_ID, GlobalUtils.LINE_SOURCE_ID) {
+                            lineCap(LineCap.ROUND)
+                            lineJoin(LineJoin.ROUND)
+                            lineOpacity(1.0)
+                            lineWidth(8.0)
+                            lineColor("#FF0000")
+                        }
+                        +image(GlobalUtils.RED_MARKER_ID) {
+                            bitmap(BitmapFactory.decodeResource(resources, R.drawable.red_marker))
+                        }
+                        +symbolLayer(GlobalUtils.SYMBOL_LAYER_ID, GlobalUtils.SYMBOL_SOURCE_ID) {
+                            iconImage(GlobalUtils.RED_MARKER_ID)
+                            iconAllowOverlap(true)
+                            iconSize(0.5)
+                            iconIgnorePlacement(true)
+                        }
+                    }),
+            {
+                updateCamera(mapInfo, null)
+            },
+            object : OnMapLoadErrorListener {
+                override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
+                    Log.e(
+                        MapActivity::class.java.simpleName,
+                        "Error loading map: " + eventData.message
+                    )
+                }
+            }
+        )
+    }
+
+    private fun updateCamera(mapInfo: MapInfo, bearing: Double?) {
+        // Create a polygon
+        val triangleCoordinates = listOf(
+            listOf(
+                Point.fromLngLat(
+                    mapInfo.boundingBox?.northeast()
+                        ?.longitude()!!, // TODO Handle the setting of bounding box for routes of type LineString
+                    mapInfo.boundingBox.northeast().latitude()
+                ),
+                Point.fromLngLat(
+                    mapInfo.boundingBox.southwest().longitude(),
+                    mapInfo.boundingBox.southwest().latitude()
+                )
+            )
+        )
+        val polygon = Polygon.fromLngLats(triangleCoordinates)
+        // Convert to a camera options from a given geometry and padding
+        val cameraPosition =
+            mapboxMap.cameraForGeometry(polygon, EdgeInsets(75.0, 40.0, 60.0, 40.0))
+        // Set camera position
+        mapboxMap.setCamera(cameraPosition)
+    }
+
+
+
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onStart() {
@@ -1132,7 +1243,7 @@ class NavigationActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun defineCheckPoints(coordinates: List<Point>, modulo: Int): List<Int> {
+    private fun defineCheckPoints(coordinates: List<Point>, modulo: Int): MutableList<Int> {
 
         var mod = modulo
         var finalCheckPoints: MutableList<IndexedValue<Point>>?

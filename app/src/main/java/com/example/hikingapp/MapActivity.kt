@@ -459,7 +459,87 @@ private fun initNavigation() {
 //            }
 //            startSimulation(hardCodedRoute)
         }
+
+
+        viewBinding.switchMapStyle.setOnClickListener {
+            viewBinding.mapStyleOptions.visibility = View.VISIBLE
+        }
+
+        viewBinding.trafficMapStyle.setOnClickListener {
+            setMapStyle(Style.TRAFFIC_DAY, mapInfo)
+            viewBinding.mapStyleOptions.visibility = View.GONE
+        }
+
+        viewBinding.satelliteMapStyle.setOnClickListener {
+            setMapStyle(Style.SATELLITE, mapInfo)
+            viewBinding.mapStyleOptions.visibility = View.GONE
+        }
+
+        viewBinding.terrainMapStyle.setOnClickListener {
+            setMapStyle(Style.OUTDOORS, mapInfo)
+            viewBinding.mapStyleOptions.visibility = View.GONE
+        }
     }
+
+    private fun setMapStyle(mapStyle: String, mapInfo: MapInfo) {
+        mapboxMap.loadStyle(
+            (
+                    style(styleUri = mapStyle) {
+                        +geoJsonSource(GlobalUtils.LINE_SOURCE_ID) {
+                            url("asset://" + mapInfo.routeGeoJsonFileName)
+                        }
+                        +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
+                            featureCollection(
+                                FeatureCollection.fromFeatures(
+                                    listOf(
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo.origin.longitude(),
+                                                mapInfo.origin.latitude()
+                                            )
+                                        ),
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo.destination.longitude(),
+                                                mapInfo.destination.latitude()
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                        +lineLayer(GlobalUtils.LINE_LAYER_ID, GlobalUtils.LINE_SOURCE_ID) {
+                            lineCap(LineCap.ROUND)
+                            lineJoin(LineJoin.ROUND)
+                            lineOpacity(1.0)
+                            lineWidth(8.0)
+                            lineColor("#FF0000")
+                        }
+                        +image(GlobalUtils.RED_MARKER_ID) {
+                            bitmap(BitmapFactory.decodeResource(resources, R.drawable.red_marker))
+                        }
+                        +symbolLayer(GlobalUtils.SYMBOL_LAYER_ID, GlobalUtils.SYMBOL_SOURCE_ID) {
+                            iconImage(GlobalUtils.RED_MARKER_ID)
+                            iconAllowOverlap(true)
+                            iconSize(0.5)
+                            iconIgnorePlacement(true)
+                        }
+                    }),
+            {
+                updateCamera(mapInfo, null)
+                viewBinding.startNavigation.visibility = View.VISIBLE
+            },
+            object : OnMapLoadErrorListener {
+                override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
+                    Log.e(
+                        MapActivity::class.java.simpleName,
+                        "Error loading map: " + eventData.message
+                    )
+                }
+            }
+        )
+    }
+
 
     private fun updateCamera(mapInfo: MapInfo, bearing: Double?) {
         // Create a polygon
