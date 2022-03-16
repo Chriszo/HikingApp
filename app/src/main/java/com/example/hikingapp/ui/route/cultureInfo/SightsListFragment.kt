@@ -3,10 +3,11 @@ package com.example.hikingapp.ui.route.cultureInfo
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,10 +16,8 @@ import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.SightsAdapter
 import com.example.hikingapp.ui.viewModels.RouteViewModel
-import com.example.hikingapp.ui.viewModels.SightsViewModel
 import com.example.hikingapp.ui.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
-import com.google.gson.Gson
 
 class SightsListFragment : Fragment(), OnItemClickedListener {
 
@@ -58,12 +57,16 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
         recyclerView = cultureInfoView.findViewById(R.id.sights_listview)
         recyclerView.layoutManager = linearLayoutManager
 
+        val progressBar = cultureInfoView.findViewById(R.id.progress_bar) as ProgressBar
+
+        progressBar.visibility = View.VISIBLE
 
         viewModel.cultureInfo.observe(viewLifecycleOwner, { updatedCultureInfo ->
             cultureInfo = updatedCultureInfo
 
             sightsAdapter = SightsAdapter(context, cultureInfo?.sights!!, itemClickedListener)
             recyclerView.adapter = sightsAdapter
+            progressBar.visibility = View.GONE
         })
 
         userViewModel.user.observe(viewLifecycleOwner, {
@@ -74,9 +77,9 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
     }
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
-        val intent = Intent(context,SightDetailsActivity::class.java)
+        val intent = Intent(context, SightDetailsActivity::class.java)
         val sight = cultureInfo?.sights?.get(position)
-        intent.putExtra("sightInfo",sight)
+        intent.putExtra("sightInfo", sight)
         intent.putExtra("action", "discover")
         intent.putExtra("authInfo", user)
         startActivity(intent)

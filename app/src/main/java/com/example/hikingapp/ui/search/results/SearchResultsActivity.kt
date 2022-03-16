@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -40,6 +41,9 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
         binding = ActivitySearchResultsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val progressBar = binding.progressBar
+        progressBar.visibility = View.VISIBLE
+
         appViewModel = ViewModelProvider(this).get(AppViewModel::class.java)
 
         val bundle = intent.extras?.get("routesBundle") as Bundle
@@ -71,6 +75,8 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
             if (photoBitmaps.size == routes.size) {
                 routesAdapter = RouteAdapter(this, null, routes, this)
                 recyclerView.adapter = routesAdapter
+
+                progressBar.visibility = View.VISIBLE
             }
         })
 

@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -52,13 +53,17 @@ class RoutePhotosFragment : Fragment(), OnItemClickedListener {
         val photoItemSpacing = PhotoItemDecorator(5)
         recyclerView.addItemDecoration(photoItemSpacing)
 
+        val progressBar = view.findViewById(R.id.progress_bar) as ProgressBar
+        progressBar.visibility = View.VISIBLE
 
         routeViewModel.photos.observe(viewLifecycleOwner, {
             photos = it
 
             photosAdapter = PhotoAdapter(context, photos, itemClickedListener)
             recyclerView.adapter = photosAdapter
+            progressBar.visibility = View.GONE
         })
+
         return view
     }
 

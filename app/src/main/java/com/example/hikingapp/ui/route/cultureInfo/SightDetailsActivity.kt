@@ -7,6 +7,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -71,6 +72,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
         val descriptionView = binding.sightState
         val mainPhotoView = binding.sightImage
         val ratingView = binding.sightRating
+        val progressBar = binding.progressBar
 
         initializeButtonListeners()
 
@@ -114,6 +116,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
             }
         }
 
+        progressBar.visibility = View.VISIBLE
 
         photos = LocalDatabase.getImages(sightInfo.sightId, Sight::class.java.simpleName)
             ?: mutableListOf()
@@ -130,6 +133,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
                             if (photos.size == sightPhotos.items.size) {
                                 photosAdapter = PhotoAdapter(this, photos, itemClickedListener)
                                 recyclerView.adapter = photosAdapter
+                                progressBar.visibility = View.GONE
                             }
                         }.addOnFailureListener {
                             if (it is StorageException) {
@@ -146,6 +150,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
                                             photosAdapter =
                                                 PhotoAdapter(this, photos, itemClickedListener)
                                             recyclerView.adapter = photosAdapter
+                                            progressBar.visibility = View.GONE
                                         }
                                     }
                                 }
