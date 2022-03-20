@@ -13,10 +13,11 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.example.hikingapp.databinding.ActivityMapBinding
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
@@ -32,6 +33,7 @@ import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.*
 import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
+import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
 import com.mapbox.maps.extension.style.image.image
 import com.mapbox.maps.extension.style.layers.generated.lineLayer
 import com.mapbox.maps.extension.style.layers.generated.symbolLayer
@@ -40,10 +42,10 @@ import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
-import com.mapbox.maps.plugin.animation.MapAnimationOptions
-import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
 import com.mapbox.maps.plugin.gestures.addOnMapClickListener
+import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.navigation.base.options.NavigationOptions
@@ -53,8 +55,6 @@ import com.mapbox.navigation.core.replay.MapboxReplayer
 import com.mapbox.navigation.core.replay.ReplayLocationEngine
 import com.mapbox.navigation.core.replay.route.ReplayProgressObserver
 import com.mapbox.navigation.core.replay.route.ReplayRouteMapper
-import com.mapbox.navigation.core.trip.session.LocationMatcherResult
-import com.mapbox.navigation.core.trip.session.LocationObserver
 import com.mapbox.navigation.core.trip.session.RouteProgressObserver
 import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
 import com.mapbox.navigation.ui.maps.route.RouteLayerConstants.TOP_LEVEL_ROUTE_LINE_LAYER_ID
@@ -100,6 +100,8 @@ import kotlinx.coroutines.*
  */
 class MapActivity : AppCompatActivity(), LocationListener {
 
+    private var mapInfo: MapInfo? = null
+    private var pointsOnCurrentLocation: Boolean = false
     private var currentLocation: Location? = null
 
     private val locationManager: LocationManager by lazy {
@@ -156,6 +158,18 @@ class MapActivity : AppCompatActivity(), LocationListener {
      */
     private val navigationLocationProvider by lazy {
         NavigationLocationProvider()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewBinding.mapView.location
+            .addOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewBinding.mapView.location
+            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
     }
 
     private val locationComponent by lazy {
@@ -320,23 +334,6 @@ class MapActivity : AppCompatActivity(), LocationListener {
         }
     }
 
-    private val locationObserver = object : LocationObserver {
-        override fun onNewRawLocation(rawLocation: Location) {}
-        override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
-            val enhancedLocation = locationMatcherResult.enhancedLocation
-            navigationLocationProvider.changePosition(
-                enhancedLocation,
-                locationMatcherResult.keyPoints,
-            )
-            updateCamera(
-                Point.fromLngLat(
-                    enhancedLocation.longitude, enhancedLocation.latitude
-                ),
-                enhancedLocation.bearing.toDouble()
-            )
-        }
-    }
-
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -359,7 +356,7 @@ class MapActivity : AppCompatActivity(), LocationListener {
             // for ActivityCompat#requestPermissions for more details.
             return
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0L,0f, this)
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, this)
 
         //TODO Retrieve current Route Map information
         val route =
@@ -367,11 +364,10 @@ class MapActivity : AppCompatActivity(), LocationListener {
 
         val routeMapEntity = LocalDatabase.getRouteMapContent(route.routeId)
 
-        val mapInfo = mapService.getMapInformation(
+        mapInfo = mapService.getMapInformation(
             routeMapEntity!!.routeMapContent,
             routeMapEntity.routeMapName
         )
-        route.mapInfo = mapInfo
 
         /* mapboxMap.addOnMapLoadedListener {
              setRouteElevationData(route.mapInfo!!, true, graph)
@@ -383,7 +379,7 @@ class MapActivity : AppCompatActivity(), LocationListener {
             true
         }
         //TODO Replace philopappou with routeName variable
-        init(mapInfo)
+        initializeMap()
     }
 
     private fun filterRoutePoints(
@@ -398,32 +394,21 @@ class MapActivity : AppCompatActivity(), LocationListener {
             .toMutableList()
     }
 
-    private fun init(mapInfo: MapInfo) {
+    private fun initializeMap() {
 
-        viewBinding.mapView.location.apply {
-            this.locationPuck = LocationPuck2D(
-                bearingImage = ContextCompat.getDrawable(
-                    this@MapActivity,
-                    R.drawable.mapbox_navigation_puck_icon
-                )
-            )
-            setLocationProvider(navigationLocationProvider)
-            enabled = true
-        }
-
-
-        initStyle(mapInfo)
-        initListeners(mapInfo)
+        initStyle()
+        initListeners()
     }
 
     @SuppressLint("MissingPermission")
-    private fun initStyle(mapInfo: MapInfo) {
+    private fun initStyle() {
 
         mapboxMap.loadStyle(
             (
                     style(styleUri = Style.SATELLITE) {
                         +geoJsonSource(GlobalUtils.LINE_SOURCE_ID) {
-                            url("asset://" + mapInfo.routeGeoJsonFileName)
+                            // TODO change with data from Firebase Storage
+                            url("asset://" + mapInfo!!.routeGeoJsonFileName)
                         }
                         +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
                             featureCollection(
@@ -431,14 +416,14 @@ class MapActivity : AppCompatActivity(), LocationListener {
                                     listOf(
                                         Feature.fromGeometry(
                                             Point.fromLngLat(
-                                                mapInfo.origin.longitude(),
-                                                mapInfo.origin.latitude()
+                                                mapInfo!!.origin.longitude(),
+                                                mapInfo!!.origin.latitude()
                                             )
                                         ),
                                         Feature.fromGeometry(
                                             Point.fromLngLat(
-                                                mapInfo.destination.longitude(),
-                                                mapInfo.destination.latitude()
+                                                mapInfo!!.destination.longitude(),
+                                                mapInfo!!.destination.latitude()
                                             )
                                         )
                                     )
@@ -463,7 +448,7 @@ class MapActivity : AppCompatActivity(), LocationListener {
                         }
                     }),
             {
-                updateCamera(mapInfo, null)
+                updateCamera(null)
                 viewBinding.startNavigation.visibility = View.VISIBLE
             },
             object : OnMapLoadErrorListener {
@@ -477,20 +462,8 @@ class MapActivity : AppCompatActivity(), LocationListener {
         )
     }
 
-/*@SuppressLint("MissingPermission")
-private fun initNavigation() {
-    mapboxNavigation.run {
-        setRoutes(listOf(hardCodedRoute))
-        registerRoutesObserver(routesObserver)
-        registerLocationObserver(locationObserver)
-        registerRouteProgressObserver(routeProgressObserver)
-        registerRouteProgressObserver(replayProgressObserver)
-        startTripSession()
-    }
-}*/
-
     @SuppressLint("SetTextI18n")
-    private fun initListeners(mapInfo: MapInfo) {
+    private fun initListeners() {
         viewBinding.startNavigation.setOnClickListener {
             viewBinding.startNavigation.visibility = View.INVISIBLE
             this.let {
@@ -506,36 +479,123 @@ private fun initNavigation() {
 //            startSimulation(hardCodedRoute)
         }
 
+        viewBinding.mapView.setOnClickListener {
+            if (pointsOnCurrentLocation) {
+                updateCamera(null)
+                pointsOnCurrentLocation = false
+            } else {
+                updateCamera(
+                    Point.fromLngLat(currentLocation!!.longitude, currentLocation!!.latitude), null
+                )
+                pointsOnCurrentLocation = true
+            }
+        }
+
+        viewBinding.showRoute.setOnClickListener {
+
+            if (mapInfo != null) {
+
+                viewBinding.mapView.location.updateSettings {
+                    this.enabled = false
+                }
+                updateCamera(null)
+                pointsOnCurrentLocation = false
+                viewBinding.showRoute.visibility = View.GONE
+                viewBinding.currentUserLocation.visibility = View.VISIBLE
+            } else {
+                Toast.makeText(this, "Route information not defined yet.", Toast.LENGTH_LONG).show()
+            }
+        }
+
         viewBinding.currentUserLocation.setOnClickListener {
-            updateCamera(Point.fromLngLat(currentLocation!!.longitude,currentLocation!!.latitude),null)
+            if (currentLocation != null) {
+
+                updateCamera(
+                    Point.fromLngLat(currentLocation!!.longitude, currentLocation!!.latitude),
+                    null
+                )
+                viewBinding.showRoute.visibility = View.VISIBLE
+                viewBinding.currentUserLocation.visibility = View.GONE
+                pointsOnCurrentLocation = true
+            } else {
+                Toast.makeText(this, "User location not yet available.", Toast.LENGTH_LONG).show()
+            }
         }
 
         viewBinding.switchMapStyle.setOnClickListener {
-            viewBinding.mapStyleOptions.visibility = View.VISIBLE
+            if (viewBinding.mapStyleOptions.visibility == View.GONE) {
+                viewBinding.mapStyleOptions.visibility = View.VISIBLE
+            } else if (viewBinding.mapStyleOptions.visibility == View.VISIBLE) {
+                viewBinding.mapStyleOptions.visibility = View.GONE
+            }
         }
 
         viewBinding.trafficMapStyle.setOnClickListener {
-            setMapStyle(Style.TRAFFIC_DAY, mapInfo)
+            setMapStyle(Style.TRAFFIC_DAY)
             viewBinding.mapStyleOptions.visibility = View.GONE
         }
 
         viewBinding.satelliteMapStyle.setOnClickListener {
-            setMapStyle(Style.SATELLITE, mapInfo)
+            setMapStyle(Style.SATELLITE)
             viewBinding.mapStyleOptions.visibility = View.GONE
         }
 
         viewBinding.terrainMapStyle.setOnClickListener {
-            setMapStyle(Style.OUTDOORS, mapInfo)
+            setMapStyle(Style.OUTDOORS)
             viewBinding.mapStyleOptions.visibility = View.GONE
         }
     }
 
-    private fun setMapStyle(mapStyle: String, mapInfo: MapInfo) {
+    private fun initLocationComponent() {
+
+        viewBinding.mapView.location.updateSettings {
+            this.locationPuck = LocationPuck2D(
+                topImage = AppCompatResources.getDrawable(
+                    this@MapActivity,
+                    com.mapbox.maps.plugin.locationcomponent.R.drawable.mapbox_user_icon
+                ),
+                bearingImage = AppCompatResources.getDrawable(
+                    this@MapActivity,
+                    com.mapbox.maps.plugin.locationcomponent.R.drawable.mapbox_user_bearing_icon
+                ),
+                shadowImage = AppCompatResources.getDrawable(
+                    this@MapActivity,
+                    com.mapbox.maps.plugin.locationcomponent.R.drawable.mapbox_user_stroke_icon
+                ),
+                scaleExpression = interpolate {
+                    linear()
+                    zoom()
+                    stop {
+                        literal(0.0)
+                        literal(0.6)
+                    }
+                    stop {
+                        literal(20.0)
+                        literal(1.0)
+                    }
+                }.toJson()
+            )
+
+            this.pulsingEnabled = true
+            this.enabled = true
+        }
+    }
+
+    private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener {
+        mapView.getMapboxMap().setCamera(CameraOptions.Builder().center(it).build())
+        mapView.gestures.focalPoint = mapView.getMapboxMap().pixelForCoordinate(it)
+    }
+
+    private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
+        mapView.getMapboxMap().setCamera(CameraOptions.Builder().bearing(it).build())
+    }
+
+    private fun setMapStyle(mapStyle: String) {
         mapboxMap.loadStyle(
             (
                     style(styleUri = mapStyle) {
                         +geoJsonSource(GlobalUtils.LINE_SOURCE_ID) {
-                            url("asset://" + mapInfo.routeGeoJsonFileName)
+                            url("asset://" + mapInfo!!.routeGeoJsonFileName)
                         }
                         +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
                             featureCollection(
@@ -543,14 +603,14 @@ private fun initNavigation() {
                                     listOf(
                                         Feature.fromGeometry(
                                             Point.fromLngLat(
-                                                mapInfo.origin.longitude(),
-                                                mapInfo.origin.latitude()
+                                                mapInfo!!.origin.longitude(),
+                                                mapInfo!!.origin.latitude()
                                             )
                                         ),
                                         Feature.fromGeometry(
                                             Point.fromLngLat(
-                                                mapInfo.destination.longitude(),
-                                                mapInfo.destination.latitude()
+                                                mapInfo!!.destination.longitude(),
+                                                mapInfo!!.destination.latitude()
                                             )
                                         )
                                     )
@@ -575,7 +635,7 @@ private fun initNavigation() {
                         }
                     }),
             {
-                updateCamera(mapInfo, null)
+                updateCamera(null)
                 viewBinding.startNavigation.visibility = View.VISIBLE
             },
             object : OnMapLoadErrorListener {
@@ -590,18 +650,18 @@ private fun initNavigation() {
     }
 
 
-    private fun updateCamera(mapInfo: MapInfo, bearing: Double?) {
+    private fun updateCamera(bearing: Double?) {
         // Create a polygon
         val triangleCoordinates = listOf(
             listOf(
                 Point.fromLngLat(
-                    mapInfo.boundingBox?.northeast()
+                    mapInfo!!.boundingBox?.northeast()
                         ?.longitude()!!, // TODO Handle the setting of bounding box for routes of type LineString
-                    mapInfo.boundingBox.northeast().latitude()
+                    mapInfo!!.boundingBox!!.northeast().latitude()
                 ),
                 Point.fromLngLat(
-                    mapInfo.boundingBox.southwest().longitude(),
-                    mapInfo.boundingBox.southwest().latitude()
+                    mapInfo!!.boundingBox!!.southwest().longitude(),
+                    mapInfo!!.boundingBox!!.southwest().latitude()
                 )
             )
         )
@@ -615,17 +675,19 @@ private fun initNavigation() {
 
 
     private fun updateCamera(point: Point, bearing: Double?) {
-        val mapAnimationOptionsBuilder = MapAnimationOptions.Builder()
-        viewBinding.mapView.camera.easeTo(
-            CameraOptions.Builder()
-                .center(point)
-                .bearing(bearing)
-                .pitch(0.0)
-                .zoom(15.0)
-                .padding(EdgeInsets(1000.0, 0.0, 0.0, 0.0))
-                .build(),
-            mapAnimationOptionsBuilder.build()
-        )
+
+        initLocationComponent()
+
+        /* viewBinding.mapView.camera.easeTo(
+             CameraOptions.Builder()
+                 .center(point)
+                 .bearing(bearing)
+                 .pitch(0.0)
+                 .zoom(15.0)
+                 .padding(EdgeInsets(1000.0, 0.0, 0.0, 0.0))
+                 .build(),
+             mapAnimationOptionsBuilder.build()
+         )*/
 
     }
 
@@ -652,7 +714,7 @@ private fun initNavigation() {
             // make sure to unregister the routes observer you have registered.
             unregisterRoutesObserver(routesObserver)
             // make sure to unregister the location observer you have registered.
-            unregisterLocationObserver(locationObserver)
+//            unregisterLocationObserver(locationObserver)
             // make sure to unregister the route progress observer you have registered.
             unregisterRouteProgressObserver(routeProgressObserver)
             // make sure to unregister the route progress observer you have registered.

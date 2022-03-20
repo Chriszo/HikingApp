@@ -37,6 +37,19 @@
         app:layout_constraintTop_toBottomOf="@id/startNavigation"
         android:layout_marginTop="5dp"/>
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/show_route"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/map_icon_foreground"
+        android:contentDescription="Current Location button"
+        android:backgroundTint="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/current_user_location"
+        android:layout_marginTop="5dp"
+        android:visibility="gone"/>
+
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/switchMapStyle"
@@ -47,7 +60,7 @@
         app:srcCompat="@drawable/map_styles_icon_foreground"
         android:contentDescription="@string/switch_map_style"
         android:backgroundTint="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/current_user_location"
+        app:layout_constraintTop_toBottomOf="@id/show_route"
         android:layout_marginTop="5dp"/>
 
     <com.google.android.material.card.MaterialCardView

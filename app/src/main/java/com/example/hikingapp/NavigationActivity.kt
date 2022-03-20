@@ -1015,7 +1015,11 @@ class NavigationActivity : AppCompatActivity() {
             }
 
             binding.switchMapStyle.setOnClickListener {
-                binding.mapStyleOptions.visibility = View.VISIBLE
+                if (binding.mapStyleOptions.visibility == View.GONE) {
+                    binding.mapStyleOptions.visibility = View.VISIBLE
+                } else if (binding.mapStyleOptions.visibility == View.VISIBLE) {
+                    binding.mapStyleOptions.visibility = View.GONE
+                }
             }
 
             binding.trafficMapStyle.setOnClickListener {
@@ -1125,8 +1129,6 @@ class NavigationActivity : AppCompatActivity() {
         // Set camera position
         mapboxMap.setCamera(cameraPosition)
     }
-
-
 
 
     @RequiresApi(Build.VERSION_CODES.N)
