@@ -226,6 +226,7 @@ class NavigationActivity : AppCompatActivity() {
             val mainIntent =
                 Intent(this@NavigationActivity, EndOfNavigationActivity::class.java)
             mainIntent.putExtra("route", currentRoute)
+            intent.putExtra("authInfo", userAuthInfo)
             mainIntent.putExtra("userNavigationData", userNavigationData)
 
             LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
@@ -548,7 +549,7 @@ class NavigationActivity : AppCompatActivity() {
         // update bottom trip progress summary
 
         binding.textDistanceRemaining.text = getString(
-            R.string.distance_remaining_content, getTwoDigitsDistance(
+            R.string.distance_remaining_content, GlobalUtils.getTwoDigitsDistance(
                 routeProgress.distanceRemaining.toDouble(),
                 DistanceUnitType.KILOMETERS
             )
@@ -556,7 +557,7 @@ class NavigationActivity : AppCompatActivity() {
 
 
         binding.textDistanceCovered.text = getString(
-            R.string.distance_covered_content, getTwoDigitsDistance(
+            R.string.distance_covered_content, GlobalUtils.getTwoDigitsDistance(
                 userNavigationData!!.distanceCovered,
                 DistanceUnitType.KILOMETERS
             )
@@ -564,7 +565,7 @@ class NavigationActivity : AppCompatActivity() {
         binding.textTimeEstimated.text = getString(
             R.string.estimated_time_content, String.format(
                 "%.2f",
-                getTimeInMinutes(routeProgress.durationRemaining)
+                GlobalUtils.getTimeInMinutes(routeProgress.durationRemaining)
             )
         )
 
@@ -655,30 +656,7 @@ class NavigationActivity : AppCompatActivity() {
             .build()
     }
 
-    private fun getTwoDigitsDistance(
-        rawDistance: Double,
-        distanceUnitType: DistanceUnitType
-    ): String {
-        /*if (DistanceUnitType.KILOMETERS == distanceUnitType) {
-            return String.format("%.2f", rawDistance).toDouble()
-                .div(1000.0)
-        }
-        return String.format("%.2f", rawDistance).toDouble()*/
-        when (distanceUnitType) {
-            DistanceUnitType.METERS -> return String.format(
-                "%.2f",
-                rawDistance
-            ) + DistanceUnitType.METERS.distanceUnit
-            DistanceUnitType.KILOMETERS -> return String.format(
-                "%.2f",
-                (rawDistance.div(1000.0))
-            ) + DistanceUnitType.KILOMETERS.distanceUnit
-        }
-    }
 
-    private fun getTimeInMinutes(seconds: Double): Double {
-        return seconds.div(60.0)
-    }
 
     /**
      * Gets notified whenever the tracked routes change.
@@ -950,6 +928,7 @@ class NavigationActivity : AppCompatActivity() {
                 val intent = Intent(this, EndOfNavigationActivity::class.java)
                 userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
                 intent.putExtra("route", currentRoute)
+                intent.putExtra("authInfo", userAuthInfo)
                 intent.putExtra("userNavigationData", userNavigationData)
 
                 LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)

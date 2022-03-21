@@ -72,7 +72,7 @@ class LoginActivity : AppCompatActivity() {
                 val user = firebaseAuth.currentUser
 
                 val intent = Intent(this, MainActivity::class.java)
-                intent.putExtra("user", user)
+                intent.putExtra("authInfo", user)
                 startActivity(intent)
                 finish()
             }.addOnFailureListener {
