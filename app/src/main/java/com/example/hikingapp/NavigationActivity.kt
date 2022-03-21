@@ -225,6 +225,7 @@ class NavigationActivity : AppCompatActivity() {
 
             val mainIntent =
                 Intent(this@NavigationActivity, EndOfNavigationActivity::class.java)
+            mainIntent.putExtra("route", currentRoute)
             mainIntent.putExtra("userNavigationData", userNavigationData)
 
             LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
@@ -948,6 +949,7 @@ class NavigationActivity : AppCompatActivity() {
                 }
                 val intent = Intent(this, EndOfNavigationActivity::class.java)
                 userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
+                intent.putExtra("route", currentRoute)
                 intent.putExtra("userNavigationData", userNavigationData)
 
                 LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)

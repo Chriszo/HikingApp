@@ -237,11 +237,10 @@ class CompletedRouteFragment : Fragment() {
 
         val shareButton = view?.share_button
         shareButton?.setOnClickListener {
-            activity?.let {
-                val intent = Intent(it, ShareActivity::class.java)
-//                intent.putExtra("routeName", route.routeName)
-                it.startActivity(intent)
-            }
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.type = "text/plain"
+            intent.putExtra(Intent.EXTRA_TEXT, "Check out this amazing hiking route ${route!!.routeName}")
+            startActivity(Intent.createChooser(intent, "Share Route"))
         }
     }
 
