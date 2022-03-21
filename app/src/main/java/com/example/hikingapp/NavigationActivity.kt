@@ -6,10 +6,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.location.Location
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
@@ -18,6 +21,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.example.hikingapp.databinding.ActivityNavigationBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DistanceUnitType
@@ -31,6 +35,7 @@ import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
@@ -103,6 +108,10 @@ import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
@@ -143,12 +152,16 @@ class NavigationActivity : AppCompatActivity() {
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
     }
+    private val storage: FirebaseStorage by lazy {
+        FirebaseStorage.getInstance()
+    }
     private var userAuthInfo: FirebaseUser? = null
     private var currentRoute: Route? = null
     private var userNavigationData: UserNavigationData? = null
     private var timeCounter: Long = 0L
     private var isOutOfRoute = false
 
+    lateinit var currentPhotoPath: String
 
     private var mapInfo: MapInfo? = null
 
@@ -1005,13 +1018,12 @@ class NavigationActivity : AppCompatActivity() {
             binding.cameraButton.setOnClickListener {
 
                 //TODO change permission granting
-                val cameraRequest = 1888
                 if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
-                    requestPermissions(arrayOf(Manifest.permission.CAMERA), cameraRequest)
+                    requestPermissions(arrayOf(Manifest.permission.CAMERA), GlobalUtils.CAMERA_REQUEST)
 
 
                 val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                startActivityForResult(cameraIntent, cameraRequest)
+                startActivityForResult(cameraIntent, GlobalUtils.CAMERA_REQUEST)
             }
 
             binding.switchMapStyle.setOnClickListener {
@@ -1045,6 +1057,64 @@ class NavigationActivity : AppCompatActivity() {
             mapboxNavigation.startTripSession()
         } else {
             startActivity(Intent(this, LoginActivity::class.java))
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == GlobalUtils.CAMERA_REQUEST && resultCode == RESULT_OK) {
+            val imageBitmap = data!!.extras!!.get("data") as Bitmap
+            val outputStream = ByteArrayOutputStream()
+            imageBitmap.compress(Bitmap.CompressFormat.JPEG,80, outputStream)
+            val byteArray = outputStream.toByteArray()
+
+            storage.getReference("routes/${currentRoute!!.routeId}/photos/photo_1_5.jpg").putBytes(byteArray).addOnSuccessListener {
+
+                println("success")
+            }
+
+//            dispatchTakePictureIntent()
+//            imageView.setImageBitmap(imageBitmap)
+        }
+    }
+
+    private fun dispatchTakePictureIntent() {
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            // Ensure that there's a camera activity to handle the intent
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                // Create the File where the photo should go
+                val photoFile: File? = try {
+                    createImageFile()
+                } catch (ex: IOException) {
+                    null
+                }
+                // Continue only if the File was successfully created
+                photoFile?.also {
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        this,
+                        "com.example.android.fileprovider",
+                        it
+                    )
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    startActivityForResult(takePictureIntent, GlobalUtils.CAMERA_REQUEST)
+                }
+            }
+        }
+    }
+
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File = getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        return File.createTempFile(
+            "JPEG_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        ).apply {
+            // Save a file: path for use with ACTION_VIEW intents
+            currentPhotoPath = absolutePath
         }
     }
 

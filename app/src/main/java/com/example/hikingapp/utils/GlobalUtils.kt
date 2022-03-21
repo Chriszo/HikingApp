@@ -15,6 +15,8 @@ object GlobalUtils {
     const val TILEQUERY_ATTRIBUTE_REQUESTED_ID = "contour"
 
     const val MEGABYTE = 1024L*1024L
+    const val CAMERA_REQUEST = 1888
+
 
 
     fun getRoutePair(route: Route): Pair<Route, Bitmap?> {

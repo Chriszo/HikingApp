@@ -4,18 +4,22 @@
     android:id ="@+id/settingsMenuId">
 
     <item
+        android:icon="@drawable/account_icon_foreground_black"
         android:title="Account Settings"
         android:id="@+id/accountSettingsFragment"
         />
     <item
+        android:icon="@drawable/settings_icon_foreground_black"
         android:title="App Settings"
         android:id="@+id/appSettingsFragment"
         />
     <item
+        android:icon="@drawable/login_icon_foreground"
         android:title="Logout"
         android:id="@+id/logoutActivity"
         />
     <item
+        android:icon="@drawable/login_icon_foreground"
         android:title="Login"
         android:id="@+id/loginActivity"
         android:visible="false"
