@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -16,7 +17,6 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.R
 import com.example.hikingapp.ReviewActivity
-import com.example.hikingapp.ShareActivity
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
@@ -26,8 +26,9 @@ import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
-import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.example.hikingapp.viewModels.RouteViewModel
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -57,6 +58,7 @@ import kotlin.collections.HashMap
 
 class CompletedRouteFragment : Fragment() {
 
+    private var authInfo: FirebaseUser? = null
     private val storage: FirebaseStorage by lazy {
         FirebaseStorage.getInstance()
     }
@@ -89,6 +91,7 @@ class CompletedRouteFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_completed_route, container, false)
 
         route = arguments?.get("route") as Route
+        authInfo = arguments?.get("authInfo") as FirebaseUser?
 
         if (completedViewModel.route.value == null) {
             completedViewModel.route.postValue(route)
@@ -227,19 +230,40 @@ class CompletedRouteFragment : Fragment() {
 
     private fun initializeButtonListeners(view: View?) {
         val rateButton = view?.rate_button
-        rateButton?.setOnClickListener {
-            activity?.let {
-                val intent = Intent(it, ReviewActivity::class.java)
-//                intent.putExtra("routeName", route.routeName)
-                it.startActivity(intent)
-            }
-        }
+
+        database.getReference("reviews").child("${route.routeId}/${authInfo!!.uid}")
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+                        rateButton?.setOnClickListener {
+                            Toast.makeText(context, "Review already submitted for route: ${route.routeName}.", Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        rateButton?.setOnClickListener {
+                            val reviewIntent = Intent(context, ReviewActivity::class.java)
+                            reviewIntent.putExtra("route", route)
+                            reviewIntent.putExtra("authInfo", authInfo)
+                            reviewIntent.putExtra("fromIntent", CompletedRouteFragment::class.java.simpleName)
+                            startActivity(reviewIntent)
+                        }
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            })
+
 
         val shareButton = view?.share_button
         shareButton?.setOnClickListener {
             val intent = Intent(Intent.ACTION_SEND)
             intent.type = "text/plain"
-            intent.putExtra(Intent.EXTRA_TEXT, "Check out this amazing hiking route ${route!!.routeName}")
+            intent.putExtra(
+                Intent.EXTRA_TEXT,
+                "Check out this amazing hiking route ${route!!.routeName}"
+            )
             startActivity(Intent.createChooser(intent, "Share Route"))
         }
     }
