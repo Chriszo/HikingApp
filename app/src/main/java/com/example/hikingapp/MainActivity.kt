@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         val toolbar = toolbarContainer.findViewById(R.id.toolbar) as Toolbar
 
         if (intent.extras?.containsKey("authInfo") == true) {
-            (intent.extras!!["authInfo"] as FirebaseUser).apply {
+            (intent.extras!!["authInfo"] as FirebaseUser?).apply {
                 userViewModel.user.postValue(this)
                 authInfo = this
                 toolbar.action_bar_user.visibility = View.GONE

@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.telephony.SmsManager
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -34,7 +35,10 @@ import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
@@ -143,8 +147,9 @@ import java.util.stream.Collectors
  */
 class NavigationActivity : AppCompatActivity() {
 
+    private var initialFilteredCoordinates: List<Point> = mutableListOf()
+    private var mainRoutes: MutableList<DirectionsRoute> = mutableListOf()
     private var currentLocation: Point? = null
-    private var routePoints: MutableList<Point> = mutableListOf()
     private var checkPoints: MutableList<Int> = mutableListOf()
     private var nearbyPointsOfInterest = mutableSetOf<Long>()
     private var checkPointsIndex = 0
@@ -223,29 +228,39 @@ class NavigationActivity : AppCompatActivity() {
             userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
             userNavigationData?.distanceCovered = routeProgress.distanceTraveled.toDouble()
 
-            val mainIntent =
-                Intent(this@NavigationActivity, EndOfNavigationActivity::class.java)
-            mainIntent.putExtra("route", currentRoute)
-            intent.putExtra("authInfo", userAuthInfo)
-            mainIntent.putExtra("userNavigationData", userNavigationData)
+            if (isOutOfRoute) {
+                Toast.makeText(
+                    this@NavigationActivity,
+                    "You are on route again! \nYou have arrived at the last visited checkpoint!",
+                    Toast.LENGTH_LONG
+                ).show()
+                mapboxNavigation.setRoutes(mainRoutes, checkPointsIndex)
+                isOutOfRoute = false
+            } else {
+                val mainIntent =
+                    Intent(this@NavigationActivity, EndOfNavigationActivity::class.java)
+                mainIntent.putExtra("route", currentRoute)
+                intent.putExtra("authInfo", userAuthInfo)
+                mainIntent.putExtra("userNavigationData", userNavigationData)
 
-            LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
-            FirebaseUtils.persistNavigation(userAuthInfo!!.uid, userNavigationData!!)
+                LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
+                FirebaseUtils.persistNavigation(userAuthInfo!!.uid, userNavigationData!!)
 
-            startActivity(mainIntent)
+                startActivity(mainIntent)
+                finish()
+            }
         }
 
         override fun onNextRouteLegStart(routeLegProgress: RouteLegProgress) {
-            checkpointCounter.getAndIncrement()
-            println("Next checkpoint: ${checkpointCounter.get()}")
+            checkPointsIndex++
+            println("Next checkpoint: ${checkPointsIndex}")
         }
 
         override fun onWaypointArrival(routeProgress: RouteProgress) {
-            routeProgress.route.geometry()
-            println("CHECKPOINT ${checkpointCounter.get()} reached")
+            println("CHECKPOINT $checkPointsIndex reached")
             Toast.makeText(
                 this@NavigationActivity,
-                "You have arrived at ${checkpointCounter.get()}",
+                "You have arrived at $checkPointsIndex",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -587,9 +602,13 @@ class NavigationActivity : AppCompatActivity() {
             // Re-define a new Route to the last passed checkpoint???
             val lastCheckPointRouteIndex =
                 if (checkPoints.isNullOrEmpty()) 0 else checkPoints[checkPointsIndex]
-            if (!routePoints.isNullOrEmpty()) {
-                routePoints[lastCheckPointRouteIndex]?.let {
-                    defineRoute(mutableListOf(currentLocation!!, it!!))
+            if (!initialFilteredCoordinates.isNullOrEmpty()) {
+                initialFilteredCoordinates[lastCheckPointRouteIndex].let {
+                    defineRoute(
+                        mutableListOf(it, currentLocation!!),
+                        wayPointsIncluded = false,
+                        reversedRoute = true
+                    )
                 }
             }
         }
@@ -656,8 +675,6 @@ class NavigationActivity : AppCompatActivity() {
             .build()
     }
 
-
-
     /**
      * Gets notified whenever the tracked routes change.
      *
@@ -719,7 +736,7 @@ class NavigationActivity : AppCompatActivity() {
 
             mapInfo = mapService.getMapInformation(
                 routeMapEntity!!.routeMapContent,
-                routeMapEntity!!.routeMapName
+                routeMapEntity.routeMapName
             )
 
             associatedSights = LocalDatabase.getSightsOfRoute(currentRoute!!.routeId)
@@ -938,32 +955,27 @@ class NavigationActivity : AppCompatActivity() {
                 )
 
                 startActivity(intent)
+                finish()
             }
 
             // Action which starts the Navigation
             binding.play.setOnClickListener {
                 if (mapboxNavigation.getRoutes().isEmpty()) {
 
-                    routePoints = if (mapInfo!!.jsonRoute is MultiLineString) {
+                    val routePoints = if (mapInfo!!.jsonRoute is MultiLineString) {
                         (mapInfo!!.jsonRoute as MultiLineString).coordinates()[0]
                     } else {
                         (mapInfo!!.jsonRoute as LineString).coordinates()
                     }
 
-                    /*  val totalRouteDistance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                          computeTotalDistance(routePoints)
-                      } else {
-                          TODO("VERSION.SDK_INT < N")
-                      }
-    
-                      val modulo = (totalRouteDistance / 300).roundToInt()
-                      val checkPoints = routePoints.withIndex()
-                          .filter { it.index % modulo == 0 && it.index != 0 && it.index != routePoints.size - 1 }
-                          .map { it.index }*/
-
-
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        defineRoute(routePoints)
+                        defineRoute(
+                            routePoints!!.toList(),
+                            wayPointsIncluded = true,
+                            reversedRoute = false,
+                            isInitial = true
+                        )
+
                     }
 
                 } else {
@@ -978,10 +990,35 @@ class NavigationActivity : AppCompatActivity() {
                 binding.pause.visibility = View.GONE
             }
             binding.lostButton.setOnClickListener {
-                // TODO define functionality for lost mode.
+                binding.pause.performClick()
+                database.getReference("contacts").child("${userAuthInfo!!.uid}")
+                    .addValueEventListener(object : ValueEventListener {
+                        @RequiresApi(Build.VERSION_CODES.N)
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            if (snapshot.exists()) {
+                                val contacts = snapshot.value as MutableList<String>
+                                contacts.forEach { phoneNumber -> phoneNumber.apply { sendSMS(this) } }
 
-                Toast.makeText(this, "A message has been sent to your Contacts.", Toast.LENGTH_LONG)
-                    .show()
+                                Toast.makeText(
+                                    this@NavigationActivity,
+                                    "SMS message has been sent to your contacts.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    this@NavigationActivity,
+                                    "No contacts have been defined.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                            offRouteObserver.onOffRouteStateChanged(true)
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            TODO("Not yet implemented")
+                        }
+
+                    })
             }
 
             binding.recenter.setOnClickListener {
@@ -1000,7 +1037,10 @@ class NavigationActivity : AppCompatActivity() {
 
                 //TODO change permission granting
                 if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
-                    requestPermissions(arrayOf(Manifest.permission.CAMERA), GlobalUtils.CAMERA_REQUEST)
+                    requestPermissions(
+                        arrayOf(Manifest.permission.CAMERA),
+                        GlobalUtils.CAMERA_REQUEST
+                    )
 
 
                 val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
@@ -1041,21 +1081,51 @@ class NavigationActivity : AppCompatActivity() {
         }
     }
 
+    private fun sendSMS(phoneNumber: String?) {
+
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.SEND_SMS
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this,
+                    Manifest.permission.SEND_SMS
+                )
+            ) {
+            } else {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.SEND_SMS),
+                    0
+                );
+            }
+        }
+        val smsManager = SmsManager.getDefault()
+        smsManager.sendTextMessage(
+            phoneNumber,
+            null,
+            "ATTENTION!!!\n I'm Lost. " +
+                    "\n My current location's coordinates are:\n ${currentLocation!!.latitude()}, ${currentLocation!!.longitude()}",
+            null,
+            null
+        )
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == GlobalUtils.CAMERA_REQUEST && resultCode == RESULT_OK) {
             val imageBitmap = data!!.extras!!.get("data") as Bitmap
             val outputStream = ByteArrayOutputStream()
-            imageBitmap.compress(Bitmap.CompressFormat.JPEG,80, outputStream)
+            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
             val byteArray = outputStream.toByteArray()
 
-            storage.getReference("routes/${currentRoute!!.routeId}/photos/photo_1_5.jpg").putBytes(byteArray).addOnSuccessListener {
-
-                println("success")
-            }
-
-//            dispatchTakePictureIntent()
-//            imageView.setImageBitmap(imageBitmap)
+            storage.getReference("routes/${currentRoute!!.routeId}/photos/photo_1_5.jpg")
+                .putBytes(byteArray).addOnSuccessListener {
+                    Toast.makeText(this@NavigationActivity, "Photo uploaded successfully.", Toast.LENGTH_LONG).show()
+                }
+                .addOnFailureListener {Toast.makeText(this@NavigationActivity, "Photo uploading failed.", Toast.LENGTH_LONG).show()  }
         }
     }
 
@@ -1234,31 +1304,41 @@ class NavigationActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        println("ON DESTROY CALLED")
         super.onDestroy()
+        println("ON DESTROY CALLED")
         MapboxNavigationProvider.destroy()
         speechApi.cancel()
         voiceInstructionsPlayer.shutdown()
+
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun defineRoute(routePoints: List<Point>) {
-        val originLocation = navigationLocationProvider.lastLocation
-        val originPoint = originLocation?.let {
-            Point.fromLngLat(it.longitude, it.latitude)
-        } ?: return
+    private fun defineRoute(
+        routePoints: List<Point>,
+        wayPointsIncluded: Boolean,
+        reversedRoute: Boolean,
+        isInitial: Boolean = false
+    ) {
 
         val modulo = 10
 
-        val coordinates = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        val filteredCoordintates = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             defineRoutePoints(routePoints, modulo)
         } else {
             TODO("VERSION.SDK_INT < N")
         }
 
-        checkPoints = defineCheckPoints(coordinates, modulo)
+        if (isInitial) {
+            checkPoints = defineCheckPoints(filteredCoordintates, modulo)
+        }
 
-        requestCustomRoute(coordinates, checkPoints)
+        requestCustomRoute(
+            filteredCoordintates,
+            checkPoints,
+            wayPointsIncluded,
+            reversedRoute,
+            isInitial
+        )
 
         // execute a route request
         // it's recommended to use the
@@ -1296,15 +1376,18 @@ class NavigationActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun defineCheckPoints(coordinates: List<Point>, modulo: Int): MutableList<Int> {
+    private fun defineCheckPoints(
+        filteredCoordintates: List<Point>,
+        modulo: Int
+    ): MutableList<Int> {
 
         var mod = modulo
         var finalCheckPoints: MutableList<IndexedValue<Point>>?
         do {
             finalCheckPoints = mutableListOf()
-            finalCheckPoints.add(IndexedValue(0, coordinates[0]))
-            coordinates.withIndex().forEach {
-                if (it.index != 0 && it.index != coordinates.size - 1) {
+            finalCheckPoints.add(IndexedValue(0, filteredCoordintates[0]))
+            filteredCoordintates.withIndex().forEach {
+                if (it.index != 0 && it.index != filteredCoordintates.size - 1) {
                     if (it.index % mod == 0) {
                         finalCheckPoints.add(IndexedValue(it.index, it.value))
                     }
@@ -1312,14 +1395,14 @@ class NavigationActivity : AppCompatActivity() {
             }
             finalCheckPoints.add(
                 IndexedValue(
-                    coordinates.size - 1,
-                    coordinates[coordinates.size - 1]
+                    filteredCoordintates.size - 1,
+                    filteredCoordintates[filteredCoordintates.size - 1]
                 )
             )
             if (finalCheckPoints.size < 3) {
                 mod--
             }
-        } while (finalCheckPoints?.size!! < 3)
+        } while (finalCheckPoints?.size!! < 3 && mod > 0)
         return finalCheckPoints.stream().map { it.index }.collect(Collectors.toList())
     }
 
@@ -1352,27 +1435,41 @@ class NavigationActivity : AppCompatActivity() {
         return finalRoutePoints.stream().map { it.value }.collect(Collectors.toList())
     }
 
-    private fun requestCustomRoute(coordinates: List<Point>, checkPoints: List<Int>) {
+    private fun requestCustomRoute(
+        filteredCoordintates: List<Point>,
+        checkPoints: List<Int>,
+        wayPointsIncluded: Boolean,
+        reversedRoute: Boolean,
+        isInitial: Boolean
+    ) {
 
-        val mapboxMapMatchingRequest = MapboxMapMatching.builder()
+        val mapMatchingBuilder = MapboxMapMatching.builder()
             .accessToken(getString(R.string.mapbox_access_token))
             .profile(DirectionsCriteria.PROFILE_WALKING)
             .overview(DirectionsCriteria.OVERVIEW_FULL)
             .steps(true)
             .bannerInstructions(true)
             .voiceInstructions(true)
-            //TODO Find a more efficient way to compute route points for the obtaining of instructions. This is fully customized to current route at fillopapou.
-            .coordinates(coordinates)
-            .waypointIndices(*checkPoints.toTypedArray())
+        //TODO Find a more efficient way to compute route points for the obtaining of instructions. This is fully customized to current route at fillopapou.
 
-            //DEFAULT
+        if (wayPointsIncluded) {
+            mapMatchingBuilder.waypointIndices(*checkPoints.toTypedArray())
+        }
+        if (reversedRoute) {
+            mapMatchingBuilder.coordinates(filteredCoordintates.reversed())
+        } else {
+            mapMatchingBuilder.coordinates(filteredCoordintates)
+        }
+        val mapboxMapMatchingRequest = mapMatchingBuilder.build()
+
+        //DEFAULT
 
 //            .waypointIndices(0, 12)
 //            .steps(true)
 //            .voiceInstructions(true)
 //            .bannerInstructions(true)
 //            .profile(DirectionsCriteria.PROFILE_DRIVING)
-            .build()
+//            .build()
 
         mapboxMapMatchingRequest.enqueueCall(object : Callback<MapMatchingResponse> {
             override fun onResponse(
@@ -1382,6 +1479,10 @@ class NavigationActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     response.body()?.matchings()?.let { matchingList ->
                         matchingList[0].toDirectionRoute().apply {
+                            if (isInitial) {
+                                mainRoutes = mutableListOf(this)
+                                initialFilteredCoordinates = filteredCoordintates
+                            }
                             setRouteAndStartNavigation(listOf(this))
                         }
                     }
@@ -1396,12 +1497,12 @@ class NavigationActivity : AppCompatActivity() {
 
     }
 
-    private fun setRouteAndStartNavigation(routes: List<DirectionsRoute>) {
+    private fun setRouteAndStartNavigation(
+        routes: List<DirectionsRoute>
+    ) {
         // set routes, where the first route in the list is the primary route that
         // will be used for active guidance
         mapboxNavigation.setRoutes(routes)
-        println("Total route distance: " + mapboxNavigation.getRoutes()[0].distance())
-
         userNavigationData = UserNavigationData(currentRoute!!.routeId)
         timeCounter = System.currentTimeMillis()
         // start location simulation along the primary route
