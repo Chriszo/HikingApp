@@ -17,7 +17,7 @@ class RouteActivity : AppCompatActivity() {
         val route = intent.extras?.get("route") as Route
         val authInfo =
             if (intent.extras?.containsKey("authInfo") == true && intent.extras?.get("authInfo") != null) {
-                intent.extras?.get("authInfo") as FirebaseUser
+                intent.extras?.get("authInfo") as FirebaseUser?
             } else null
         val action: String? = intent.extras?.get("action") as String?
 

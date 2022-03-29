@@ -231,7 +231,7 @@ class NavigationActivity : AppCompatActivity() {
             if (isOutOfRoute) {
                 Toast.makeText(
                     this@NavigationActivity,
-                    "You are on route again! \nYou have arrived at the last visited checkpoint!",
+                    "You have arrived at the last visited checkpoint!",
                     Toast.LENGTH_LONG
                 ).show()
                 mapboxNavigation.setRoutes(mainRoutes, checkPointsIndex)
@@ -253,14 +253,12 @@ class NavigationActivity : AppCompatActivity() {
 
         override fun onNextRouteLegStart(routeLegProgress: RouteLegProgress) {
             checkPointsIndex++
-            println("Next checkpoint: ${checkPointsIndex}")
         }
 
         override fun onWaypointArrival(routeProgress: RouteProgress) {
-            println("CHECKPOINT $checkPointsIndex reached")
             Toast.makeText(
                 this@NavigationActivity,
-                "You have arrived at $checkPointsIndex",
+                "Checkpoint ${checkPointsIndex + 1} reached.",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -495,6 +493,7 @@ class NavigationActivity : AppCompatActivity() {
                             runOnUiThread {
                                 if (!nearbyPointsOfInterest.contains(sight.sightId)) {
                                     nearbyPointsOfInterest.add(sight.sightId)
+                                    // TODO add Map element(?)
                                     Toast.makeText(
                                         this@NavigationActivity,
                                         "You are approaching sight: " + sight.name,
@@ -546,11 +545,7 @@ class NavigationActivity : AppCompatActivity() {
         val maneuvers = maneuverApi.getManeuvers(routeProgress)
         maneuvers.fold(
             { error ->
-                Toast.makeText(
-                    this@NavigationActivity,
-                    error.errorMessage,
-                    Toast.LENGTH_SHORT
-                ).show()
+                Log.e(this.javaClass.simpleName, error.errorMessage?:"")
             },
             {
                 binding.maneuverView.visibility = View.VISIBLE

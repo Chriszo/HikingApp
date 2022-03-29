@@ -26,7 +26,7 @@ class ReviewActivity : AppCompatActivity() {
     private lateinit var fromIntent: String
     private lateinit var binding: ActivityReviewBinding
     private lateinit var route: Route
-    private lateinit var authInfo: FirebaseUser
+    private var authInfo: FirebaseUser? = null
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
     }
@@ -40,7 +40,7 @@ class ReviewActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         route = intent.extras!!["route"] as Route
-        authInfo = intent.extras!!["authInfo"] as FirebaseUser
+        authInfo = intent.extras!!["authInfo"] as FirebaseUser?
         fromIntent = intent.extras!!["fromIntent"] as String
         userNavigationData = if (intent.extras!!.containsKey("userNavigationData")) intent.extras?.get("userNavigationData") as UserNavigationData? else null
 
@@ -77,7 +77,7 @@ class ReviewActivity : AppCompatActivity() {
                 Toast.makeText(this, "You have not provided neither a rating nor a review.", Toast.LENGTH_LONG).show()
             } else {
                 val review = Review(binding.ratingValue.rating, binding.reviewValue.text.toString())
-                database.getReference("reviews").child("${route.routeId}/${authInfo.uid}").setValue(review).addOnSuccessListener {
+                database.getReference("reviews").child("${route.routeId}/${authInfo!!.uid}").setValue(review).addOnSuccessListener {
                     Toast.makeText(this, "Review for route ${route.routeName} submitted successfully!", Toast.LENGTH_LONG).show()
                     var intent: Intent? = null
                     when(fromIntent) {
