@@ -57,7 +57,7 @@
                 android:layout_height="wrap_content"
                 android:numStars="5"
                 android:layout_marginStart="10dp"
-                style="@style/RatingBar"
+                android:theme="@style/RatingBar"
                 android:scaleX="0.5"
                 android:scaleY="0.5"
                 android:transformPivotX="10dp"/>
