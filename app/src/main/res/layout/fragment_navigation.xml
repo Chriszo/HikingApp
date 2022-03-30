@@ -4,19 +4,339 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.navigation.NavigationFragment">
+    tools:context=".ui.navigation.NavigationFragment"
+    android:id="@+id/navigation_fragment_id"
+    >
 
-    <TextView
-        android:id="@+id/text_navigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
+    <com.mapbox.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </com.mapbox.maps.MapView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/tripProgressCard"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_marginTop="550dp"
+        android:layout_marginBottom="0dp"
+        app:cardElevation="8dp"
+        app:cardUseCompatPadding="false"
+        app:layout_constraintEnd_toEndOf="parent"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!--        <com.mapbox.navigation.ui.tripprogress.view.MapboxTripProgressView-->
+        <!--            android:id="@+id/tripProgressView"-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="wrap_content" />-->
+
+        <LinearLayout
+            android:id="@+id/l1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/l11"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center">
+
+                <TextView
+                    android:id="@+id/text_distance_remaining"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/text_distance_covered"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/text_time_estimated"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="end"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/l12"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center">
+
+                <TextView
+                    android:id="@+id/current_elevation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="bottom"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- TODO Fix Constraints for the Card views at the bottom of the navigation page-->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/actionsCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="35dp"
+        app:cardElevation="8dp"
+        app:cardUseCompatPadding="false"
+        app:layout_constraintBottom_toBottomOf="@+id/mapView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tripProgressCard">
+
+
+        <!--Card Divider element -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@android:color/darker_gray" />
+
+        <LinearLayout
+            android:id="@+id/l2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/play"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginStart="60dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/circular_button"
+                android:backgroundTint="@color/white"
+                android:drawableStart="@drawable/ic_play_foreground"
+                android:paddingStart="-25dp"
+                android:paddingEnd="-25dp"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/pause"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginStart="60dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/circular_button"
+                android:backgroundTint="@color/white"
+                android:drawableStart="@drawable/ic_pause_foreground"
+                android:paddingStart="-25dp"
+                android:paddingEnd="-25dp"
+                android:visibility="gone" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/lost_button"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="60dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/circular_button"
+                android:backgroundTint="@android:color/white"
+                android:drawableStart="@drawable/lost_icon_foreground"
+                android:paddingStart="-16dp"
+                android:paddingTop="19dp"
+                android:paddingEnd="-10dp"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/stop"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginStart="60dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/circular_button"
+                android:backgroundTint="@android:color/white"
+                android:drawableStart="@drawable/ic_stop_foreground"
+                android:paddingStart="-25dp"
+                android:paddingEnd="-25dp" />
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <com.mapbox.navigation.ui.maneuver.view.MapboxManeuverView
+        android:id="@+id/maneuverView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <com.mapbox.navigation.ui.voice.view.MapboxSoundButton
+        android:id="@+id/soundButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/maneuverView" />
+
+    <com.mapbox.navigation.ui.maps.camera.view.MapboxRouteOverviewButton
+        android:id="@+id/routeOverview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/soundButton" />
+
+    <com.mapbox.navigation.ui.maps.camera.view.MapboxRecenterButton
+        android:id="@+id/recenter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/routeOverview" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/cameraButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:background="@color/white"
+        android:contentDescription="@string/camera_action_button"
+        app:backgroundTint="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/recenter"
+        app:srcCompat="@drawable/photo_camera_interface_symbol_for_button" />
+
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/switchMapStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="@string/switch_map_style"
+        app:srcCompat="@drawable/map_styles_icon_foreground"
+        android:backgroundTint="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/cameraButton"/>
+
+
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/mapStyle_options"
+        app:layout_constraintTop_toBottomOf="@id/switchMapStyle"
+        app:layout_constraintEnd_toEndOf="@id/switchMapStyle"
+        android:layout_width="45dp"
+        android:layout_height="180dp"
+        android:layout_marginEnd="7dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/l3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/traffic_map_style"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/traffic_map_style"
+                android:layout_gravity="center"
+                android:layout_marginTop="5dp"
+                />
+
+            <TextView
+                android:id="@+id/traffic_map_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="3dp"
+                android:layout_marginBottom="5dp"
+                android:text="Traffic"
+                android:textSize="8sp"/>
+
+
+            <ImageView
+                android:id="@+id/satellite_map_style"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/satellite_map_style"
+                android:layout_gravity="center"
+                android:layout_marginTop="5dp"/>
+
+
+            <TextView
+                android:id="@+id/satellite_map_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="3dp"
+                android:layout_marginBottom="5dp"
+                android:text="Satellite"
+                android:textSize="8sp"/>
+
+            <ImageView
+                android:id="@+id/terrain_map_style"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/terain_map_style"
+                android:layout_gravity="center"
+                android:layout_marginTop="5dp"/>
+
+
+            <TextView
+                android:id="@+id/terrain_map_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="3dp"
+                android:layout_marginBottom="5dp"
+                android:text="Terrain"
+                android:textSize="8sp"/>
+
+        </LinearLayout>
+
+
+
+    </com.google.android.material.card.MaterialCardView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

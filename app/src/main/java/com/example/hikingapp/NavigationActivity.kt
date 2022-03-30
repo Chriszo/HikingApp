@@ -147,6 +147,7 @@ import java.util.stream.Collectors
  */
 class NavigationActivity : AppCompatActivity() {
 
+    private var routeCompleted: Boolean = false
     private var initialFilteredCoordinates: List<Point> = mutableListOf()
     private var mainRoutes: MutableList<DirectionsRoute> = mutableListOf()
     private var currentLocation: Point? = null
@@ -237,6 +238,7 @@ class NavigationActivity : AppCompatActivity() {
                 mapboxNavigation.setRoutes(mainRoutes, checkPointsIndex)
                 isOutOfRoute = false
             } else {
+                routeCompleted = true
                 val mainIntent =
                     Intent(this@NavigationActivity, EndOfNavigationActivity::class.java)
                 mainIntent.putExtra("route", currentRoute)
@@ -537,6 +539,11 @@ class NavigationActivity : AppCompatActivity() {
         // draw the upcoming maneuver arrow on the map
         val style = mapboxMap.getStyle()
         if (style != null) {
+
+            if (TripSessionState.STARTED == mapboxNavigation.getTripSessionState()) {
+                mapboxMap.getStyle()!!.removeStyleLayer(GlobalUtils.LINE_LAYER_ID)
+            }
+
             val maneuverArrowResult = routeArrowApi.addUpcomingManeuverArrow(routeProgress)
             routeArrowView.renderManeuverUpdate(style, maneuverArrowResult)
         }
@@ -937,18 +944,25 @@ class NavigationActivity : AppCompatActivity() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     clearRouteAndStopNavigation()
                 }
-                val intent = Intent(this, EndOfNavigationActivity::class.java)
-                userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
-                intent.putExtra("route", currentRoute)
+
+                var intent: Intent? = null
+                if (routeCompleted) {
+                    intent = Intent(this, EndOfNavigationActivity::class.java)
+                    userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
+                    intent.putExtra("route", currentRoute)
+                    intent.putExtra("userNavigationData", userNavigationData)
+                    LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
+                    FirebaseUtils.persistNavigation(userAuthInfo!!.uid, userNavigationData!!)
+
+                } else {
+                    intent = Intent(this, MainActivity::class.java)
+                    LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
+                    FirebaseUtils.persistUserInCompletedRoute(
+                        userAuthInfo!!.uid,
+                        userNavigationData!!.routeId
+                    )
+                }
                 intent.putExtra("authInfo", userAuthInfo)
-                intent.putExtra("userNavigationData", userNavigationData)
-
-                LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
-                FirebaseUtils.persistUserInCompletedRoute(
-                    userAuthInfo!!.uid,
-                    userNavigationData!!.routeId
-                )
-
                 startActivity(intent)
                 finish()
             }

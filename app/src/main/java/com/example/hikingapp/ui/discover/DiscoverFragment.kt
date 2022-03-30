@@ -98,6 +98,9 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     private val sharedPreferences: SharedPreferences by lazy {
         requireActivity().applicationContext.getSharedPreferences("mainPhotoPrefs", 0)
     }
+    private val chosenRoutePreference: SharedPreferences by lazy {
+        requireActivity().applicationContext.getSharedPreferences("chosenRoute", 0)
+    }
 
     private val routeViewModel: RouteViewModel by activityViewModels()
     private val userViewModel: UserViewModel by activityViewModels()
@@ -627,6 +630,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
 
         val intent = Intent(context, RouteActivity::class.java)
         intent.putExtra("route", currentRoutes[position])
+        chosenRoutePreference.edit().putLong("routeId", currentRoutes[position].routeId).commit()
         intent.putExtra("action", "discover")
         intent.putExtra("authInfo", userViewModel.user.value)
         startActivity(intent)
