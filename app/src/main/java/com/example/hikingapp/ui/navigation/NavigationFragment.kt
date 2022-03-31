@@ -615,7 +615,7 @@ class NavigationFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-
+        navigationView = inflater.inflate(R.layout.fragment_navigation, container, false)
 
         requireActivity().actionBar?.title = "Navigation"
         if (userViewModel.user.value == null) {
@@ -625,7 +625,6 @@ class NavigationFragment : Fragment() {
 
 //            _binding = FragmentNavigationBinding.inflate(layoutInflater)
 
-            navigationView = inflater.inflate(R.layout.fragment_navigation, container, false)
 
 //            val root = binding.root
 
@@ -813,7 +812,6 @@ class NavigationFragment : Fragment() {
 
                 val routeMapEntity = LocalDatabase.getRouteMapContent(currentRoute!!.routeId)
 
-
                 mapInfo = mapService.getMapInformation(
                     routeMapEntity!!.routeMapContent,
                     routeMapEntity.routeMapName
@@ -983,9 +981,7 @@ class NavigationFragment : Fragment() {
                                 reversedRoute = false,
                                 isInitial = true
                             )
-
                         }
-
                     } else {
                         resumeNavigation()
                     }
@@ -1102,9 +1098,8 @@ class NavigationFragment : Fragment() {
                 // and later when a route is set also receiving route progress updates
                 mapboxNavigation.startTripSession()
             }
-            return navigationView
         }
-        return null
+        return navigationView
     }
 
     private fun setMapStyle(mapStyle: String, mapInfo: MapInfo, routeLineIsVisible: Boolean = true) {

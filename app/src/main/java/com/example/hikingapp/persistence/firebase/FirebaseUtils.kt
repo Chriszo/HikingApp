@@ -77,14 +77,16 @@ object FirebaseUtils {
                         for (navigation in completedNavigations) {
                             if (navigation.routeId == userNavigationData.routeId) {
                                 routeAlreadyExists = true
+                                navigation.appendNavigationData(userNavigationData)
                                 break
                             }
                         }
                         if (!routeAlreadyExists) {
                             completedNavigations.add(userNavigationData)
-                            database.getReference(COMPLETED_USER_NAVIGATION_DATA).child(uid)
-                                .setValue(completedNavigations)
                         }
+                        database.getReference(COMPLETED_USER_NAVIGATION_DATA).child(uid)
+                            .setValue(completedNavigations)
+
                     } else {
                         database.getReference(COMPLETED_USER_NAVIGATION_DATA).child(uid)
                             .setValue(mutableListOf(userNavigationData))

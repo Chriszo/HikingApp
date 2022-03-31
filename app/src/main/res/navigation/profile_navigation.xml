@@ -15,4 +15,9 @@
         android:name="com.example.hikingapp.ui.profile.completed.CompletedFragment"
         android:label="fragment_completed"
         tools:layout="@layout/fragment_completed" />
+    <fragment
+        android:id="@+id/statisticsFragment"
+        android:name="com.example.hikingapp.ui.profile.statistics.StatisticsFragment"
+        android:label="fragment_statistics"
+        tools:layout="@layout/fragment_statistics" />
 </navigation>
