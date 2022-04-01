@@ -54,6 +54,7 @@
         android:scaleY="0.3"
         android:theme="@style/RatingBar"
         android:transformPivotX="10dp"
+        android:isIndicator="true"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/route_state" />
 

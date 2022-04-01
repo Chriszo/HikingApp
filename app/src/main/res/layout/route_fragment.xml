@@ -78,6 +78,7 @@
                         android:scaleY="0.5"
                         android:theme="@style/RatingBar"
                         android:transformPivotX="10dp"
+                        android:isIndicator="true"
                         app:layout_constraintStart_toStartOf="@+id/stateName"
                         app:layout_constraintTop_toBottomOf="@id/stateName" />
 
@@ -146,6 +147,7 @@
                     android:id="@+id/info_nav_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    app:labelVisibilityMode="labeled"
                     app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
                     app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
                     app:menu="@menu/route_nav_menu" />

@@ -20,4 +20,9 @@
         android:name="com.example.hikingapp.ui.route.photos.RoutePhotosFragment"
         android:label="fragment_photos"
         tools:layout="@layout/fragment_photos" />
+    <fragment
+        android:id="@+id/reviewsListFragment"
+        android:name="com.example.hikingapp.ui.route.ratings.ReviewsListFragment"
+        android:label="fragment_reviews_list"
+        tools:layout="@layout/fragment_reviews_list" />
 </navigation>

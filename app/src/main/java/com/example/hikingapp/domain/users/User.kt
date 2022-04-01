@@ -9,4 +9,7 @@ class User(
     var password: String,
     var profileInfo: ProfileInfo?
 ) :
-    Serializable {}
+    Serializable {
+
+        constructor(): this("","","","",null)
+    }

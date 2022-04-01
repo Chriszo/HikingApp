@@ -4,10 +4,10 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivityReviewBinding
 import com.example.hikingapp.domain.navigation.UserNavigationData
 import com.example.hikingapp.domain.route.Route
@@ -42,30 +42,34 @@ class ReviewActivity : AppCompatActivity() {
         route = intent.extras!!["route"] as Route
         authInfo = intent.extras!!["authInfo"] as FirebaseUser?
         fromIntent = intent.extras!!["fromIntent"] as String
-        userNavigationData = if (intent.extras!!.containsKey("userNavigationData")) intent.extras?.get("userNavigationData") as UserNavigationData? else null
+        userNavigationData =
+            if (intent.extras!!.containsKey("userNavigationData")) intent.extras?.get("userNavigationData") as UserNavigationData? else null
 
         val mainRoutePhoto = LocalDatabase.getMainImage(route.routeId, route::class.java.simpleName)
 
         if (Objects.isNull(mainRoutePhoto)) {
 
-            FirebaseStorage.getInstance().getReference("routes/mainPhotos/route_${route.routeId}_main.jpg").getBytes(GlobalUtils.MEGABYTE * 5).addOnSuccessListener {
+            FirebaseStorage.getInstance()
+                .getReference("routes/mainPhotos/route_${route.routeId}_main.jpg")
+                .getBytes(GlobalUtils.MEGABYTE * 5).addOnSuccessListener {
 
                 val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                binding.routeImage.setImageDrawable(BitmapDrawable(resources,bitmap))
+                binding.routeImage.setImageDrawable(BitmapDrawable(resources, bitmap))
             }
         } else {
-            binding.routeImage.setImageDrawable(BitmapDrawable(resources,mainRoutePhoto))
+            binding.routeImage.setImageDrawable(BitmapDrawable(resources, mainRoutePhoto))
         }
 
         binding.backButton.setOnClickListener {
 
             var intent: Intent? = null
-            when(fromIntent) {
+            when (fromIntent) {
                 EndOfNavigationActivity::class.java.simpleName -> {
                     intent = Intent(this@ReviewActivity, EndOfNavigationActivity::class.java)
                     intent.putExtra("userNavigationData", userNavigationData)
                 }
-                CompletedRouteFragment::class.java.simpleName -> intent = Intent(this@ReviewActivity, MainActivity::class.java)
+                CompletedRouteFragment::class.java.simpleName -> intent =
+                    Intent(this@ReviewActivity, MainActivity::class.java)
             }
             intent!!.putExtra("route", route)
             intent.putExtra("authInfo", authInfo)
@@ -74,18 +78,34 @@ class ReviewActivity : AppCompatActivity() {
 
         binding.submitReviewButton.setOnClickListener {
             if (binding.ratingValue.rating == 0f && binding.reviewValue.text.toString().isBlank()) {
-                Toast.makeText(this, "You have not provided neither a rating nor a review.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "You have not provided neither a rating nor a review.",
+                    Toast.LENGTH_LONG
+                ).show()
             } else {
-                val review = Review(binding.ratingValue.rating, binding.reviewValue.text.toString())
-                database.getReference("reviews").child("${route.routeId}/${authInfo!!.uid}").setValue(review).addOnSuccessListener {
-                    Toast.makeText(this, "Review for route ${route.routeName} submitted successfully!", Toast.LENGTH_LONG).show()
+                val review = Review(
+                    null,
+                    null,
+                    binding.reviewValue.text.toString(),
+                    binding.ratingValue.rating
+                )
+                database.getReference("reviews").child("${route.routeId}/${authInfo!!.uid}")
+                    .setValue(review).addOnSuccessListener {
+                    Toast.makeText(
+                        this,
+                        "Review for route ${route.routeName} submitted successfully!",
+                        Toast.LENGTH_LONG
+                    ).show()
                     var intent: Intent? = null
-                    when(fromIntent) {
+                    when (fromIntent) {
                         EndOfNavigationActivity::class.java.simpleName -> {
-                            intent = Intent(this@ReviewActivity, EndOfNavigationActivity::class.java)
+                            intent =
+                                Intent(this@ReviewActivity, EndOfNavigationActivity::class.java)
                             intent!!.putExtra("userNavigationData", userNavigationData)
                         }
-                        CompletedRouteFragment::class.java.simpleName -> intent = Intent(this@ReviewActivity, MainActivity::class.java)
+                        CompletedRouteFragment::class.java.simpleName -> intent =
+                            Intent(this@ReviewActivity, MainActivity::class.java)
                     }
                     intent!!.putExtra("route", route)
                     intent!!.putExtra("authInfo", authInfo)
@@ -95,6 +115,5 @@ class ReviewActivity : AppCompatActivity() {
             }
 
         }
-
     }
 }

@@ -11,4 +11,7 @@
     <item
         android:id="@+id/photosFragment"
         android:title="Photos" />
+    <item
+        android:id="@+id/reviewsListFragment"
+        android:title="Reviews" />
 </menu>
