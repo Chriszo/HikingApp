@@ -16,9 +16,13 @@ import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.ui.profile.completed.CompletedRouteFragment
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import java.util.*
+import kotlin.collections.HashMap
 
 class ReviewActivity : AppCompatActivity() {
 
@@ -84,34 +88,50 @@ class ReviewActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             } else {
-                val review = Review(
-                    null,
-                    null,
-                    binding.reviewValue.text.toString(),
-                    binding.ratingValue.rating
-                )
-                database.getReference("reviews").child("${route.routeId}/${authInfo!!.uid}")
-                    .setValue(review).addOnSuccessListener {
-                    Toast.makeText(
-                        this,
-                        "Review for route ${route.routeName} submitted successfully!",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    var intent: Intent? = null
-                    when (fromIntent) {
-                        EndOfNavigationActivity::class.java.simpleName -> {
-                            intent =
-                                Intent(this@ReviewActivity, EndOfNavigationActivity::class.java)
-                            intent!!.putExtra("userNavigationData", userNavigationData)
+                database.getReference("users").child("user${authInfo!!.uid}").addValueEventListener(object: ValueEventListener {
+
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        var userName: String? = null
+
+                        if (snapshot.exists()) {
+                            userName = (snapshot.value as HashMap<String,*>)["userName"] as String?
                         }
-                        CompletedRouteFragment::class.java.simpleName -> intent =
-                            Intent(this@ReviewActivity, MainActivity::class.java)
+                        val review = Review(
+                            null,
+                            userName,
+                            binding.reviewValue.text.toString(),
+                            binding.ratingValue.rating
+                        )
+                        database.getReference("reviews").child("${route.routeId}/${authInfo!!.uid}")
+                            .setValue(review).addOnSuccessListener {
+                                Toast.makeText(
+                                    this@ReviewActivity,
+                                    "Review for route ${route.routeName} submitted successfully!",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                var intent: Intent? = null
+                                when (fromIntent) {
+                                    EndOfNavigationActivity::class.java.simpleName -> {
+                                        intent =
+                                            Intent(this@ReviewActivity, EndOfNavigationActivity::class.java)
+                                        intent!!.putExtra("userNavigationData", userNavigationData)
+                                    }
+                                    CompletedRouteFragment::class.java.simpleName -> intent =
+                                        Intent(this@ReviewActivity, MainActivity::class.java)
+                                }
+                                intent!!.putExtra("route", route)
+                                intent!!.putExtra("authInfo", authInfo)
+                                intent!!.putExtra("reviewSubmitted", true)
+                                startActivity(intent)
+                            }
                     }
-                    intent!!.putExtra("route", route)
-                    intent!!.putExtra("authInfo", authInfo)
-                    intent!!.putExtra("reviewSubmitted", true)
-                    startActivity(intent)
-                }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
+
+                })
+
             }
 
         }

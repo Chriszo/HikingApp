@@ -43,6 +43,17 @@
 
         </RelativeLayout>
 
+        <TextView
+            android:id="@+id/no_results_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:text="@string/no_results_found"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:visibility="gone"/>
+
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/reviews_recycler_view"
@@ -52,6 +63,8 @@
 
 
     </LinearLayout>
+
+
 
 
 </FrameLayout>

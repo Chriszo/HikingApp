@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -30,6 +31,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
+import kotlinx.android.synthetic.main.fragment_reviews_list.view.*
 
 class ReviewsListFragment : Fragment(), OnItemClickedListener {
 
@@ -63,6 +65,8 @@ class ReviewsListFragment : Fragment(), OnItemClickedListener {
 
         progressBar = view.findViewById(R.id.progress_bar) as ProgressBar
         progressBar!!.visibility = View.VISIBLE
+
+        val noResultsText = view.findViewById<TextView>(R.id.no_results_text)
 
         linearLayoutManager = LinearLayoutManager(context)
         reviewsRecyclerView = view.findViewById(R.id.reviews_recycler_view)
@@ -104,6 +108,10 @@ class ReviewsListFragment : Fragment(), OnItemClickedListener {
                                         reviewData.entries.size
                                     )
                                 }
+                            } else {
+                                reviewsRecyclerView.visibility = View.GONE
+                                noResultsText.visibility = View.VISIBLE
+                                progressBar!!.visibility = View.GONE
                             }
                         }
 
