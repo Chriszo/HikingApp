@@ -23,7 +23,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HikingApp.NoActionBar">
-        <activity android:name=".ui.route.ratings.ReviewItemActivity"></activity>
+        <activity android:name=".ui.settings.ContactsActivity"></activity>
+        <activity android:name=".ui.settings.DeleteAccountActivity" />
+        <activity android:name=".ui.settings.EditAccountActivity" />
+        <activity android:name=".ui.route.ratings.ReviewItemActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -36,10 +39,10 @@
         </provider>
 
         <activity
-            android:name=".AccountActivity"
+            android:name=".ui.settings.AccountActivity"
             android:exported="false" />
         <activity
-            android:name=".LogoutActivity"
+            android:name=".ui.settings.LogoutActivity"
             android:exported="false" />
         <activity
             android:name=".SignUpActivity"
@@ -54,7 +57,7 @@
             android:name=".ReviewActivity"
             android:exported="false" />
         <activity
-            android:name=".SettingsActivity"
+            android:name=".ui.settings.SettingsActivity"
             android:exported="false" />
         <activity
             android:name=".ui.search.results.SearchResultsActivity"

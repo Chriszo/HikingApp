@@ -16,8 +16,10 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.databinding.ActivityMainBinding
+import com.example.hikingapp.ui.settings.*
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_main.*
@@ -72,7 +74,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         toolbar.account_icon.setOnClickListener {
-            val accountIntent = Intent(this,AccountActivity::class.java)
+            val accountIntent = Intent(this, AccountActivity::class.java)
             accountIntent.putExtra("authInfo", authInfo)
             startActivity(accountIntent)
         }
@@ -106,22 +108,41 @@ class MainActivity : AppCompatActivity() {
     private fun setMenuItemListeners(optionsMenu: Menu) {
 
         val accountSettingsItem = optionsMenu.findItem(R.id.accountSettingsFragment)
+        val logoutItem = optionsMenu.findItem(R.id.account_logout)
+        val editItem = optionsMenu.findItem(R.id.account_edit)
+        val deleteIem = optionsMenu.findItem(R.id.account_delete)
         val appSettingsItem = optionsMenu.findItem(R.id.appSettingsFragment)
-        val logoutItem = optionsMenu.findItem(R.id.logoutActivity)
+        val settingsItem = optionsMenu.findItem(R.id.app_settings)
+        val contactSettingsItem = optionsMenu.findItem(R.id.contact_settings)
         val loginItem = optionsMenu.findItem(R.id.loginActivity)
 
-        setMenuItemsVisibility(logoutItem, loginItem, accountSettingsItem, appSettingsItem)
+        setMenuItemsVisibility(loginItem, accountSettingsItem, appSettingsItem)
 
+        logoutItem.setOnMenuItemClickListener {
+            if (authInfo != null) {
+                FirebaseAuth.getInstance().signOut()
+                startActivity(Intent(this, MainActivity::class.java))
+            }
+            true
+        }
 
-        accountSettingsItem.setOnMenuItemClickListener {
-            val intent = Intent(this, AccountActivity::class.java)
+        editItem.setOnMenuItemClickListener {
+            val intent = Intent(this, EditAccountActivity::class.java)
             intent.putExtra("authInfo", authInfo)
             intent.putExtra("selectedSetting", "Account Setting clicked")
             startActivity(intent)
             true
         }
 
-        appSettingsItem.setOnMenuItemClickListener {
+        deleteIem.setOnMenuItemClickListener {
+            val intent = Intent(this, DeleteAccountActivity::class.java)
+            intent.putExtra("authInfo", authInfo)
+            intent.putExtra("selectedSetting", "Account Setting clicked")
+            startActivity(intent)
+            true
+        }
+
+        settingsItem.setOnMenuItemClickListener {
             val intent = Intent(this, SettingsActivity::class.java)
             intent.putExtra("authInfo", authInfo)
             intent.putExtra("selectedSetting", "App Setting clicked")
@@ -129,14 +150,23 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        logoutItem.setOnMenuItemClickListener {
+
+        contactSettingsItem.setOnMenuItemClickListener {
+            val intent = Intent(this, ContactsActivity::class.java)
+            intent.putExtra("authInfo", authInfo)
+            intent.putExtra("selectedSetting", "App Setting clicked")
+            startActivity(intent)
+            true
+        }
+
+   /*     logoutItem.setOnMenuItemClickListener {
             if (authInfo != null) {
                 val intent = Intent(this,LogoutActivity::class.java)
                 intent.putExtra("authInfo", authInfo)
                 startActivity(intent)
             }
             true
-        }
+        }*/
 
         loginItem.setOnMenuItemClickListener {
             if (authInfo == null) {
@@ -148,7 +178,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setMenuItemsVisibility(
-        logoutItem: MenuItem?,
         loginItem: MenuItem?,
         accountSettingsItem: MenuItem,
         appSettingsItem: MenuItem
@@ -156,12 +185,10 @@ class MainActivity : AppCompatActivity() {
 
         if (authInfo != null) {
             loginItem?.isVisible = false
-            logoutItem?.isVisible = true
             accountSettingsItem.isVisible = true
             appSettingsItem.isVisible = true
         } else {
             loginItem?.isVisible = true
-            logoutItem?.isVisible = false
             accountSettingsItem.isVisible = false
             appSettingsItem.isVisible = false
         }

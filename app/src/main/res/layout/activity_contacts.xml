@@ -4,13 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.settings.SettingsActivity">
+    tools:context=".ui.settings.ContactsActivity">
+
+    <include layout="@layout/custom_toolbar"
+        android:id="@+id/toolbarContainer"/>
 
     <TextView
-        android:id="@+id/selectedSetting"
-        android:layout_width="56dp"
-        android:layout_height="19dp"
-        android:text="TextView"
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Contacts"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

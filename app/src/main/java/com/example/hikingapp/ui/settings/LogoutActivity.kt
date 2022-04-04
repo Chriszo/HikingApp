@@ -1,4 +1,4 @@
-package com.example.hikingapp
+package com.example.hikingapp.ui.settings
 
 import android.app.ProgressDialog
 import android.content.Intent
@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import com.example.hikingapp.MainActivity
+import com.example.hikingapp.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 

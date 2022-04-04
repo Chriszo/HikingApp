@@ -1,8 +1,9 @@
-package com.example.hikingapp
+package com.example.hikingapp.ui.settings
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.databinding.ActivitySettingsBinding
 
 

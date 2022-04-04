@@ -8,7 +8,9 @@ import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivitySignUpBinding
+import com.example.hikingapp.domain.users.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 class SignUpActivity : AppCompatActivity() {
 
@@ -55,6 +57,10 @@ class SignUpActivity : AppCompatActivity() {
         firebaseAuth.createUserWithEmailAndPassword(userMail, userPassword).addOnSuccessListener {
             progressDialog.dismiss()
             val user = firebaseAuth.currentUser
+
+            val newUser = User(user?.uid!!,user?.email!!.split("@")[0],user?.email!!,"pass", null)
+            FirebaseDatabase.getInstance().getReference("users").child("user${user.uid}").setValue(newUser)
+
             val intent = Intent(this, MainActivity::class.java)
             intent.putExtra("user", user)
             startActivity(intent)

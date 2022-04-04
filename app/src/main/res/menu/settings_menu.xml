@@ -4,20 +4,27 @@
     android:id ="@+id/settingsMenuId">
 
     <item
-        android:icon="@drawable/account_icon_foreground_black"
         android:title="Account Settings"
         android:id="@+id/accountSettingsFragment"
-        />
+        app:showAsAction="never">
+        <menu>
+            <item android:id="@+id/account_logout" android:icon="@drawable/login_icon_foreground"
+                android:title=" Logout" />
+            <item android:id="@+id/account_edit" android:icon="@drawable/account_icon_foreground"
+                android:title=" Edit" />
+            <item android:id="@+id/account_delete" android:icon="@drawable/delete_icon_foreground"
+                android:title=" Delete" />
+        </menu>
+    </item>
     <item
-        android:icon="@drawable/settings_icon_foreground_black"
         android:title="App Settings"
         android:id="@+id/appSettingsFragment"
-        />
-    <item
-        android:icon="@drawable/login_icon_foreground"
-        android:title="Logout"
-        android:id="@+id/logoutActivity"
-        />
+        app:showAsAction="never">
+        <menu>
+            <item android:title="Settings" android:icon="@drawable/settings_icon_foreground" android:id="@+id/app_settings"/>
+            <item android:title="Contacts" android:icon="@drawable/contacts_icon_foreground" android:id="@+id/contact_settings"/>
+        </menu>
+    </item>
     <item
         android:icon="@drawable/login_icon_foreground"
         android:title="Login"
