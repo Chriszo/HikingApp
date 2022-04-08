@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -51,7 +52,13 @@ class MainActivity : AppCompatActivity() {
 
         val toolbar = toolbarContainer.findViewById(R.id.toolbar) as Toolbar
 
-        if (intent.extras?.containsKey("authInfo") == true) {
+        val backButton = toolbarContainer.findViewById<ImageView>(R.id.back_btn)
+        backButton.visibility = View.GONE
+
+        val title = toolbarContainer.findViewById<TextView>(R.id.action_bar_title)
+        title.visibility = View.GONE
+
+            if (intent.extras?.containsKey("authInfo") == true) {
             (intent.extras!!["authInfo"] as FirebaseUser?).apply {
                 userViewModel.user.postValue(this)
                 authInfo = this

@@ -3,7 +3,9 @@ package com.example.hikingapp.ui.settings
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.example.hikingapp.BackButtonListener
 import com.example.hikingapp.MainActivity
 import com.example.hikingapp.databinding.ActivityEditAccountBinding
 import com.example.hikingapp.domain.users.User
@@ -14,21 +16,24 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
-class EditAccountActivity : AppCompatActivity() {
+class EditAccountActivity : AppCompatActivity(), BackButtonListener {
 
     private lateinit var binding: ActivityEditAccountBinding
+    private var authInfo: FirebaseUser? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityEditAccountBinding.inflate(layoutInflater)
+        setBackButtonListener()
 
         setContentView(binding.root)
 
+        (binding.toolbarContainer.actionBarTitle as TextView).text = "Edit Account"
+
         if (intent.extras?.containsKey("authInfo") == true) {
 
-
-            val authInfo: FirebaseUser? = intent.extras?.get("authInfo") as FirebaseUser?
+            authInfo = intent.extras?.get("authInfo") as FirebaseUser?
 
             if (authInfo != null) {
 
@@ -37,7 +42,7 @@ class EditAccountActivity : AppCompatActivity() {
 
 
 
-                FirebaseDatabase.getInstance().getReference("users").child("user${authInfo.uid}")
+                FirebaseDatabase.getInstance().getReference("users").child("user${authInfo!!.uid}")
                     .addValueEventListener(object :
                         ValueEventListener {
                         override fun onDataChange(snapshot: DataSnapshot) {
@@ -48,7 +53,7 @@ class EditAccountActivity : AppCompatActivity() {
                                 val password = userData["password"] as String?
 
                                 binding.userNameText.setText(userName)
-                                binding.emailText.setText(authInfo.email)
+                                binding.emailText.setText(authInfo!!.email)
                                 binding.passwordText.setText(password)
                             }
                         }
@@ -67,7 +72,7 @@ class EditAccountActivity : AppCompatActivity() {
             binding.submitEditButton.setOnClickListener {
                 if (authInfo != null) {
 
-                    updateUser(authInfo)
+                    updateUser(authInfo!!)
 
                 }
             }
@@ -101,5 +106,15 @@ class EditAccountActivity : AppCompatActivity() {
                 startActivity(intent)
             }
 
+    }
+
+    override fun setBackButtonListener() {
+        binding.toolbarContainer.backBtn.setOnClickListener {
+            if (authInfo != null) {
+                val intent = Intent(this, MainActivity::class.java)
+                intent.putExtra("authInfo", authInfo)
+                startActivity(intent)
+            }
+        }
     }
 }
