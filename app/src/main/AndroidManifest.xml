@@ -23,7 +23,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HikingApp.NoActionBar">
-        <activity android:name=".ui.settings.ContactsActivity"></activity>
+        <activity
+            android:name=".ui.settings.DeleteContactActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.settings.EditContactActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.settings.AddContactActivity"
+            android:exported="false" />
+        <activity android:name=".ui.settings.ContactsActivity" />
         <activity android:name=".ui.settings.DeleteAccountActivity" />
         <activity android:name=".ui.settings.EditAccountActivity" />
         <activity android:name=".ui.route.ratings.ReviewItemActivity" />
