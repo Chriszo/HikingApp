@@ -15,6 +15,7 @@
         app:layout_constraintTop_toBottomOf="@id/toolbarContainer"
         android:layout_marginTop="20dp">
 
+
         <TextView
             android:id="@+id/textView6"
             android:layout_width="wrap_content"
@@ -42,11 +43,34 @@
             android:orientation="vertical"
             android:layout_margin="20dp">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="10dp">
+
+                <ImageView
+                    android:id="@+id/account_image"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/default_image_icon_foreground"
+                    android:background="@drawable/custom_border"/>
+
+                <TextView
+                    android:id="@+id/image_selector"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Change picture"/>
+            </LinearLayout>
+
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/userNameLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="10dp"
+                android:layout_marginTop="10dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:endIconMode="clear_text">

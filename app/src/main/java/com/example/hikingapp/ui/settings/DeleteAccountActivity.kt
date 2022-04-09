@@ -1,13 +1,13 @@
 package com.example.hikingapp.ui.settings
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.BackButtonListener
 import com.example.hikingapp.MainActivity
-import com.example.hikingapp.R
 import com.example.hikingapp.databinding.ActivityDeleteAccountBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -15,6 +15,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
 
 class DeleteAccountActivity : AppCompatActivity(), BackButtonListener {
 
@@ -42,20 +43,22 @@ class DeleteAccountActivity : AppCompatActivity(), BackButtonListener {
                 binding.toolbarContainer.actionBarUser.visibility = View.GONE
                 binding.toolbarContainer.accountIcon.visibility = View.VISIBLE
 
-                FirebaseDatabase.getInstance().getReference("users").child("user${authInfo!!.uid}").addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
+                FirebaseDatabase.getInstance().getReference("users").child("user${authInfo!!.uid}")
+                    .addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
 
-                        if (snapshot.exists()) {
-                            val userName = (snapshot.value as HashMap<String,*>)["userName"] as String?
-                            binding.userName.text = userName
+                            if (snapshot.exists()) {
+                                val userName =
+                                    (snapshot.value as HashMap<String, *>)["userName"] as String?
+                                binding.userName.text = userName
+                            }
                         }
-                    }
 
-                    override fun onCancelled(error: DatabaseError) {
-                        TODO("Not yet implemented")
-                    }
+                        override fun onCancelled(error: DatabaseError) {
+                            TODO("Not yet implemented")
+                        }
 
-                })
+                    })
 
             } else {
                 binding.toolbarContainer.actionBarUser.visibility = View.VISIBLE
@@ -64,9 +67,23 @@ class DeleteAccountActivity : AppCompatActivity(), BackButtonListener {
 
             binding.submitDeleteButton.setOnClickListener {
                 if (authInfo != null) {
+
                     FirebaseAuth.getInstance().currentUser!!.delete().addOnSuccessListener {
 
-                        FirebaseDatabase.getInstance().getReference("users").child("user${authInfo!!.uid}").removeValue()
+                        FirebaseDatabase.getInstance().getReference("users")
+                            .child("user${authInfo!!.uid}").removeValue().addOnSuccessListener {
+                            FirebaseStorage.getInstance()
+                                .getReference("users")
+                                .child(binding.userName.text.toString())
+                                .child(binding.userName.text.toString() + "_icon.png")
+                                .delete()
+                                .addOnSuccessListener {
+                                    Log.i(
+                                        DeleteContactActivity::class.java.simpleName,
+                                        "Acount image deleted for user: ${binding.userName.text.toString()}"
+                                    )
+                                }
+                        }
                         startActivity(Intent(this, MainActivity::class.java))
                     }
                 }
@@ -80,8 +97,6 @@ class DeleteAccountActivity : AppCompatActivity(), BackButtonListener {
                 }
             }
         }
-
-
 
 
     }

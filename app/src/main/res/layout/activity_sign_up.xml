@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".SignUpActivity">
 
-
     <TextView
         android:id="@+id/signUpTitle"
         android:layout_width="wrap_content"
@@ -28,6 +27,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/signUpTitle"
         android:textStyle="bold"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="100dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/signUpHint">
+
+        <ImageView
+            android:id="@+id/account_image"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/default_image_icon_foreground"
+            android:background="@drawable/custom_border"/>
+
+        <TextView
+            android:id="@+id/image_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Add picture"/>
+
+    </LinearLayout>
 
 
     <com.google.android.material.textfield.TextInputLayout
