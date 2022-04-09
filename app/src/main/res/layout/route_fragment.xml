@@ -50,7 +50,7 @@
                         android:layout_marginTop="120dp"
                         android:text="RouteName"
                         android:textColor="@color/white"
-                        android:textSize="20dp"
+                        android:textSize="24sp"
                         android:textStyle="bold"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />

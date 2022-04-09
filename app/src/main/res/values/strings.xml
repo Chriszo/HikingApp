@@ -25,7 +25,7 @@
     <string name="distance_covered_content">Covered: <b>%s</b></string>
     <string name="distance_remaining_content">Remaining: <b>%s</b></string>
     <string name="route_not_found">Route not found</string>
-    <string name="completed">Completed Routes</string>
+    <string name="completed">Completed</string>
     <string name="routes_label">Routes</string>
     <string name="sights_label">Sights</string>
     <string name="nav_header_desc">Navigation Header</string>
@@ -33,7 +33,7 @@
     <!--    <string name="nav_header_subtitle">Header Subtitle</string>-->
     <string name="open">open</string>
     <string name="close">close</string>
-    <string name="saved">Saved Routes</string>
+    <string name="saved">Saved</string>
     <string name="select_all"><u>Select all</u></string>
     <string name="un_select_all"><u>UnSelect all</u></string>
     <string name="remove_sights">Remove Sight(s)</string>
@@ -42,7 +42,7 @@
     <string name="secondary_text">(%s)</string>
     <string name="no_results_found">No Results Found...</string>
     <string name="switch_map_style">Switch Map Style</string>
-    <string name="statistics">Statistics</string>
+    <string name="statistics">Stats</string>
     <string name="deletion_text">You are going to submit a request for the deletion of you account. <br /><br /> <b>Do you want to proceed?</b></string>
 
 </resources>
