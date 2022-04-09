@@ -17,6 +17,7 @@ import android.provider.MediaStore
 import android.telephony.SmsManager
 import android.util.Log
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -33,6 +34,7 @@ import com.example.hikingapp.persistence.firebase.FirebaseUtils
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
+import com.example.hikingapp.ui.settings.ContactsActivity
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
@@ -145,7 +147,7 @@ import java.util.stream.Collectors
  * - At any point in time you can finish guidance or select a new destination.
  * - You can use buttons to mute/unmute voice instructions, recenter the camera, or show the route overview.
  */
-class NavigationActivity : AppCompatActivity() {
+class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
     private var routeCompleted: Boolean = false
     private var initialFilteredCoordinates: List<Point> = mutableListOf()
@@ -731,6 +733,9 @@ class NavigationActivity : AppCompatActivity() {
 
             binding = ActivityNavigationBinding.inflate(layoutInflater)
             setContentView(binding.root)
+            setBackButtonListener()
+            (binding.toolbarContainer.actionBarTitle as TextView).text = currentRoute!!.routeName
+
 
             mapboxMap = binding.mapView.getMapboxMap()
 
@@ -1611,6 +1616,18 @@ class NavigationActivity : AppCompatActivity() {
             pushEvents(replayEvents)
             seekTo(replayEvents.first())
             play()
+        }
+    }
+
+    override fun setBackButtonListener() {
+        binding.toolbarContainer.backBtn.setOnClickListener {
+            if (userAuthInfo != null) {
+                val intent = Intent(this, RouteActivity::class.java)
+                intent.putExtra("authInfo", userAuthInfo)
+                intent.putExtra("route", currentRoute)
+                intent.putExtra("action", "discover")
+                startActivity(intent)
+            }
         }
     }
 }

@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -29,6 +30,7 @@ import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.firebase.auth.FirebaseUser
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.*
 import com.mapbox.maps.*
@@ -98,8 +100,9 @@ import kotlinx.coroutines.*
  * - Click on start navigation.
  * - You should now be able to navigate to the destination with the route line and route arrows drawn.
  */
-class MapActivity : AppCompatActivity(), LocationListener {
+class MapActivity : AppCompatActivity(), LocationListener, BackButtonListener {
 
+    private var currentRoute: Route? = null
     private var mapInfo: MapInfo? = null
     private var pointsOnCurrentLocation: Boolean = false
     private var currentLocation: Location? = null
@@ -338,6 +341,7 @@ class MapActivity : AppCompatActivity(), LocationListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(viewBinding.root)
+        setBackButtonListener()
 
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -359,10 +363,12 @@ class MapActivity : AppCompatActivity(), LocationListener {
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, this)
 
         //TODO Retrieve current Route Map information
-        val route =
+        currentRoute =
             if (intent.extras!!.containsKey("route")) intent.extras?.get("route") as Route else Route()
 
-        val routeMapEntity = LocalDatabase.getRouteMapContent(route.routeId)
+        (viewBinding.toolbarContainer.actionBarTitle as TextView).text = currentRoute!!.routeName
+
+        val routeMapEntity = LocalDatabase.getRouteMapContent(currentRoute!!.routeId)
 
         mapInfo = mapService.getMapInformation(
             routeMapEntity!!.routeMapContent,
@@ -374,10 +380,10 @@ class MapActivity : AppCompatActivity(), LocationListener {
          }*/
 
         // For debugging and monitoring only
-        mapboxMap.addOnMapClickListener {
-            println(route)
+/*        mapboxMap.addOnMapClickListener {
+            println(currentRoute)
             true
-        }
+        }*/
         //TODO Replace philopappou with routeName variable
         initializeMap()
     }
@@ -725,5 +731,19 @@ class MapActivity : AppCompatActivity(), LocationListener {
 
     override fun onLocationChanged(location: Location) {
         currentLocation = location
+    }
+
+    override fun setBackButtonListener() {
+        viewBinding.toolbarContainer.backBtn.setOnClickListener {
+            val intent = Intent(this, RouteActivity::class.java)
+
+            if (intent.extras?.containsKey("authInfo") == true) {
+                val authInfo = intent.extras?.get("authInfo") as FirebaseUser?
+                intent.putExtra("authInfo", authInfo)
+            }
+            intent.putExtra("route", currentRoute)
+            intent.putExtra("action", "discover")
+            startActivity(intent)
+        }
     }
 }
