@@ -392,10 +392,12 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         set(value) {
             field = value
             if (value) {
-                binding.soundButton.muteAndExtend(BUTTON_ANIMATION_DURATION)
+                binding.soundButton.mute()
+//                binding.soundButton.muteAndExtend(BUTTON_ANIMATION_DURATION)
                 voiceInstructionsPlayer.volume(SpeechVolume(0f))
             } else {
-                binding.soundButton.unmuteAndExtend(BUTTON_ANIMATION_DURATION)
+                binding.soundButton.unmute()
+//                binding.soundButton.unmuteAndExtend(BUTTON_ANIMATION_DURATION)
                 voiceInstructionsPlayer.volume(SpeechVolume(1f))
             }
         }
@@ -1066,6 +1068,14 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                     binding.mapStyleOptions.visibility = View.VISIBLE
                 } else if (binding.mapStyleOptions.visibility == View.VISIBLE) {
                     binding.mapStyleOptions.visibility = View.GONE
+                }
+            }
+
+            binding.navToggle.setOnClickListener {
+                if (binding.navOptions.visibility == View.GONE) {
+                    binding.navOptions.visibility = View.VISIBLE
+                } else if (binding.navOptions.visibility == View.VISIBLE) {
+                    binding.navOptions.visibility = View.GONE
                 }
             }
 
