@@ -994,6 +994,8 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
                     }
 
+                    binding.stop.visibility = View.VISIBLE
+
                 } else {
                     resumeNavigation()
                 }

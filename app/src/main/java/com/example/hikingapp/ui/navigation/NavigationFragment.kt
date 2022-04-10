@@ -243,10 +243,10 @@ class NavigationFragment : Fragment() {
         set(value) {
             field = value
             if (value) {
-                navigationView!!.soundButton.muteAndExtend(BUTTON_ANIMATION_DURATION)
+                navigationView!!.soundButton.mute()
                 voiceInstructionsPlayer.volume(SpeechVolume(0f))
             } else {
-                navigationView!!.soundButton.unmuteAndExtend(BUTTON_ANIMATION_DURATION)
+                navigationView!!.soundButton.unmute()
                 voiceInstructionsPlayer.volume(SpeechVolume(1f))
             }
         }
@@ -603,7 +603,6 @@ class NavigationFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-
 
 
     }
@@ -982,6 +981,9 @@ class NavigationFragment : Fragment() {
                                 isInitial = true
                             )
                         }
+
+                        stopButton!!.visibility = View.VISIBLE
+
                     } else {
                         resumeNavigation()
                     }
@@ -1068,6 +1070,14 @@ class NavigationFragment : Fragment() {
                     )
                 }
 
+                navigationView!!.nav_toggle.setOnClickListener {
+                    if (navigationView!!.nav_options.visibility == View.GONE) {
+                        navigationView!!.nav_options.visibility = View.VISIBLE
+                    } else if (navigationView!!.nav_options.visibility == View.VISIBLE) {
+                        navigationView!!.nav_options.visibility = View.GONE
+                    }
+                }
+
                 navigationView!!.switchMapStyle.setOnClickListener {
                     if (mapStyleOptions!!.visibility == View.GONE) {
                         mapStyleOptions!!.visibility = View.VISIBLE
@@ -1102,7 +1112,11 @@ class NavigationFragment : Fragment() {
         return navigationView
     }
 
-    private fun setMapStyle(mapStyle: String, mapInfo: MapInfo, routeLineIsVisible: Boolean = true) {
+    private fun setMapStyle(
+        mapStyle: String,
+        mapInfo: MapInfo,
+        routeLineIsVisible: Boolean = true
+    ) {
         mapboxMap.loadStyle(
             (
                     style(styleUri = mapStyle) {

@@ -14,7 +14,8 @@
     <com.mapbox.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.7"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbarContainer">
@@ -24,20 +25,14 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/tripProgressCard"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_marginTop="550dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.125"
         android:layout_marginBottom="0dp"
         app:cardElevation="8dp"
         app:cardUseCompatPadding="false"
         app:layout_constraintEnd_toEndOf="parent"
-
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <!--        <com.mapbox.navigation.ui.tripprogress.view.MapboxTripProgressView-->
-        <!--            android:id="@+id/tripProgressView"-->
-        <!--            android:layout_width="match_parent"-->
-        <!--            android:layout_height="wrap_content" />-->
+        app:layout_constraintTop_toBottomOf="@+id/mapView">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -110,13 +105,11 @@
     <!-- TODO Fix Constraints for the Card views at the bottom of the navigation page-->
     <androidx.cardview.widget.CardView
         android:id="@+id/actionsCard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="0dp"
-        android:layout_marginBottom="35dp"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.095"
         app:cardElevation="8dp"
         app:cardUseCompatPadding="false"
-        app:layout_constraintBottom_toBottomOf="@+id/mapView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tripProgressCard">
@@ -130,16 +123,18 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center">
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/play"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_gravity="end|center_vertical"
-                android:layout_marginStart="60dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
+                android:layout_marginEnd="60dp"
                 android:background="@drawable/circular_button"
                 android:backgroundTint="@color/white"
                 android:drawableStart="@drawable/ic_play_foreground"
@@ -151,9 +146,9 @@
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_gravity="end|center_vertical"
-                android:layout_marginStart="60dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
+                android:layout_marginEnd="60dp"
                 android:background="@drawable/circular_button"
                 android:backgroundTint="@color/white"
                 android:drawableStart="@drawable/ic_pause_foreground"
@@ -166,7 +161,6 @@
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_gravity="center"
-                android:layout_marginStart="60dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
                 android:background="@drawable/circular_button"
@@ -181,13 +175,14 @@
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_gravity="end|center_vertical"
-                android:layout_marginStart="60dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
+                android:layout_marginStart="60dp"
                 android:background="@drawable/circular_button"
                 android:backgroundTint="@android:color/white"
                 android:drawableStart="@drawable/ic_stop_foreground"
                 android:paddingStart="-25dp"
+                android:visibility="gone"
                 android:paddingEnd="-25dp" />
         </LinearLayout>
 

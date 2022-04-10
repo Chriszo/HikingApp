@@ -21,7 +21,7 @@
                 android:layout_height="400dp"
                 android:layout_marginTop="0dp"
                 android:scaleType="fitXY"
-                android:src="@drawable/sunny"
+                android:src="@drawable/default_image_icon_foreground"
                 app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -94,36 +94,36 @@
                         android:id="@+id/route_bookmark"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="330dp"
+                        android:layout_marginStart="300dp"
                         android:layout_marginTop="5dp"
                         android:layout_marginBottom="5dp"
-                        android:paddingEnd="20dp"
+                        android:paddingEnd="30dp"
                         android:rotationX="4"
                         app:backgroundTint="#FFFFFF"
-                        app:srcCompat="@drawable/bookmark_outlined_icon_foreground" />
+                        android:src="@drawable/bookmark_outlined_icon_foreground"/>
 
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/show_map"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="330dp"
+                        android:layout_marginStart="300dp"
                         android:layout_marginTop="5dp"
                         android:layout_marginBottom="5dp"
                         android:paddingEnd="20dp"
                         android:rotationX="4"
-                        app:backgroundTint="#FFFFFF"
-                        app:srcCompat="@drawable/map_icon_foreground" />
+                        android:src="@drawable/map_icon_foreground"
+                        app:backgroundTint="#FFFFFF" />
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/navigate"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="330dp"
+                        android:layout_marginStart="300dp"
                         android:layout_marginTop="5dp"
                         android:layout_marginBottom="5dp"
-                        app:backgroundTint="#FFFFFF"
-                        app:srcCompat="@drawable/navigate_icon_foreground" />
+                        android:src="@drawable/navigate_icon_foreground"
+                        app:backgroundTint="#FFFFFF" />
                 </LinearLayout>
             </RelativeLayout>
 
