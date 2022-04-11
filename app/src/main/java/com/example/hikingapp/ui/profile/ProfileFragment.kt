@@ -25,6 +25,7 @@ import com.example.hikingapp.databinding.FragmentProfileBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.persistence.local.LocalDatabase
+import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.ProfileViewModel
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.viewModels.UserViewModel
@@ -85,10 +86,9 @@ class ProfileFragment : Fragment() {
         val inProdMode = getString(R.string.prodMode).toBooleanStrict()
 
         if (userViewModel.user.value == null && inProdMode) {
-
-            // TODO Populate with data from DB and will be related to User
-//            DBUtils.initializeDatabaseData()
-            startActivity(Intent(context, LoginActivity::class.java))
+            val redirectIntent = Intent(context,LoginActivity::class.java)
+            redirectIntent.putExtra(GlobalUtils.LAST_PAGE, ProfileFragment::class.java.simpleName)
+            startActivity(redirectIntent)
         } else {
 
             userViewModel.user.observe(viewLifecycleOwner, {

@@ -11,13 +11,14 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.databinding.ActivityMainBinding
 import com.example.hikingapp.ui.settings.*
+import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -29,6 +30,7 @@ import kotlinx.android.synthetic.main.custom_toolbar.view.*
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var navController: NavController
     private lateinit var binding: ActivityMainBinding
 
     private val userViewModel: UserViewModel by viewModels()
@@ -48,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val toolbarContainer = findViewById(R.id.toolbarContainer) as View
+        val toolbarContainer = findViewById<View>(R.id.toolbarContainer)
 
         val toolbar = toolbarContainer.findViewById(R.id.toolbar) as Toolbar
 
@@ -58,7 +60,7 @@ class MainActivity : AppCompatActivity() {
         val title = toolbarContainer.findViewById<TextView>(R.id.action_bar_title)
         title.visibility = View.GONE
 
-            if (intent.extras?.containsKey("authInfo") == true) {
+        if (intent.extras?.containsKey("authInfo") == true) {
             (intent.extras!!["authInfo"] as FirebaseUser?).apply {
                 userViewModel.user.postValue(this)
                 authInfo = this
@@ -99,7 +101,8 @@ class MainActivity : AppCompatActivity() {
 
         val navView: BottomNavigationView = binding.drawerLayout.nav_view
 
-        val navController = findNavController(R.id.nav_host_fragment_activity_main)
+        navController = findNavController(R.id.nav_host_fragment_activity_main)
+
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(
@@ -166,18 +169,9 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-   /*     logoutItem.setOnMenuItemClickListener {
-            if (authInfo != null) {
-                val intent = Intent(this,LogoutActivity::class.java)
-                intent.putExtra("authInfo", authInfo)
-                startActivity(intent)
-            }
-            true
-        }*/
-
         loginItem.setOnMenuItemClickListener {
             if (authInfo == null) {
-                val intent = Intent(this,LoginActivity::class.java)
+                val intent = Intent(this, LoginActivity::class.java)
                 startActivity(intent)
             }
             true

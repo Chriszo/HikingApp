@@ -1132,7 +1132,11 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             // and later when a route is set also receiving route progress updates
             mapboxNavigation.startTripSession()
         } else {
-            startActivity(Intent(this, LoginActivity::class.java))
+
+            val redirectIntent = Intent(this,LoginActivity::class.java)
+            redirectIntent.putExtra(GlobalUtils.LAST_PAGE, NavigationActivity::class.java.simpleName)
+            redirectIntent.putExtra("route",(intent.extras?.get("route") as Route?))
+            startActivity(redirectIntent)
         }
     }
 

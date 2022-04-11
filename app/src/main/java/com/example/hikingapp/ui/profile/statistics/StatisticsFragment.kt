@@ -101,7 +101,9 @@ class StatisticsFragment : Fragment() {
                     })
 
             } else {
-                startActivity(Intent(context, LoginActivity::class.java))
+                val redirectIntent = Intent(context,LoginActivity::class.java)
+                redirectIntent.putExtra(GlobalUtils.LAST_PAGE, StatisticsFragment::class.java.simpleName)
+                startActivity(redirectIntent)
             }
         })
 

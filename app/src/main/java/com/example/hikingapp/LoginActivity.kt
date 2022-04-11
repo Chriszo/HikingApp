@@ -1,6 +1,5 @@
 package com.example.hikingapp
 
-import android.app.ActionBar
 import android.app.ProgressDialog
 import android.content.Intent
 import android.os.Bundle
@@ -9,7 +8,12 @@ import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivityLoginBinding
+import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.ui.profile.ProfileFragment
+import com.example.hikingapp.ui.profile.statistics.StatisticsFragment
+import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 
 class LoginActivity : AppCompatActivity() {
 
@@ -71,15 +75,44 @@ class LoginActivity : AppCompatActivity() {
 
                 val user = firebaseAuth.currentUser
 
-                val intent = Intent(this, MainActivity::class.java)
-                intent.putExtra("authInfo", user)
-                startActivity(intent)
-                finish()
+                redirect(user)
             }.addOnFailureListener {
                 progressDialog.dismiss()
                 Toast.makeText(this, "Login failed. Reason: ${it.message}", Toast.LENGTH_LONG)
                     .show()
             }
+    }
+
+    private fun redirect(user: FirebaseUser?) {
+
+        var redirectIntent: Intent? = null
+        val lastPage = (intent.extras?.get(GlobalUtils.LAST_PAGE) as String?).apply {
+            when(this) {
+                "NavigationActivity" -> {
+                    val currentRoute = intent.extras?.get("route") as Route?
+                    redirectIntent = Intent(this@LoginActivity, NavigationActivity::class.java)
+                    redirectIntent!!.putExtra("route", currentRoute)
+                }
+                "StatisticsFragment" -> {
+                    redirectIntent = Intent(this@LoginActivity, StatisticsFragment::class.java)
+                }
+                "ProfileFragment" -> {
+                    redirectIntent = Intent(this@LoginActivity, MainActivity::class.java)
+                    redirectIntent!!.putExtra(GlobalUtils.LAST_PAGE, ProfileFragment::class.java.simpleName)
+                }
+                "RouteFragment" -> {
+                    val currentRoute = intent.extras?.get("route") as Route?
+                    redirectIntent = Intent(this@LoginActivity, RouteActivity::class.java)
+                    redirectIntent!!.putExtra("route", currentRoute)
+                    redirectIntent!!.putExtra("action", "discover")
+                }
+                else -> {
+                    redirectIntent = Intent(this@LoginActivity, MainActivity::class.java)
+                }
+            }
+        }
+        redirectIntent!!.putExtra("authInfo", user)
+        startActivity(redirectIntent)
     }
 
 

@@ -18,6 +18,8 @@ object GlobalUtils {
     const val MEGABYTE = 1024L * 1024L
     const val CAMERA_REQUEST = 1888
 
+    const val LAST_PAGE = "lastPage"
+
 
     fun getRoutePair(route: Route): Pair<Route, Bitmap?> {
 

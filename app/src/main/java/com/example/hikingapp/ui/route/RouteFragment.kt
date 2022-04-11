@@ -555,7 +555,10 @@ class RouteFragment : Fragment() {
 
                                 })
                         } else {
-                            startActivity(Intent(context, LoginActivity::class.java))
+                            val redirectIntent = Intent(context,LoginActivity::class.java)
+                            redirectIntent.putExtra(GlobalUtils.LAST_PAGE, "RouteFragment")
+                            redirectIntent.putExtra("route",route)
+                            startActivity(redirectIntent)
                         }
                     }
                 }

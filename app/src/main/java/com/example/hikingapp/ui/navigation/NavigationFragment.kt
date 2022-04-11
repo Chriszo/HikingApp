@@ -111,7 +111,6 @@ import com.mapbox.navigation.ui.voice.model.SpeechError
 import com.mapbox.navigation.ui.voice.model.SpeechValue
 import com.mapbox.navigation.ui.voice.model.SpeechVolume
 import com.mapbox.turf.TurfMeasurement
-import kotlinx.android.synthetic.main.activity_navigation.*
 import kotlinx.android.synthetic.main.fragment_navigation.view.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -633,14 +632,13 @@ class NavigationFragment : Fragment() {
 
         requireActivity().actionBar?.title = "Navigation"
         if (userViewModel.user.value == null) {
-            val intent = Intent(context, LoginActivity::class.java)
-            startActivity(intent)
+            val redirectIntent = Intent(context, LoginActivity::class.java)
+            redirectIntent.putExtra(
+                GlobalUtils.LAST_PAGE,
+                NavigationFragment::class.java.simpleName
+            )
+            startActivity(redirectIntent)
         } else {
-
-//            _binding = FragmentNavigationBinding.inflate(layoutInflater)
-
-
-//            val root = binding.root
 
             // initialize Mapbox Navigation
             mapboxNavigation = if (MapboxNavigationProvider.isCreated()) {
@@ -927,7 +925,9 @@ class NavigationFragment : Fragment() {
                             }
                             ),
                     {
-                        mapView!!.location.addOnIndicatorPositionChangedListener(onPositionChangedListener)
+                        mapView!!.location.addOnIndicatorPositionChangedListener(
+                            onPositionChangedListener
+                        )
 
 //                mapboxMap.addOnMapLoadedListener {
 //                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
