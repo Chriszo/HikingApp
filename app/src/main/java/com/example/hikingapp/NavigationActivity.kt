@@ -34,7 +34,6 @@ import com.example.hikingapp.persistence.firebase.FirebaseUtils
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
-import com.example.hikingapp.ui.settings.ContactsActivity
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
@@ -65,6 +64,7 @@ import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.navigation.base.TimeFormat
 import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
@@ -99,6 +99,8 @@ import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineApi
 import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineView
 import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineOptions
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLine
+import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
+import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
 import com.mapbox.navigation.ui.tripprogress.api.MapboxTripProgressApi
 import com.mapbox.navigation.ui.tripprogress.model.*
 import com.mapbox.navigation.ui.tripprogress.view.MapboxTripProgressView
@@ -109,6 +111,7 @@ import com.mapbox.navigation.ui.voice.model.SpeechError
 import com.mapbox.navigation.ui.voice.model.SpeechValue
 import com.mapbox.navigation.ui.voice.model.SpeechVolume
 import com.mapbox.turf.TurfMeasurement
+import kotlinx.android.synthetic.main.activity_navigation.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -540,6 +543,12 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         viewportDataSource.onRouteProgressChanged(routeProgress)
         viewportDataSource.evaluate()
 
+        routeLineApi.updateWithRouteProgress(routeProgress) { result ->
+            mapboxMap.getStyle()?.apply {
+                routeLineView.renderRouteLineUpdate(this, result)
+            }
+        }
+
         // draw the upcoming maneuver arrow on the map
         val style = mapboxMap.getStyle()
         if (style != null) {
@@ -556,7 +565,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         val maneuvers = maneuverApi.getManeuvers(routeProgress)
         maneuvers.fold(
             { error ->
-                Log.e(this.javaClass.simpleName, error.errorMessage?:"")
+                Log.e(this.javaClass.simpleName, error.errorMessage ?: "")
             },
             {
                 binding.maneuverView.visibility = View.VISIBLE
@@ -722,6 +731,11 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         }
     }
 
+    private val onPositionChangedListener = OnIndicatorPositionChangedListener { point ->
+        val result = routeLineApi.updateTraveledRouteLine(point)
+        routeLineView.renderRouteLineUpdate(mapboxMap.getStyle()!!, result)
+    }
+
     @RequiresApi(Build.VERSION_CODES.M)
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -864,14 +878,22 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 Locale.US.language
             )
 
+            val traveledResources = RouteLineColorResources.Builder()
+                .routeLineTraveledColor(android.graphics.Color.LTGRAY).build()
+
             // initialize route line, the withRouteLineBelowLayerId is specified to place
             // the route line below road labels layer on the map
             // the value of this option will depend on the style that you are using
             // and under which layer the route line should be placed on the map layers stack
             val mapboxRouteLineOptions = MapboxRouteLineOptions.Builder(this)
                 .withRouteLineBelowLayerId("road-label")
+                .withVanishingRouteLineEnabled(true)
+                .withRouteLineResources(
+                    RouteLineResources.Builder().routeLineColorResources(traveledResources).build()
+                )
                 .build()
             routeLineApi = MapboxRouteLineApi(mapboxRouteLineOptions)
+            routeLineApi.setVanishingOffset(1.0)
             routeLineView = MapboxRouteLineView(mapboxRouteLineOptions)
 
             // initialize maneuver arrow view to draw arrows on the map
@@ -932,6 +954,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                         }
                         ),
                 {
+                    mapView.location.addOnIndicatorPositionChangedListener(onPositionChangedListener)
 //                mapboxMap.addOnMapLoadedListener {
 //                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
 //                }
@@ -958,12 +981,18 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                     userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
                     intent.putExtra("route", currentRoute)
                     intent.putExtra("userNavigationData", userNavigationData)
-                    LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
+                    LocalDatabase.saveNavigationDataLocally(
+                        userAuthInfo!!.uid,
+                        userNavigationData!!
+                    )
                     FirebaseUtils.persistNavigation(userAuthInfo!!.uid, userNavigationData!!)
 
                 } else {
                     intent = Intent(this, MainActivity::class.java)
-                    LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
+                    LocalDatabase.saveNavigationDataLocally(
+                        userAuthInfo!!.uid,
+                        userNavigationData!!
+                    )
                     FirebaseUtils.persistUserInCompletedRoute(
                         userAuthInfo!!.uid,
                         userNavigationData!!.routeId
@@ -1149,9 +1178,19 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
             storage.getReference("routes/${currentRoute!!.routeId}/photos/photo_1_5.jpg")
                 .putBytes(byteArray).addOnSuccessListener {
-                    Toast.makeText(this@NavigationActivity, "Photo uploaded successfully.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@NavigationActivity,
+                        "Photo uploaded successfully.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
-                .addOnFailureListener {Toast.makeText(this@NavigationActivity, "Photo uploading failed.", Toast.LENGTH_LONG).show()  }
+                .addOnFailureListener {
+                    Toast.makeText(
+                        this@NavigationActivity,
+                        "Photo uploading failed.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
         }
     }
 

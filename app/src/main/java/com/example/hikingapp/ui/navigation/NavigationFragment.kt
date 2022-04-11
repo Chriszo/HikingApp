@@ -67,6 +67,7 @@ import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.navigation.base.TimeFormat
 import com.mapbox.navigation.base.formatter.UnitType
@@ -99,6 +100,8 @@ import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineApi
 import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineView
 import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineOptions
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLine
+import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
+import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
 import com.mapbox.navigation.ui.tripprogress.api.MapboxTripProgressApi
 import com.mapbox.navigation.ui.tripprogress.model.*
 import com.mapbox.navigation.ui.voice.api.MapboxSpeechApi
@@ -108,6 +111,7 @@ import com.mapbox.navigation.ui.voice.model.SpeechError
 import com.mapbox.navigation.ui.voice.model.SpeechValue
 import com.mapbox.navigation.ui.voice.model.SpeechVolume
 import com.mapbox.turf.TurfMeasurement
+import kotlinx.android.synthetic.main.activity_navigation.*
 import kotlinx.android.synthetic.main.fragment_navigation.view.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -239,6 +243,11 @@ class NavigationFragment : Fragment() {
 
     private lateinit var routeArrowView: MapboxRouteArrowView
 
+    private val onPositionChangedListener = OnIndicatorPositionChangedListener { point ->
+        val result = routeLineApi.updateTraveledRouteLine(point)
+        routeLineView.renderRouteLineUpdate(mapboxMap.getStyle()!!, result)
+    }
+
     private var isVoiceInstructionsMuted = false
         set(value) {
             field = value
@@ -327,6 +336,12 @@ class NavigationFragment : Fragment() {
         // update the camera position to account for the progressed fragment of the route
         viewportDataSource.onRouteProgressChanged(routeProgress)
         viewportDataSource.evaluate()
+
+        routeLineApi.updateWithRouteProgress(routeProgress) { result ->
+            mapboxMap.getStyle()?.apply {
+                routeLineView.renderRouteLineUpdate(this, result)
+            }
+        }
 
         // draw the upcoming maneuver arrow on the map
         val style = mapboxMap.getStyle()
@@ -774,14 +789,20 @@ class NavigationFragment : Fragment() {
                 Locale.US.language
             )
 
+            val traveledResources = RouteLineColorResources.Builder()
+                .routeLineTraveledColor(android.graphics.Color.LTGRAY).build()
+
             // initialize route line, the withRouteLineBelowLayerId is specified to place
             // the route line below road labels layer on the map
             // the value of this option will depend on the style that you are using
             // and under which layer the route line should be placed on the map layers stack
-            val mapboxRouteLineOptions =
-                MapboxRouteLineOptions.Builder(requireContext())
-                    .withRouteLineBelowLayerId("road-label")
-                    .build()
+            val mapboxRouteLineOptions = MapboxRouteLineOptions.Builder(requireContext())
+                .withRouteLineBelowLayerId("road-label")
+                .withVanishingRouteLineEnabled(true)
+                .withRouteLineResources(
+                    RouteLineResources.Builder().routeLineColorResources(traveledResources).build()
+                )
+                .build()
             routeLineApi = MapboxRouteLineApi(mapboxRouteLineOptions)
             routeLineView = MapboxRouteLineView(mapboxRouteLineOptions)
 
@@ -906,6 +927,8 @@ class NavigationFragment : Fragment() {
                             }
                             ),
                     {
+                        mapView!!.location.addOnIndicatorPositionChangedListener(onPositionChangedListener)
+
 //                mapboxMap.addOnMapLoadedListener {
 //                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
 //                }

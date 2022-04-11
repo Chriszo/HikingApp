@@ -172,7 +172,7 @@
                     android:id="@+id/time_est_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Est:" />
+                    android:text="eat:" />
 
                 <TextView
                     android:id="@+id/time_est_content"

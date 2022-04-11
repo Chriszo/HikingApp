@@ -34,6 +34,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/info_icon_foreground.xml" value="0.165625" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/inner_nav_item.xml" value="0.22552083333333334" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/lost_icon_foreground.xml" value="0.15416666666666667" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/map_styles_icon_foreground.xml" value="0.2046875" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/mapbox_button.xml" value="0.16302083333333334" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/mylocation_icon_background.xml" value="0.19739583333333333" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/mylocation_icon_foreground.xml" value="0.19739583333333333" />
@@ -61,7 +62,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_logout.xml" value="0.17083333333333334" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_main.xml" value="0.33" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_map.xml" value="0.25" />
-        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_navigation.xml" value="0.1" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_navigation.xml" value="0.33" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_photo.xml" value="0.1" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_review.xml" value="0.75" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_route.xml" value="0.1" />
@@ -90,7 +91,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_photos_list.xml" value="0.17083333333333334" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_profile.xml" value="0.33" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_reviews_list.xml" value="0.15572916666666667" />
-        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_route_info.xml" value="0.18" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_route_info.xml" value="0.5" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_saved.xml" value="0.25" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_saved_route.xml" value="0.1984375" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_sight.xml" value="0.35507246376811596" />
@@ -127,7 +128,7 @@
   <component name="VisualizationToolProject">
     <option name="state">
       <ProjectState>
-        <option name="scale" value="0.33541666666666664" />
+        <option name="scale" value="0.1" />
       </ProjectState>
     </option>
   </component>

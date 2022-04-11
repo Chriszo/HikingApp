@@ -157,21 +157,21 @@
                 android:visibility="gone" />
 
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/lost_button"
+                android:id="@+id/stop"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:layout_gravity="center"
+                android:layout_gravity="center_vertical"
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
                 android:background="@drawable/circular_button"
                 android:backgroundTint="@android:color/white"
-                android:drawableStart="@drawable/lost_icon_foreground"
-                android:paddingStart="-16dp"
-                android:paddingTop="19dp"
-                android:paddingEnd="-10dp" />
+                android:drawableStart="@drawable/ic_stop_foreground"
+                android:paddingStart="-25dp"
+                android:paddingEnd="-25dp"
+                android:visibility="gone"/>
 
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/stop"
+                android:id="@+id/lost_button"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_gravity="end|center_vertical"
@@ -180,10 +180,12 @@
                 android:layout_marginStart="60dp"
                 android:background="@drawable/circular_button"
                 android:backgroundTint="@android:color/white"
-                android:drawableStart="@drawable/ic_stop_foreground"
-                android:paddingStart="-25dp"
-                android:visibility="gone"
-                android:paddingEnd="-25dp" />
+                android:drawableStart="@drawable/lost_icon_foreground"
+                android:paddingStart="-16dp"
+                android:paddingTop="19dp"
+                android:paddingEnd="-10dp" />
+
+
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
