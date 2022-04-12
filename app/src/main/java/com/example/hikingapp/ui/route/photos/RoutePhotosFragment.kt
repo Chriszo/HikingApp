@@ -13,10 +13,13 @@ import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
 import com.example.hikingapp.utils.PhotoItemDecorator
 import com.example.hikingapp.viewModels.RouteViewModel
+import com.example.hikingapp.viewModels.UserViewModel
+import com.google.firebase.auth.FirebaseUser
 
 class RoutePhotosFragment : Fragment(), OnItemClickedListener {
 
@@ -25,8 +28,11 @@ class RoutePhotosFragment : Fragment(), OnItemClickedListener {
     private lateinit var itemClickedListener: OnItemClickedListener
     private lateinit var photosAdapter: PhotoAdapter
     private val routeViewModel: RouteViewModel by activityViewModels()
+    private val userViewModel: UserViewModel by activityViewModels()
 
-    private lateinit var photos: List<Bitmap?>
+    private lateinit var photos: List<PhotoItem?>
+    private var routeId: Long = 0
+    private var authInfo: FirebaseUser? = null
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -64,12 +70,22 @@ class RoutePhotosFragment : Fragment(), OnItemClickedListener {
             progressBar.visibility = View.GONE
         })
 
+        routeViewModel.route.observe(viewLifecycleOwner,{
+            routeId = it.routeId
+        })
+
+        userViewModel.user.observe(viewLifecycleOwner,{
+            authInfo = it
+        })
+
         return view
     }
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
         val intent = Intent(context, PhotoActivity::class.java)
-        intent.putExtra("photo_item", photos[position])
+        intent.putExtra("photo_item", photos[position]!!.imageName)
+        intent.putExtra("routeId", routeId)
+        intent.putExtra("authInfo",authInfo)
         startActivity(intent)
     }
 

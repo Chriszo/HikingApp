@@ -1,6 +1,8 @@
 package com.example.hikingapp
 
+import android.content.Context
 import android.content.Intent
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -40,6 +42,7 @@ class MainActivity : AppCompatActivity() {
 
     private var authInfo: FirebaseUser? = null
 
+    private lateinit var db:SQLiteDatabase
     private val storage: FirebaseStorage by lazy {
         FirebaseStorage.getInstance()
     }
@@ -49,6 +52,9 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        db = this.openOrCreateDatabase("images.db", Context.MODE_PRIVATE,null)
+        db.execSQL("create table if not exists images (name String, data blob)")
 
         val toolbarContainer = findViewById<View>(R.id.toolbarContainer)
 

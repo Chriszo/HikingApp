@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.PhotoItem
 import java.io.Serializable
 
 class RouteViewModel : ViewModel(), Serializable {
@@ -17,7 +18,7 @@ class RouteViewModel : ViewModel(), Serializable {
 
     val cultureInfo = MutableLiveData<CultureInfo>()
 
-    val photos = MutableLiveData<List<Bitmap?>>()
+    val photos = MutableLiveData<List<PhotoItem?>>()
 
 //    val sightPhotos = MutableLiveData<List<Bitmap>>()
 

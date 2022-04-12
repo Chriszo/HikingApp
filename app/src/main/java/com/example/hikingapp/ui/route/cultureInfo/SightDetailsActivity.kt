@@ -16,6 +16,7 @@ import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
 import com.example.hikingapp.databinding.ActivitySightDetailsBinding
 import com.example.hikingapp.domain.culture.Sight
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
@@ -44,7 +45,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
 
     private lateinit var sightInfo: Sight
 
-    private lateinit var photos: MutableList<Bitmap?>
+    private lateinit var photos: MutableList<PhotoItem?>
 
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
@@ -129,7 +130,9 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
                             if (Objects.isNull(photos)) {
                                 photos = mutableListOf()
                             }
-                            photos.add(bitmap)
+
+                            val photoItem = PhotoItem(photoReference.path.split("/").last(),bitmap)
+                            photos.add(photoItem)
                             if (photos.size == sightPhotos.items.size) {
                                 photosAdapter = PhotoAdapter(this, photos, itemClickedListener)
                                 recyclerView.adapter = photosAdapter
@@ -272,7 +275,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
         val intent = Intent(this, PhotoActivity::class.java)
-        intent.putExtra("photo_item", photos[position])
+        intent.putExtra("photo_item", photos[position]!!.imageName)
         startActivity(intent)
     }
 }

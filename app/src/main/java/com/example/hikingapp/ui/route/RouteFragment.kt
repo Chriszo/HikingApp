@@ -25,6 +25,7 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.domain.weather.WeatherForecast
 import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
@@ -418,12 +419,14 @@ class RouteFragment : Fragment() {
                             if (route.photos.isNullOrEmpty()) {
                                 route.photos = mutableListOf()
                             }
-                            route.photos!!.add(bitmap)
+
+                            val photoItem = PhotoItem(photoReference.path.split("/").last(),bitmap)
+                            route.photos!!.add(photoItem)
                             LocalDatabase.saveImage(
                                 route.routeId,
                                 Route::class.java.simpleName,
                                 photoReference.path.split("/").last(),
-                                bitmap,
+                                photoItem,
                                 false
                             )
                             if (route?.photos?.size == routePhotosFolder.items.size) {
@@ -463,7 +466,7 @@ class RouteFragment : Fragment() {
                             sight.sightId,
                             Sight::class.java.simpleName,
                             "sight_${sight.sightId}_main.jpg",
-                            bitmap,
+                            PhotoItem("sight_${sight.sightId}_main.jpg",bitmap),
                             true
                         )
                         if (sightMainPhotos.size == route.cultureInfo!!.sights?.size ?: mutableListOf<Sight>()) {

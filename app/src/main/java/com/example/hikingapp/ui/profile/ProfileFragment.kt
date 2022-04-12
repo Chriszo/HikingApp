@@ -24,6 +24,7 @@ import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.databinding.FragmentProfileBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.ProfileViewModel
@@ -417,7 +418,7 @@ class ProfileFragment : Fragment() {
                             sight.sightId,
                             Sight::class.java.simpleName,
                             "sight_${sight.sightId}_main.jpg",
-                            bitmap,
+                            PhotoItem("sight_${sight.sightId}_main.jpg", bitmap),
                             true
                         )
                         if (sightMainPhotos.size == sights?.size ?: mutableListOf<Sight>()) {

@@ -13,6 +13,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
 import com.example.hikingapp.viewModels.RouteViewModel
@@ -25,7 +26,7 @@ class PhotosListFragment : Fragment(), OnItemClickedListener {
     private lateinit var photosAdapter: PhotoAdapter
     private val routeViewModel: RouteViewModel by activityViewModels()
 
-    private lateinit var photos: List<Bitmap?>
+    private lateinit var photos: List<PhotoItem?>
 
     override fun onAttach(context: Context) {
         super.onAttach(context)

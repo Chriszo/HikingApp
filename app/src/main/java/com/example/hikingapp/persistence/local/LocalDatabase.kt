@@ -1,10 +1,13 @@
 package com.example.hikingapp.persistence.local
 
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.navigation.UserNavigationData
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.domain.users.reviews.Review
 import com.example.hikingapp.persistence.entities.ImageEntity
 import com.example.hikingapp.persistence.entities.RouteMapEntity
@@ -20,13 +23,14 @@ class LocalDatabase {
         private val userNavigationStorage = mutableMapOf<String, MutableList<UserNavigationData>>()
         private val routeMapStorage = mutableMapOf<Long, RouteMapEntity?>()
         private val reviewsStorage = mutableMapOf<Long, MutableList<Review>>()
+        private val photosData = mutableMapOf<String,Bitmap>()
 
         @RequiresApi(Build.VERSION_CODES.N)
         fun saveImage(
             id: Long,
             className: String,
             imageName: String,
-            bitmap: Bitmap,
+            photoItem: PhotoItem,
             isMainImage: Boolean
         ) {
 
@@ -38,7 +42,7 @@ class LocalDatabase {
                         this.add(
                             (ImageEntity(
                                 imageName,
-                                bitmap,
+                                photoItem.imageBitmap!!,
                                 isMainImage
                             ))
                         )
@@ -51,13 +55,18 @@ class LocalDatabase {
                         this.add(
                             ImageEntity(
                                 imageName,
-                                bitmap,
+                                photoItem.imageBitmap!!,
                                 isMainImage
                             )
                         )
                     }
                 }
             }
+            photosData[imageName.split(".")[0]] = photoItem.imageBitmap!!
+        }
+
+        fun getBitmapForImageName(imageName: String): Bitmap? {
+            return photosData[imageName]
         }
 
         @RequiresApi(Build.VERSION_CODES.N)
@@ -90,10 +99,10 @@ class LocalDatabase {
         }
 
         @RequiresApi(Build.VERSION_CODES.N)
-        fun getImages(id: Long, className: String): MutableList<Bitmap?>? {
+        fun getImages(id: Long, className: String): MutableList<PhotoItem?>? {
             val mapKey = if (className == "Route") "R_$id" else "S_$id"
             return photosLocalStorage[mapKey]?.stream()?.filter { !it.isMainImage }
-                ?.map { it.imageBitmap }
+                ?.map { PhotoItem(it.imageName,it.imageBitmap) }
                 ?.collect(Collectors.toList())?.toMutableList()
         }
 

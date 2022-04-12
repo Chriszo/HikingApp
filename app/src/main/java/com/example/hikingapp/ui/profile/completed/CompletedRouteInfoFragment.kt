@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
@@ -31,7 +32,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
     private val completedViewModel: CompletedViewModel by activityViewModels()
 
     private lateinit var route: Route
-    private lateinit var completedRoutePhotos: MutableList<Bitmap?>
+    private lateinit var completedRoutePhotos: MutableList<PhotoItem?>
     private lateinit var elevationData: MutableList<Long>
 
     private lateinit var completedPhotosRecyclerView: RecyclerView
@@ -132,7 +133,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
         val photoIntent = Intent(context, PhotoActivity::class.java)
-        photoIntent.putExtra("photo_item", completedRoutePhotos[position])
+        photoIntent.putExtra("photo_item", completedRoutePhotos[position]?.imageName)
         startActivity(photoIntent)
     }
 }

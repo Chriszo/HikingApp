@@ -1,6 +1,9 @@
 package com.example.hikingapp.ui.settings
 
+import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -22,9 +25,11 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.mapbox.navigation.ui.utils.internal.extensions.getBitmap
 import java.io.ByteArrayOutputStream
+import android.widget.Toast
+import com.example.hikingapp.LocalDBExecutor
 
 
-class EditAccountActivity : AppCompatActivity(), BackButtonListener {
+class EditAccountActivity : AppCompatActivity(), BackButtonListener, LocalDBExecutor {
 
     private lateinit var binding: ActivityEditAccountBinding
     private var authInfo: FirebaseUser? = null
@@ -67,13 +72,24 @@ class EditAccountActivity : AppCompatActivity(), BackButtonListener {
                                 binding.emailText.setText(authInfo!!.email)
                                 binding.passwordText.setText(password)
 
-                                FirebaseStorage.getInstance().getReference("users")
-                                    .child(binding.userNameText.text.toString())
-                                    .child(binding.userNameText.text.toString() + "_icon.png")
-                                    .getBytes(GlobalUtils.MEGABYTE * 5).addOnSuccessListener {
 
-                                        binding.accountImage.setImageBitmap(BitmapFactory.decodeByteArray(it,0,it.size))
+                                val db = this@EditAccountActivity.openOrCreateDatabase("images.db", Context.MODE_PRIVATE,null)
+                                val c: Cursor = db.rawQuery("select * from images where name=?",arrayOf("$userName-account-icon"))
+                                if (c.moveToNext()) {
 
+                                    val image: ByteArray = c.getBlob(1)
+                                    val bmp = BitmapFactory.decodeByteArray(image, 0, image.size)
+                                    binding.accountImage.setImageBitmap(bmp)
+
+                                } else {
+                                    FirebaseStorage.getInstance().getReference("users")
+                                        .child(binding.userNameText.text.toString())
+                                        .child(binding.userNameText.text.toString() + "_icon.png")
+                                        .getBytes(GlobalUtils.MEGABYTE * 5).addOnSuccessListener {
+
+                                            binding.accountImage.setImageBitmap(GlobalUtils.decodeSampledBitmapFromByteArray(it,100,100))
+
+                                        }
                                 }
 
                             }
@@ -113,10 +129,13 @@ class EditAccountActivity : AppCompatActivity(), BackButtonListener {
 
     private fun updateUserImage() {
 
+        val userName = binding.userNameText.text.toString()
         val bitmap = binding.accountImage.drawable.getBitmap()
 
         val outStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 0, outStream)
+
+        saveToLocalDB(userName,outStream)
 
         FirebaseStorage.getInstance()
             .getReference("users")
@@ -152,8 +171,6 @@ class EditAccountActivity : AppCompatActivity(), BackButtonListener {
                     binding.accountImage.setImageURI(selectedImageUri)
                 }
             }
-
-
         }
     }
 
@@ -186,5 +203,21 @@ class EditAccountActivity : AppCompatActivity(), BackButtonListener {
                 startActivity(intent)
             }
         }
+    }
+
+    override fun saveToLocalDB(userName: String, outStream: ByteArrayOutputStream) {
+
+        val db = this.openOrCreateDatabase("images.db", Context.MODE_PRIVATE,null)
+        db.execSQL("create table if not exists images (name String, data blob)")
+
+        val c: Cursor = db.rawQuery("select * from images where name=?",arrayOf("$userName-account-icon"))
+        if (c.moveToNext()) {
+            db.delete("images","name=?", arrayOf("$userName-account-icon"))
+        }
+
+        val data = ContentValues()
+        data.put("name", "$userName-account-icon")
+        data.put("data", outStream.toByteArray())
+        db.insert("images",null,data)
     }
 }

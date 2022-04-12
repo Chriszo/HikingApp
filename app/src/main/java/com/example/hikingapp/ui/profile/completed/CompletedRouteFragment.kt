@@ -21,6 +21,7 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
@@ -203,12 +204,14 @@ class CompletedRouteFragment : Fragment() {
                             if (route.photos.isNullOrEmpty()) {
                                 route.photos = mutableListOf()
                             }
-                            route.photos!!.add(bitmap)
+
+                            val photoItem = PhotoItem(photoReference.path.split("/").last(),bitmap)
+                            route.photos!!.add(photoItem)
                             LocalDatabase.saveImage(
                                 route.routeId,
                                 Route::class.java.simpleName,
                                 photoReference.path.split("/").last(),
-                                bitmap,
+                                photoItem,
                                 false
                             )
                             if (route?.photos?.size == routePhotosFolder.items.size) {

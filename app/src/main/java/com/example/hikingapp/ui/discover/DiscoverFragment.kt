@@ -33,6 +33,7 @@ import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.enums.RouteType
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.route.RouteInfo
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.persistence.utils.DBUtils
 import com.example.hikingapp.search.SearchFiltersWrapper
@@ -294,7 +295,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                                     route.routeId,
                                     route.javaClass.simpleName,
                                     "route_${route.routeId}_main.jpg",
-                                    routeMainPhotoBitmap,
+                                    PhotoItem("route_${route.routeId}_main.jpg",routeMainPhotoBitmap),
                                     true
                                 )
 

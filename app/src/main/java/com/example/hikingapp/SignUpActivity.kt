@@ -1,7 +1,10 @@
 package com.example.hikingapp
 
 import android.app.ProgressDialog
+import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
@@ -17,7 +20,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.mapbox.navigation.ui.utils.internal.extensions.getBitmap
 import java.io.ByteArrayOutputStream
 
-class SignUpActivity : AppCompatActivity() {
+class SignUpActivity : AppCompatActivity(), LocalDBExecutor {
 
     private val SELECT_PICTURE = 200
     private lateinit var progressDialog: ProgressDialog
@@ -107,8 +110,10 @@ class SignUpActivity : AppCompatActivity() {
             progressDialog.dismiss()
             val user = firebaseAuth.currentUser
 
-            val newUser = User(user?.uid!!,user?.email!!.split("@")[0],user?.email!!,"pass", null)
-            FirebaseDatabase.getInstance().getReference("users").child("user${user.uid}").setValue(newUser).addOnSuccessListener {
+            val newUser =
+                User(user?.uid!!, user?.email!!.split("@")[0], user?.email!!, "pass", null)
+            FirebaseDatabase.getInstance().getReference("users").child("user${user.uid}")
+                .setValue(newUser).addOnSuccessListener {
                 addAccountImage(user?.email!!)
 
                 val intent = Intent(this, MainActivity::class.java)
@@ -131,12 +136,30 @@ class SignUpActivity : AppCompatActivity() {
 
         val os = ByteArrayOutputStream()
 
-        bitmap.compress(Bitmap.CompressFormat.PNG,100,os)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 0, os)
+
+        saveToLocalDB(userName, os)
 
         FirebaseStorage.getInstance()
             .getReference("users")
             .child("$userName/")
             .child(userName + "_icon.png")
             .putBytes(os.toByteArray())
+    }
+
+    override fun saveToLocalDB(userName: String, outputStream: ByteArrayOutputStream) {
+        val db = this.openOrCreateDatabase("images.db", Context.MODE_PRIVATE, null)
+        db.execSQL("create table if not exists images (name String, data blob)")
+
+        val c: Cursor =
+            db.rawQuery("select * from images where name=?", arrayOf("$userName-account-icon"))
+        if (c.moveToNext()) {
+            db.delete("images", "name=?", arrayOf("$userName-account-icon"))
+        }
+
+        val data = ContentValues()
+        data.put("name", "$userName-account-icon")
+        data.put("data", outputStream.toByteArray())
+        db.insert("images", null, data)
     }
 }

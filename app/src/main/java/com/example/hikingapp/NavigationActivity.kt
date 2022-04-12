@@ -1177,24 +1177,27 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         if (requestCode == GlobalUtils.CAMERA_REQUEST && resultCode == RESULT_OK) {
             val imageBitmap = data!!.extras!!.get("data") as Bitmap
             val outputStream = ByteArrayOutputStream()
-            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
             val byteArray = outputStream.toByteArray()
 
-            storage.getReference("routes/${currentRoute!!.routeId}/photos/photo_1_5.jpg")
-                .putBytes(byteArray).addOnSuccessListener {
-                    Toast.makeText(
-                        this@NavigationActivity,
-                        "Photo uploaded successfully.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                .addOnFailureListener {
-                    Toast.makeText(
-                        this@NavigationActivity,
-                        "Photo uploading failed.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+            storage.getReference("routes/${currentRoute!!.routeId}/photos").listAll().addOnSuccessListener {
+                val nextIndex = it.items.size + 1
+                storage.getReference("routes/${currentRoute!!.routeId}/photos/photo_${currentRoute!!.routeId}_$nextIndex.jpg")
+                    .putBytes(byteArray).addOnSuccessListener {
+                        Toast.makeText(
+                            this@NavigationActivity,
+                            "Photo uploaded successfully.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(
+                            this@NavigationActivity,
+                            "Photo uploading failed.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+            }
         }
     }
 

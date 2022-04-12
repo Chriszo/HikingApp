@@ -25,6 +25,7 @@ import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.domain.weather.WeatherForecast
 import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
@@ -35,6 +36,7 @@ import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -74,6 +76,7 @@ class SavedRouteFragment : Fragment() {
     }
 
     private val viewModel: RouteViewModel by activityViewModels()
+    private val userViewModel: UserViewModel by activityViewModels()
 
     private lateinit var routeMap: String
 
@@ -103,6 +106,8 @@ class SavedRouteFragment : Fragment() {
 
         route = arguments?.get("route") as Route
         authInfo = arguments?.get("authInfo") as FirebaseUser?
+
+        userViewModel.user.postValue(authInfo)
 
         mapService = MapServiceImpl()
         weatherService = WeatherServiceImpl()
@@ -402,12 +407,13 @@ class SavedRouteFragment : Fragment() {
                             if (route.photos.isNullOrEmpty()) {
                                 route.photos = mutableListOf()
                             }
-                            route.photos!!.add(bitmap)
+                            val photoItem = PhotoItem(photoReference.path.split("/").last(),bitmap)
+                            route.photos!!.add(photoItem)
                             LocalDatabase.saveImage(
                                 route.routeId,
                                 Route::class.java.simpleName,
                                 photoReference.path.split("/").last(),
-                                bitmap,
+                                photoItem,
                                 false
                             )
                             if (route?.photos?.size == routePhotosFolder.items.size) {
@@ -447,7 +453,7 @@ class SavedRouteFragment : Fragment() {
                             sight.sightId,
                             Sight::class.java.simpleName,
                             "sight_${sight.sightId}_main.jpg",
-                            bitmap,
+                            PhotoItem("sight_${sight.sightId}_main.jpg",bitmap),
                             true
                         )
                         if (sightMainPhotos.size == route.cultureInfo!!.sights?.size ?: mutableListOf<Sight>()) {
