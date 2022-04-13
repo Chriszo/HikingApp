@@ -11,6 +11,7 @@ import com.example.hikingapp.databinding.ActivityLoginBinding
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.profile.ProfileFragment
 import com.example.hikingapp.ui.profile.statistics.StatisticsFragment
+import com.example.hikingapp.ui.route.photos.PhotoActivity
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -105,6 +106,15 @@ class LoginActivity : AppCompatActivity() {
                     redirectIntent = Intent(this@LoginActivity, RouteActivity::class.java)
                     redirectIntent!!.putExtra("route", currentRoute)
                     redirectIntent!!.putExtra("action", "discover")
+                }
+                "PhotoActivity" -> {
+                    val imageName = intent.extras?.get("photo_item") as String?
+                    val itemId = intent.extras?.get("itemId") as String?
+                    redirectIntent = Intent(this@LoginActivity, PhotoActivity::class.java)
+                    redirectIntent!!.putExtra(GlobalUtils.LAST_PAGE, "PhotoActivity")
+                    redirectIntent!!.putExtra("photo_item", imageName)
+                    redirectIntent!!.putExtra("itemId", itemId)
+                    startActivity(redirectIntent)
                 }
                 else -> {
                     redirectIntent = Intent(this@LoginActivity, MainActivity::class.java)

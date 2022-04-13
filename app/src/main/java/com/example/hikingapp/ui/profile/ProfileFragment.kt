@@ -20,13 +20,13 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
-import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.databinding.FragmentProfileBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.utils.GlobalUtils
+import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.viewModels.ProfileViewModel
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.viewModels.UserViewModel
@@ -89,7 +89,7 @@ class ProfileFragment : Fragment() {
         val inProdMode = getString(R.string.prodMode).toBooleanStrict()
 
         if (userViewModel.user.value == null && inProdMode) {
-            val redirectIntent = Intent(context,LoginActivity::class.java)
+            val redirectIntent = Intent(context, LoginActivity::class.java)
             redirectIntent.putExtra(GlobalUtils.LAST_PAGE, ProfileFragment::class.java.simpleName)
             startActivity(redirectIntent)
         } else {
@@ -434,29 +434,147 @@ class ProfileFragment : Fragment() {
                     })
 
 
-                database.getReference("savedPhotosAssociations").child(userAuthInfo!!.uid).addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        if (snapshot.exists()) {
-                            userSavedPhotoNames = (snapshot.value as MutableList<String>)
+                database.getReference("savedPhotosAssociations").child(userAuthInfo!!.uid)
+                    .addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            if (snapshot.exists()) {
+                                userSavedPhotoNames = (snapshot.value as MutableList<String>)
 
-                            savedPhotos =
-                                LocalDatabase.getAllImages()
-                                    ?.filter {userSavedPhotoNames.contains(it.key)}
-                                    ?.map { PhotoItem(it.key,it.value) }
+                                val localPhotosFound = LocalDatabase.getAllImages()
+                                    ?.filter { userSavedPhotoNames.contains(it.key) }
+                                    ?.map { PhotoItem(it.key, it.value) }
                                     ?.stream()
-                                    ?.collect(Collectors.toList()) ?: mutableListOf()
+                                    ?.collect(Collectors.toList())
 
-                            profileViewModel.savedPhotos.postValue(savedPhotos)
-                        } else {
-                            savedPhotos = mutableListOf()
+                                if (!localPhotosFound.isNullOrEmpty()) {
+                                    savedPhotos = localPhotosFound
+                                    profileViewModel.savedPhotos.postValue(savedPhotos)
+
+                                } else {
+                                    savedPhotos = mutableListOf()
+                                    userSavedPhotoNames.forEach { photoName ->
+                                        if (photoName.startsWith("sight_")) {
+
+                                            val photoNamePartitions = photoName.split("_")
+                                            val sightId = photoNamePartitions[2]
+
+                                            storage.getReference("sights")
+                                                .child(sightId)
+                                                .child("$photoName.jpg")
+                                                .getBytes(GlobalUtils.MEGABYTE * 5)
+                                                .addOnSuccessListener {
+                                                    val bitmap = BitmapFactory.decodeByteArray(
+                                                        it,
+                                                        0,
+                                                        it.size
+                                                    )
+                                                    savedPhotos.add(PhotoItem(photoName, bitmap))
+
+                                                    if (savedPhotos.size == userSavedPhotoNames.size) {
+                                                        profileViewModel.savedPhotos.postValue(
+                                                            savedPhotos
+                                                        )
+                                                    }
+                                                }.addOnFailureListener {
+                                                    if (it is StorageException) {
+                                                        when (it.httpResultCode) {
+                                                            404 -> throw IllegalStateException("No photo with imageName: $photoName.jpg was found for sight $sightId in Firebase Storage")
+                                                        }
+                                                    } else {
+                                                        throw it
+                                                    }
+                                                }
+                                        } else if (photoName.startsWith("photo_")) {
+                                            val photoNamePartitions = photoName.split("_")
+                                            val routeId = photoNamePartitions[1]
+                                            storage.getReference("routes")
+                                                .child(routeId)
+                                                .child("photos")
+                                                .child("$photoName.jpg")
+                                                .getBytes(GlobalUtils.MEGABYTE * 5)
+                                                .addOnSuccessListener {
+                                                    val bitmap = BitmapFactory.decodeByteArray(
+                                                        it,
+                                                        0,
+                                                        it.size
+                                                    )
+                                                    savedPhotos.add(PhotoItem(photoName, bitmap))
+                                                    if (savedPhotos.size == userSavedPhotoNames.size) {
+                                                        profileViewModel.savedPhotos.postValue(
+                                                            savedPhotos
+                                                        )
+                                                    }
+                                                }.addOnFailureListener {
+                                                    if (it is StorageException) {
+                                                        when (it.httpResultCode) {
+                                                            404 -> throw IllegalStateException("No photo with imageName: $photoName.jpg was found for sight $routeId in Firebase Storage")
+                                                        }
+                                                    } else {
+                                                        throw it
+                                                    }
+                                                }
+                                        }
+
+                                    }
+
+                                    /*val storage = FirebaseStorage.getInstance()
+                                    if (itemId.startsWith("R")) {
+                                        storage.getReference("routes")
+                                            .child(itemId.substring(1))
+                                            .child("photos")
+                                            .child("$imageName.jpg")
+                                            .getBytes(GlobalUtils.MEGABYTE * 5)
+                                            .addOnSuccessListener {
+                                                bitmap = BitmapFactory.decodeByteArray(it,0,it.size)
+                                                binding.photoId.setImageDrawable(BitmapDrawable(resources, bitmap))
+                                            }.addOnFailureListener {
+                                                if (it is StorageException) {
+                                                    when(it.httpResultCode) {
+                                                        404 -> throw IllegalStateException("No photo with imageName: $imageName.jpg was found for route ${itemId.substring(1)} in Firebase Storage")
+                                                    }
+                                                } else {
+                                                    throw it
+                                                }
+                                            }
+                                    } else if (itemId.startsWith("S")) {
+                                        storage.getReference("sights")
+                                            .child(itemId.substring(1))
+                                            .child("$imageName.jpg")
+                                            .getBytes(GlobalUtils.MEGABYTE * 5)
+                                            .addOnSuccessListener {
+                                                bitmap = BitmapFactory.decodeByteArray(it,0,it.size)
+                                                binding.photoId.setImageDrawable(BitmapDrawable(resources, bitmap))
+                                            }.addOnFailureListener {
+                                                if (it is StorageException) {
+                                                    when(it.httpResultCode) {
+                                                        404 -> throw IllegalStateException("No photo with imageName: $imageName.jpg was found for sight ${itemId.substring(1)} in Firebase Storage")
+                                                    }
+                                                } else {
+                                                    throw it
+                                                }
+                                            }
+                                    } else {
+                                        Log.w(PhotoActivity::class.java.simpleName,"Current itemId not identified as route (starts with R) or sight (starts with S) photo.")
+                                    }*/
+                                }
+
+                                /* savedPhotos =
+                                     LocalDatabase.getAllImages()
+                                         ?.filter {userSavedPhotoNames.contains(it.key)}
+                                         ?.map { PhotoItem(it.key,it.value) }
+                                         ?.stream()
+                                         ?.collect(Collectors.toList()) ?: mutableListOf()*/
+
+                            } else {
+                                savedPhotos = mutableListOf()
+                            }
                         }
-                    }
 
-                    override fun onCancelled(error: DatabaseError) {
-                        TODO("Not yet implemented")
-                    }
+                        override fun onCancelled(error: DatabaseError) {
+                            TODO("Not yet implemented")
+                        }
 
-                })
+                    })
 
             })
 
@@ -464,8 +582,6 @@ class ProfileFragment : Fragment() {
         }
         return null
     }
-
-
 
 
     @RequiresApi(Build.VERSION_CODES.N)

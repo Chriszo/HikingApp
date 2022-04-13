@@ -6,7 +6,9 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.example.hikingapp.BackButtonListener
 import com.example.hikingapp.MainActivity
 import com.example.hikingapp.R
 import com.google.firebase.auth.FirebaseUser
@@ -19,8 +21,9 @@ import kotlinx.android.synthetic.main.activity_logout.view.*
 import kotlinx.android.synthetic.main.custom_toolbar.view.*
 import kotlinx.android.synthetic.main.custom_toolbar.view.toolbar
 
-class AccountActivity : AppCompatActivity() {
+class AccountActivity : AppCompatActivity(), BackButtonListener {
 
+    private var toolbarContainer: ConstraintLayout? = null
     private var authInfo: FirebaseUser? = null
 
 
@@ -41,7 +44,10 @@ class AccountActivity : AppCompatActivity() {
         val editButton = findViewById<Button>(R.id.editButton)
         val deletButton = findViewById<Button>(R.id.deleteButton)
 
-        val toolbarContainer = findViewById<ConstraintLayout>(R.id.toolbarContainer)
+        toolbarContainer = findViewById<ConstraintLayout>(R.id.toolbarContainer)
+
+        (toolbarContainer!!.action_bar_title as TextView).text = "Account"
+        setBackButtonListener()
 
         if (intent.extras?.containsKey("authInfo") == true) {
             (intent.extras!!["authInfo"] as FirebaseUser).apply {
@@ -50,8 +56,8 @@ class AccountActivity : AppCompatActivity() {
                 FirebaseDatabase.getInstance().getReference("users").child("user${authInfo!!.uid}").addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
 
-                        toolbarContainer.toolbar.account_icon.visibility = View.VISIBLE
-                        toolbarContainer.toolbar.action_bar_user.visibility = View.GONE
+                        toolbarContainer!!.toolbar.account_icon.visibility = View.VISIBLE
+                        toolbarContainer!!.toolbar.action_bar_user.visibility = View.GONE
 
                         if (snapshot.exists()) {
                             val userData = snapshot.value as HashMap<String, *>
@@ -95,6 +101,16 @@ class AccountActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
 
+            }
+        }
+    }
+
+    override fun setBackButtonListener() {
+        toolbarContainer!!.back_btn.setOnClickListener {
+            if (authInfo != null) {
+                val intent = Intent(this, MainActivity::class.java)
+                intent.putExtra("authInfo", authInfo)
+                startActivity(intent)
             }
         }
     }
