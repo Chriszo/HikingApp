@@ -44,5 +44,7 @@
     <string name="switch_map_style">Switch Map Style</string>
     <string name="statistics">Stats</string>
     <string name="deletion_text">You are going to submit a request for the deletion of you account. <br /><br /> <b>Do you want to proceed?</b></string>
+    <string name="photos_label">Photos</string>
+    <string name="remove_photos_text">Remove Photo(s)</string>
 
 </resources>

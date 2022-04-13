@@ -16,8 +16,10 @@ import com.example.hikingapp.R
 import com.example.hikingapp.RouteActivity
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.ui.adapters.*
 import com.example.hikingapp.ui.route.cultureInfo.SightDetailsActivity
+import com.example.hikingapp.ui.route.photos.PhotoActivity
 import com.example.hikingapp.viewModels.ProfileViewModel
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
@@ -30,19 +32,26 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
 
     private lateinit var routes: MutableList<Route>
     private lateinit var sights: MutableList<Sight>
+    private lateinit var photos: MutableList<PhotoItem>
 
 
     private lateinit var routesLayoutManager: LinearLayoutManager
     private lateinit var sightsLayoutManager: LinearLayoutManager
+    private lateinit var photosLayoutManager: LinearLayoutManager
+
 
 
     private lateinit var routesRecyclerView: RecyclerView
     private lateinit var sightsRecyclerView: RecyclerView
+    private lateinit var photosRecyclerView: RecyclerView
     private lateinit var routesAdapter: RoutesProfileAdapter
     private lateinit var sightsAdapter: SightsProfileAdapter
+    private lateinit var photosAdapter: PhotosProfileAdapter
+
 
     private var allRouteItemsSelected = false
     private var allSightItemsSelected = false
+    private var allPhotosItemsSelected = false
 
     private var user: FirebaseUser? = null
 
@@ -61,6 +70,8 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
 
         val selectAllRoutesTextView = view.findViewById(R.id.select_all_route_items) as TextView
         val selectAllSightsTextView = view.findViewById(R.id.select_all_sight_items) as TextView
+        val selectAllPhotosTextView = view.findViewById(R.id.select_all_photo_items) as TextView
+
 
 
         userViewModel.user.observe(viewLifecycleOwner, {
@@ -93,6 +104,15 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
             }
         })
 
+        profileViewModel.isPhotosLongClickPressed.observe(viewLifecycleOwner, {
+            if (it == true) {
+                selectAllPhotosTextView.visibility = View.VISIBLE
+                selectAllPhotosTextView.text = getString(R.string.select_all)
+            } else {
+                selectAllPhotosTextView.visibility = View.GONE
+            }
+        })
+
         profileViewModel.selectedRouteItems.observe(viewLifecycleOwner, {
             allRouteItemsSelected =
                 profileViewModel.selectedRouteItems.value?.size == profileViewModel.savedRoutes.value?.size
@@ -106,6 +126,14 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
                 profileViewModel.selectedSightItems.value?.size == profileViewModel.savedSights.value?.size
             if (allSightItemsSelected) {
                 selectAllSightsTextView.text = getString(R.string.un_select_all)
+            }
+        })
+
+        profileViewModel.selectedPhotoItems.observe(viewLifecycleOwner, {
+            allPhotosItemsSelected =
+                profileViewModel.selectedPhotoItems.value?.size == profileViewModel.savedPhotos.value?.size
+            if (allPhotosItemsSelected) {
+                selectAllPhotosTextView.text = getString(R.string.un_select_all)
             }
         })
 
@@ -138,11 +166,29 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
 
         }
 
+
+        selectAllPhotosTextView.setOnClickListener {
+            if (!allPhotosItemsSelected) {
+                photosAdapter.selectAllItems()
+                selectAllPhotosTextView.text = getString(R.string.un_select_all)
+                allPhotosItemsSelected = true
+            } else {
+                photosAdapter.clearAllItems()
+                selectAllPhotosTextView.text = getString(R.string.select_all)
+                selectAllPhotosTextView.visibility = View.GONE
+                allPhotosItemsSelected = false
+            }
+
+        }
+
         initializeSavedRoutes(view)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             initializeSavedSights(view)
         }
+
+        initializeSavedPhotos(view)
+
         return view
     }
 
@@ -192,6 +238,27 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
         })
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun initializeSavedPhotos(view: View) {
+        photosRecyclerView = view.findViewById(R.id.favoritesPhotosView)
+        photosLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        photosRecyclerView.layoutManager = photosLayoutManager
+
+        profileViewModel.savedPhotos.observe(viewLifecycleOwner, {
+            photos = it as MutableList<PhotoItem>
+
+            /*profileViewModel.user.value?.profileInfo?.savedRoutes =
+                routes.stream().map { it.routeId }.collect(Collectors.toList())*/
+
+            photosAdapter = PhotosProfileAdapter(context, photos, this, this)
+            photosRecyclerView.adapter = photosAdapter
+
+            profileViewModel.savedPhotosEnabled.observe(viewLifecycleOwner, {
+                photosAdapter.setEnabled(it)
+            })
+        })
+    }
+
     override fun onItemClicked(position: Int, bundle: Bundle) {
         if (bundle.containsKey("class")) {
             when (bundle.get("class")) {
@@ -208,6 +275,15 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
                     val intent = Intent(context, SightDetailsActivity::class.java)
                     // TODO replace with Global Utils ID
                     intent.putExtra("sightInfo", sights[position])
+                    intent.putExtra("authInfo", user)
+                    intent.putExtra("action", "saved")
+                    startActivity(intent)
+                }
+                PhotoItem::class.java.simpleName -> {
+                    val intent = Intent(context, PhotoActivity::class.java)
+                    // TODO replace with Global Utils ID
+                    intent.putExtra("photo_item", photos[position]!!.imageName)
+//                    intent.putExtra("itemId", "S${sightInfo.sightId}")
                     intent.putExtra("authInfo", user)
                     intent.putExtra("action", "saved")
                     startActivity(intent)
@@ -234,6 +310,15 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
             }
         }
 
+        if (bundle.containsKey("photoLongClick")) {
+
+            if (bundle.getBoolean("photoLongClick")) {
+                profileViewModel.isPhotosLongClickPressed.postValue(true)
+            } else {
+                profileViewModel.isPhotosLongClickPressed.postValue(false)
+            }
+        }
+
         if (bundle.containsKey("sightSelectedItems")) {
             val selectedItemsWrapper =
                 bundle.getSerializable("sightSelectedItems") as SelectedItemsWrapper
@@ -244,6 +329,12 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
             val selectedItemsWrapper =
                 bundle.getSerializable("routeSelectedItems") as SelectedItemsWrapper
             profileViewModel.selectedRouteItems.postValue(selectedItemsWrapper.selectedItems)
+        }
+
+        if (bundle.containsKey("photoSelectedItems")) {
+            val selectedItemsWrapper =
+                bundle.getSerializable("photoSelectedItems") as SelectedItemsWrapper
+            profileViewModel.selectedPhotoItems.postValue(selectedItemsWrapper.selectedItems)
         }
     }
 

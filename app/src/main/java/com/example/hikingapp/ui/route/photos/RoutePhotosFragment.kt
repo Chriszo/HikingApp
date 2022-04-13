@@ -84,7 +84,7 @@ class RoutePhotosFragment : Fragment(), OnItemClickedListener {
     override fun onItemClicked(position: Int, bundle: Bundle) {
         val intent = Intent(context, PhotoActivity::class.java)
         intent.putExtra("photo_item", photos[position]!!.imageName)
-        intent.putExtra("routeId", routeId)
+        intent.putExtra("itemId", "R$routeId")
         intent.putExtra("authInfo",authInfo)
         startActivity(intent)
     }

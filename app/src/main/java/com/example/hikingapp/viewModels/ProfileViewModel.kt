@@ -4,6 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.domain.users.User
 import java.io.Serializable
 
@@ -19,15 +20,20 @@ class ProfileViewModel : ViewModel(), Serializable {
 
     val completedSights = MutableLiveData<MutableList<Sight>>()
 
+    val savedPhotos = MutableLiveData<MutableList<PhotoItem>>()
+
 
     val selectedRouteItems = MutableLiveData<MutableList<Int>>()
     val selectedSightItems = MutableLiveData<MutableList<Int>>()
+    val selectedPhotoItems = MutableLiveData<MutableList<Int>>()
 
     val isRoutesLongClickPressed = MutableLiveData<Boolean>()
 
     val isSightsLongClickPressed = MutableLiveData<Boolean>()
 
+    val isPhotosLongClickPressed = MutableLiveData<Boolean>()
+
     val savedRoutesEnabled = MutableLiveData<Boolean>()
     val savedSightsEnabled = MutableLiveData<Boolean>()
-
+    val savedPhotosEnabled = MutableLiveData<Boolean>()
 }

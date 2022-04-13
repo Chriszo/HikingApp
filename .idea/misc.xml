@@ -12,6 +12,8 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/arrow_back_icon_foreground_dark.xml" value="0.18697916666666667" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/background.xml" value="0.15885416666666666" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/bookmark_icon_background.xml" value="0.165625" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/bookmark_outlined_icon_foreground.xml" value="0.16302083333333334" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/bookmark_outlined_icon_foreground_white.xml" value="0.16302083333333334" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/circular_button.xml" value="0.25104166666666666" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/custom_border.xml" value="0.1890625" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/custom_filters_search_icon.xml" value="0.14791666666666667" />
@@ -43,6 +45,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/rate_icon_foreground.xml" value="0.18020833333333333" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/rate_icon_foreground_white.xml" value="0.1921875" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/remove_bookmark_icon_foreground.xml" value="0.21458333333333332" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/remove_bookmark_icon_foreground_white.xml" value="0.175" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/rounded.xml" value="0.18541666666666667" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/rounded_green.xml" value="0.3807291666666667" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/drawable/rounded_red.xml" value="0.3828125" />
@@ -92,7 +95,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_navigation.xml" value="0.20520833333333333" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_photos.xml" value="0.25" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_photos_list.xml" value="0.17083333333333334" />
-        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_profile.xml" value="0.33" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_profile.xml" value="0.3001579778830964" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_reviews_list.xml" value="0.15572916666666667" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_route_info.xml" value="0.5" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_saved.xml" value="0.25" />
@@ -102,6 +105,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/nav_header_main.xml" value="0.18489583333333334" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/photo_item.xml" value="0.3383152173913043" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/place_view.xml" value="0.1578125" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/profile_photo_item.xml" value="0.33" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/profile_route_item.xml" value="0.5" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/route_fragment.xml" value="0.25" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/route_item.xml" value="0.33" />

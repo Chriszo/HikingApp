@@ -59,6 +59,7 @@ class ProfileFragment : Fragment() {
     private lateinit var completedRoutes: MutableList<Route>
     private lateinit var savedSights: MutableList<Sight>
     private lateinit var completedSights: MutableList<Sight>
+    private lateinit var savedPhotos: MutableList<PhotoItem>
 
     private var userAuthInfo: FirebaseUser? = null
     private val database: FirebaseDatabase by lazy {
@@ -69,6 +70,7 @@ class ProfileFragment : Fragment() {
     private lateinit var userCompletedRouteIds: MutableList<Long>
     private lateinit var userSavedSightIds: MutableList<Long>
     private lateinit var userCompletedSightIds: MutableList<Long>
+    private lateinit var userSavedPhotoNames: MutableList<String>
 
     private lateinit var progressDialog: ProgressDialog
 
@@ -120,40 +122,75 @@ class ProfileFragment : Fragment() {
 
             profileViewModel.isRoutesLongClickPressed.observe(viewLifecycleOwner, {
 
-                val deleteText = root.findViewById(R.id.removeText) as TextView
                 val sightsView = root.findViewById(R.id.favoritesSightsRView) as RecyclerView
+                val photosView = root.findViewById(R.id.favoritesPhotosView) as RecyclerView
+
+                val deleteText = root.findViewById(R.id.removeText) as TextView
                 if (it == true) {
                     deleteFrame.visibility = View.VISIBLE
                     sightsView.alpha = 0.5f
+                    photosView.alpha = 0.5f
                     profileViewModel.savedSightsEnabled.postValue(false)
+                    profileViewModel.savedPhotosEnabled.postValue(false)
                     deleteText.text = getString(R.string.remove_routes)
 
                 } else {
 
                     deleteFrame.visibility = View.GONE
                     sightsView.alpha = 1f
+                    photosView.alpha = 1f
                     profileViewModel.savedSightsEnabled.postValue(true)
+                    profileViewModel.savedPhotosEnabled.postValue(true)
                 }
             })
 
             profileViewModel.isSightsLongClickPressed.observe(viewLifecycleOwner, {
 
                 val routesView = root.findViewById(R.id.favoritesRoutesRView) as RecyclerView
+                val photosView = root.findViewById(R.id.favoritesPhotosView) as RecyclerView
                 val deleteText = root.findViewById(R.id.removeText) as TextView
 
                 if (it == true) {
 
                     deleteFrame.visibility = View.VISIBLE
                     routesView.alpha = 0.5f
+                    photosView.alpha = 0.5f
                     profileViewModel.savedRoutesEnabled.postValue(false)
+                    profileViewModel.savedPhotosEnabled.postValue(false)
                     deleteText.text = getString(R.string.remove_sights)
 
                 } else {
 
                     deleteFrame.visibility = View.GONE
                     routesView.alpha = 1f
+                    photosView.alpha = 1f
                     profileViewModel.savedRoutesEnabled.postValue(true)
+                    profileViewModel.savedPhotosEnabled.postValue(true)
+                }
+            })
 
+            profileViewModel.isPhotosLongClickPressed.observe(viewLifecycleOwner, {
+
+                val routesView = root.findViewById(R.id.favoritesRoutesRView) as RecyclerView
+                val sightsView = root.findViewById(R.id.favoritesSightsRView) as RecyclerView
+                val deleteText = root.findViewById(R.id.removeText) as TextView
+
+                if (it == true) {
+
+                    deleteFrame.visibility = View.VISIBLE
+                    routesView.alpha = 0.5f
+                    sightsView.alpha = 0.5f
+                    profileViewModel.savedRoutesEnabled.postValue(false)
+                    profileViewModel.savedSightsEnabled.postValue(false)
+                    deleteText.text = getString(R.string.remove_photos_text)
+
+                } else {
+
+                    deleteFrame.visibility = View.GONE
+                    routesView.alpha = 1f
+                    sightsView.alpha = 1f
+                    profileViewModel.savedRoutesEnabled.postValue(true)
+                    profileViewModel.savedSightsEnabled.postValue(true)
                 }
             })
 
@@ -163,6 +200,8 @@ class ProfileFragment : Fragment() {
 
                 val selectedRouteItemsList = profileViewModel.selectedRouteItems.value
                 val selectedSightItemsList = profileViewModel.selectedSightItems.value
+                val selectedPhotoItemsList = profileViewModel.selectedPhotoItems.value
+
 
 
                 if (Objects.nonNull(userAuthInfo) && !selectedRouteItemsList.isNullOrEmpty()) {
@@ -171,6 +210,10 @@ class ProfileFragment : Fragment() {
 
                 if (Objects.nonNull(userAuthInfo) && !selectedSightItemsList.isNullOrEmpty()) {
                     handleSightSelectedItems(selectedSightItemsList)
+                }
+
+                if (Objects.nonNull(userAuthInfo) && !selectedPhotoItemsList.isNullOrEmpty()) {
+                    handlePhotoSelectedItems(selectedPhotoItemsList)
                 }
             }
 
@@ -390,12 +433,39 @@ class ProfileFragment : Fragment() {
 
                     })
 
+
+                database.getReference("savedPhotosAssociations").child(userAuthInfo!!.uid).addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (snapshot.exists()) {
+                            userSavedPhotoNames = (snapshot.value as MutableList<String>)
+
+                            savedPhotos =
+                                LocalDatabase.getAllImages()
+                                    ?.filter {userSavedPhotoNames.contains(it.key)}
+                                    ?.map { PhotoItem(it.key,it.value) }
+                                    ?.stream()
+                                    ?.collect(Collectors.toList()) ?: mutableListOf()
+
+                            profileViewModel.savedPhotos.postValue(savedPhotos)
+                        } else {
+                            savedPhotos = mutableListOf()
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
+
+                })
+
             })
 
             return root
         }
         return null
     }
+
+
 
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -487,6 +557,23 @@ class ProfileFragment : Fragment() {
     }
 
 
+    private fun handlePhotoSelectedItems(selectedPhotoItemsList: MutableList<Int>) {
+        val photosCopy = mutableListOf<PhotoItem>().apply { addAll(savedPhotos) }
+        savedPhotos.clear()
+
+        photosCopy.withIndex().forEach {
+            if (!selectedPhotoItemsList.contains(it.index)) {
+                savedPhotos.add(it.value)
+            }
+        }
+
+        selectedPhotoItemsList.clear()
+        profileViewModel.selectedPhotoItems.postValue(selectedPhotoItemsList)
+        profileViewModel.savedPhotos.postValue(savedPhotos)
+        profileViewModel.isPhotosLongClickPressed.postValue(false)
+    }
+
+
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onDestroyView() {
         super.onDestroyView()
@@ -497,10 +584,28 @@ class ProfileFragment : Fragment() {
             persistCompletedRoutes()
             persistSavedSights()
             persistCompletedSights()
-
+            persistSavedPhotos()
         }
 
         _binding = null
+    }
+
+    private fun persistSavedPhotos() {
+        database.getReference("savedPhotosAssociations").child(userAuthInfo!!.uid)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                @RequiresApi(Build.VERSION_CODES.N)
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val savedPhotoImageNames =
+                        savedPhotos.stream().map { it.imageName }.collect(Collectors.toList())
+                    database.getReference("savedPhotosAssociations").child(userAuthInfo!!.uid)
+                        .setValue(savedPhotoImageNames)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            })
     }
 
     private fun persistCompletedSights() {

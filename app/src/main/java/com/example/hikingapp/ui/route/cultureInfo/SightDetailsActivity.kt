@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,6 +25,7 @@ import com.example.hikingapp.ui.route.photos.PhotoActivity
 import com.example.hikingapp.utils.PhotoItemDecorator
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -35,13 +37,15 @@ import java.util.*
 
 class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
 
+    private var authInfo: FirebaseUser? = null
     private lateinit var binding: ActivitySightDetailsBinding
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var layoutManager: LinearLayoutManager
     private lateinit var itemClickedListener: OnItemClickedListener
     private lateinit var photosAdapter: PhotoAdapter
-    private lateinit var routeViewModel: RouteViewModel
+    private val routeViewModel: RouteViewModel by viewModels()
+    private val userViewModel: UserViewModel by viewModels()
 
     private lateinit var sightInfo: Sight
 
@@ -68,6 +72,9 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
         recyclerView.addItemDecoration(photoItemSpacing)
 
         sightInfo = intent.extras!!.get("sightInfo") as Sight
+
+        authInfo = intent.extras!!.get("authInfo") as FirebaseUser?
+        userViewModel.user.postValue(authInfo)
 
         val nameView = binding.sightName
         val descriptionView = binding.sightState
@@ -131,8 +138,12 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
                                 photos = mutableListOf()
                             }
 
-                            val photoItem = PhotoItem(photoReference.path.split("/").last(),bitmap)
+                            val imageName = photoReference.path.split("/").last()
+                            val photoItem = PhotoItem(imageName,bitmap)
                             photos.add(photoItem)
+
+                            LocalDatabase.saveImage(sightInfo.sightId, Sight::class.java.simpleName,imageName,photoItem,false)
+
                             if (photos.size == sightPhotos.items.size) {
                                 photosAdapter = PhotoAdapter(this, photos, itemClickedListener)
                                 recyclerView.adapter = photosAdapter
@@ -276,6 +287,8 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
     override fun onItemClicked(position: Int, bundle: Bundle) {
         val intent = Intent(this, PhotoActivity::class.java)
         intent.putExtra("photo_item", photos[position]!!.imageName)
+        intent.putExtra("itemId", "S${sightInfo.sightId}")
+        intent.putExtra("authInfo",authInfo)
         startActivity(intent)
     }
 }

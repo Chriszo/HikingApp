@@ -69,6 +69,10 @@ class LocalDatabase {
             return photosData[imageName]
         }
 
+        fun getAllImages(): MutableMap<String,Bitmap>? {
+            return photosData
+        }
+
         @RequiresApi(Build.VERSION_CODES.N)
         fun getImage(id: Long, className: String, imageName: String?): Bitmap? {
             val mapKey = if (className == "Route") "R_$id" else "S_$id"
