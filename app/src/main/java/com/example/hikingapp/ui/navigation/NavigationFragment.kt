@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -31,12 +32,15 @@ import com.example.hikingapp.*
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
+import com.example.hikingapp.domain.navigation.SerializableMapPoint
 import com.example.hikingapp.domain.navigation.UserNavigationData
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.route.RouteInfo
 import com.example.hikingapp.persistence.firebase.FirebaseUtils
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
+import com.example.hikingapp.utils.ElevationDataUtils
 import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.viewModels.UserViewModel
@@ -45,6 +49,10 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.jjoe64.graphview.GraphView
+import com.jjoe64.graphview.series.DataPoint
+import com.jjoe64.graphview.series.LineGraphSeries
+import com.jjoe64.graphview.series.PointsGraphSeries
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.matching.v5.MapboxMapMatching
@@ -118,9 +126,19 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 
 class NavigationFragment : Fragment() {
+
+    private var onNavigationMode = false
+
+    private var elevationGraph: GraphView? = null
+    private var series = LineGraphSeries<DataPoint>()
+    private var liveSeries = PointsGraphSeries<DataPoint>()
+    private var datapoints: MutableList<DataPoint> = mutableListOf()
+    private val elevationCounter: AtomicInteger = AtomicInteger()
+
 
     private var satelliteMapStyle: ImageView? = null
     private var terrainMapStyle: ImageView? = null
@@ -412,9 +430,19 @@ class NavigationFragment : Fragment() {
             currentLocation =
                 Point.fromLngLat(enhancedLocation.longitude, enhancedLocation.latitude)
 
-            GlobalScope.launch {
-                callElevationDataAPI(enhancedLocation) // Update elevation data value
+            if (onNavigationMode) {
+
+                val locationKey = "${currentLocation!!.longitude()}_${currentLocation!!.latitude()}"
+
+                if (currentRoute!!.routeInfo!!.navigationData!!.containsKey(locationKey)) {
+                    addPointToGraph(currentRoute!!.routeInfo!!.navigationData!![locationKey])
+                }
+
             }
+
+            /*GlobalScope.launch {
+                callElevationDataAPI(enhancedLocation) // Update elevation data value
+            }*/
 
             if (!isOutOfRoute) {
                 associatedSights?.forEach { sight ->
@@ -457,6 +485,65 @@ class NavigationFragment : Fragment() {
                 )
             }
         }
+    }
+
+    private fun addPointToGraph(serializableMapPoint: SerializableMapPoint?) {
+        val dataPoint = DataPoint(
+            elevationCounter.getAndIncrement().toDouble(),
+            serializableMapPoint!!.elevation!!.toDouble()
+        )
+        datapoints.add(
+            dataPoint
+        )
+        GlobalScope.launch {
+            series.resetData(datapoints.toTypedArray())
+
+            liveSeries.resetData(listOf(dataPoint).toTypedArray())
+            println("Added point: " + elevationCounter.get() + " - height: " + serializableMapPoint.elevation)
+
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun configureGraphAttributes(navigationView: View) {
+
+        elevationGraph = navigationView.findViewById(R.id.elevation_graph_nav) as GraphView
+
+        elevationGraph!!.title = "Elevation Profile"
+        elevationGraph!!.gridLabelRenderer.verticalAxisTitle = "Elevation"
+
+        elevationGraph!!.addSeries(series)
+
+        liveSeries.color = Color.RED
+        elevationGraph!!.addSeries(liveSeries)
+
+        val viewport = elevationGraph!!.viewport
+
+        viewport.isYAxisBoundsManual = true
+        viewport.setMinY(0.0)
+        val maxElevation = ElevationDataUtils.getMaxElevation(currentRoute!!.routeInfo!!.navigationData!!)
+        viewport.setMaxY(maxElevation.toDouble() + 10.0)
+        viewport.isScrollable = true
+        viewport.isXAxisBoundsManual = true
+        viewport.setMinX(0.0)
+        viewport.setMaxX(currentRoute!!.routeInfo!!.navigationData!!.entries.size.toDouble() + 10.0)
+
+        val initialGraphPoints = currentRoute!!.routeInfo!!.navigationData!!.entries
+            .stream()
+            .map { it.value }
+            .sorted(compareBy { it.index })
+            .collect(Collectors.toList())
+
+        initialGraphPoints.forEach {
+            series.appendData(
+                DataPoint(it.index.toDouble(), it.elevation!!.toDouble()),
+                true,
+                currentRoute!!.routeInfo!!.navigationData!!.entries.size
+            )
+        }
+
+        elevationGraph!!.addSeries(series)
+
     }
 
     private val voiceInstructionsObserver = VoiceInstructionsObserver { voiceInstructions ->
@@ -823,6 +910,20 @@ class NavigationFragment : Fragment() {
                 currentRoute =
                     routeViewModel.currentRoutes.value?.stream()?.filter { it.routeId == routeId }
                         ?.findFirst()?.orElse(null)
+
+                database.getReference("navDataWithElevation")
+                    .child(currentRoute!!.routeId.toString())
+                    .child("serializedMapPoints").addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            configureRouteNavigationMapData(snapshot)
+                            configureGraphAttributes(navigationView!!)
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            TODO("Not yet implemented")
+                        }
+
+                    })
 /*
                 binding = ActivityNavigationBinding.inflate(layoutInflater)
                 setContentView(binding.navigationView)*/
@@ -948,6 +1049,7 @@ class NavigationFragment : Fragment() {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         clearRouteAndStopNavigation()
                     }
+                    onNavigationMode = false
 
                     var intent: Intent? = null
                     if (routeCompleted) {
@@ -1006,17 +1108,19 @@ class NavigationFragment : Fragment() {
                         }
 
                         stopButton!!.visibility = View.VISIBLE
-
                     } else {
                         resumeNavigation()
                     }
                     playButton!!.visibility = View.GONE
                     pauseButton!!.visibility = View.VISIBLE
+                    onNavigationMode = true
                 }
                 pauseButton!!.setOnClickListener {
                     pauseNavigation()
                     playButton!!.visibility = View.VISIBLE
                     pauseButton!!.visibility = View.GONE
+                    onNavigationMode = false
+
                 }
                 lostButton!!.setOnClickListener {
                     pauseButton!!.performClick()
@@ -1133,6 +1237,30 @@ class NavigationFragment : Fragment() {
             }
         }
         return navigationView
+    }
+
+    private fun configureRouteNavigationMapData(snapshot: DataSnapshot) {
+        val data = snapshot.value as MutableList<HashMap<String, *>>
+
+        data.forEach {
+
+            val point = SerializableMapPoint(
+                it["pointId"] as String,
+                it["index"] as Long,
+                it["longitude"] as Double,
+                it["latitude"] as Double,
+                it["elevation"] as Long
+            )
+
+            if (currentRoute!!.routeInfo == null){
+                currentRoute!!.routeInfo = RouteInfo()
+            }
+
+            if (currentRoute!!.routeInfo!!.navigationData.isNullOrEmpty()) {
+                currentRoute!!.routeInfo!!.navigationData = mutableMapOf()
+            }
+            currentRoute!!.routeInfo!!.navigationData!![point.pointId] = point
+        }
     }
 
     private fun setMapStyle(

@@ -263,7 +263,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                                 it.routeType,
                                 it.difficultyLevel,
                                 it.rating,
-                                mutableListOf()
+                                mutableListOf(),
+                                mutableMapOf()
                             ),
                             null,
                             null,

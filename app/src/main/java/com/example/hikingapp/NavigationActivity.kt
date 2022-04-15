@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.location.Location
 import android.net.Uri
 import android.os.Build
@@ -28,12 +29,14 @@ import com.example.hikingapp.databinding.ActivityNavigationBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.map.MapInfo
+import com.example.hikingapp.domain.navigation.SerializableMapPoint
 import com.example.hikingapp.domain.navigation.UserNavigationData
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.persistence.firebase.FirebaseUtils
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
+import com.example.hikingapp.utils.ElevationDataUtils
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
@@ -41,6 +44,10 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import com.jjoe64.graphview.GraphView
+import com.jjoe64.graphview.series.DataPoint
+import com.jjoe64.graphview.series.LineGraphSeries
+import com.jjoe64.graphview.series.PointsGraphSeries
 import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
@@ -171,8 +178,14 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
     private var userNavigationData: UserNavigationData? = null
     private var timeCounter: Long = 0L
     private var isOutOfRoute = false
+    private var onNavigationMode = false
 
     lateinit var currentPhotoPath: String
+
+    private var elevationGraph: GraphView? = null
+    private var series = LineGraphSeries<DataPoint>()
+    private var liveSeries = PointsGraphSeries<DataPoint>()
+    private var datapoints: MutableList<DataPoint> = mutableListOf()
 
     private var mapInfo: MapInfo? = null
 
@@ -223,7 +236,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         }
     }
 
-    private val checkpointCounter: AtomicInteger = AtomicInteger()
+    private val elevationCounter: AtomicInteger = AtomicInteger()
 
     private val arrivalObserver = object : ArrivalObserver {
 
@@ -476,6 +489,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             // not handled
         }
 
+        @RequiresApi(Build.VERSION_CODES.N)
         override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
             val enhancedLocation = locationMatcherResult.enhancedLocation
             // update location puck's position on the map
@@ -487,9 +501,22 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             currentLocation =
                 Point.fromLngLat(enhancedLocation.longitude, enhancedLocation.latitude)
 
-            GlobalScope.launch {
-                callElevationDataAPI(enhancedLocation) // Update elevation data value
+            if (onNavigationMode) {
+
+                val locationKey = "${currentLocation!!.longitude()}_${currentLocation!!.latitude()}"
+
+                if (currentRoute!!.routeInfo!!.navigationData!!.containsKey(locationKey)) {
+                    addPointToGraph(currentRoute!!.routeInfo!!.navigationData!![locationKey])
+                }
+
             }
+
+//            else {
+//                GlobalScope.launch {
+//                    callElevationDataAPIAsync(enhancedLocation) // Update elevation data value
+//                }
+//            }
+
 
             if (!isOutOfRoute) {
                 associatedSights?.forEach { sight ->
@@ -531,6 +558,24 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                         .build()
                 )
             }
+        }
+    }
+
+    private fun addPointToGraph(point: SerializableMapPoint?) {
+
+        val dataPoint = DataPoint(
+            elevationCounter.getAndIncrement().toDouble(),
+            point!!.elevation!!.toDouble()
+        )
+        datapoints.add(
+            dataPoint
+        )
+        GlobalScope.launch {
+            series.resetData(datapoints.toTypedArray())
+
+            liveSeries.resetData(listOf(dataPoint).toTypedArray())
+            println("Added point: " + elevationCounter.get() + " - height: " + point.elevation)
+
         }
     }
 
@@ -629,7 +674,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         }
     }
 
-    private fun callElevationDataAPI(
+    private fun callElevationDataAPIAsync(
         currentLocation: Location
     ) {
 
@@ -662,6 +707,8 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                                         R.string.elevation_content,
                                         max.toString()
                                     )
+
+                                addPointToGraph(max)
                             }
                         call.cancel()
                     } else {
@@ -678,6 +725,12 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 return
             }
         })
+    }
+
+    private fun addPointToGraph(elevation: Long) {
+        val dataPoint = DataPoint(elevationCounter.toDouble(), elevation.toDouble())
+        elevationCounter.getAndIncrement()
+        series.appendData(dataPoint, false, 10000)
     }
 
     private fun formElevationRequestQuery(currentLocation: Location): MapboxTilequery {
@@ -771,6 +824,10 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             binding.textTimeEstimated.text = getString(R.string.estimated_time_empty)
 
             binding.currentElevation.text = ""
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                configureGraphAttributes()
+            }
 
             // initialize the location puck
             binding.mapView.location.apply {
@@ -974,7 +1031,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     clearRouteAndStopNavigation()
                 }
-
+                onNavigationMode = false
                 var intent: Intent? = null
                 if (routeCompleted) {
                     intent = Intent(this, EndOfNavigationActivity::class.java)
@@ -1030,11 +1087,13 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 }
                 binding.play.visibility = View.GONE
                 binding.pause.visibility = View.VISIBLE
+                onNavigationMode = true
             }
             binding.pause.setOnClickListener {
                 pauseNavigation()
                 binding.play.visibility = View.VISIBLE
                 binding.pause.visibility = View.GONE
+                onNavigationMode = false
             }
             binding.lostButton.setOnClickListener {
                 binding.pause.performClick()
@@ -1133,11 +1192,57 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             mapboxNavigation.startTripSession()
         } else {
 
-            val redirectIntent = Intent(this,LoginActivity::class.java)
-            redirectIntent.putExtra(GlobalUtils.LAST_PAGE, NavigationActivity::class.java.simpleName)
-            redirectIntent.putExtra("route",(intent.extras?.get("route") as Route?))
+            val redirectIntent = Intent(this, LoginActivity::class.java)
+            redirectIntent.putExtra(
+                GlobalUtils.LAST_PAGE,
+                NavigationActivity::class.java.simpleName
+            )
+            redirectIntent.putExtra("route", (intent.extras?.get("route") as Route?))
             startActivity(redirectIntent)
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun configureGraphAttributes() {
+
+        elevationGraph = binding.elevationGraph
+
+        elevationGraph!!.title = "Elevation Profile"
+        elevationGraph!!.gridLabelRenderer.verticalAxisTitle = "Elevation"
+
+        elevationGraph!!.addSeries(series)
+
+        liveSeries.color = Color.RED
+        elevationGraph!!.addSeries(liveSeries)
+
+        val viewport = elevationGraph!!.viewport
+
+        viewport.isYAxisBoundsManual = true
+        viewport.setMinY(0.0)
+        val maxElevation =
+            ElevationDataUtils.getMaxElevation(currentRoute!!.routeInfo!!.navigationData!!)
+        viewport.setMaxY(maxElevation.toDouble() + 10.0)
+        viewport.isScrollable = true
+        viewport.isXAxisBoundsManual = true
+        viewport.setMinX(0.0)
+        viewport.setMaxX(currentRoute!!.routeInfo!!.navigationData!!.entries.size.toDouble() + 10.0)
+
+        val initialGraphPoints = currentRoute!!.routeInfo!!.navigationData!!.entries
+            .stream()
+            .map { it.value }
+            .sorted(compareBy { it.index })
+            .collect(Collectors.toList())
+
+        initialGraphPoints.forEach {
+            series.appendData(
+                DataPoint(it.index.toDouble(), it.elevation!!.toDouble()),
+                true,
+                currentRoute!!.routeInfo!!.navigationData!!.entries.size
+            )
+        }
+
+        elevationGraph!!.addSeries(series)
+
     }
 
     private fun sendSMS(phoneNumber: String?) {
@@ -1180,24 +1285,25 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
             val byteArray = outputStream.toByteArray()
 
-            storage.getReference("routes/${currentRoute!!.routeId}/photos").listAll().addOnSuccessListener {
-                val nextIndex = it.items.size + 1
-                storage.getReference("routes/${currentRoute!!.routeId}/photos/photo_${currentRoute!!.routeId}_$nextIndex.jpg")
-                    .putBytes(byteArray).addOnSuccessListener {
-                        Toast.makeText(
-                            this@NavigationActivity,
-                            "Photo uploaded successfully.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(
-                            this@NavigationActivity,
-                            "Photo uploading failed.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-            }
+            storage.getReference("routes/${currentRoute!!.routeId}/photos").listAll()
+                .addOnSuccessListener {
+                    val nextIndex = it.items.size + 1
+                    storage.getReference("routes/${currentRoute!!.routeId}/photos/photo_${currentRoute!!.routeId}_$nextIndex.jpg")
+                        .putBytes(byteArray).addOnSuccessListener {
+                            Toast.makeText(
+                                this@NavigationActivity,
+                                "Photo uploaded successfully.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(
+                                this@NavigationActivity,
+                                "Photo uploading failed.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                }
         }
     }
 

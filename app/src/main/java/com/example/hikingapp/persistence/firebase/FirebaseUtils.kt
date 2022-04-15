@@ -1,10 +1,19 @@
 package com.example.hikingapp.persistence.firebase
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import com.example.hikingapp.domain.navigation.MapPointWrapper
+import com.example.hikingapp.domain.navigation.SerializableMapPoint
 import com.example.hikingapp.domain.navigation.UserNavigationData
+import com.example.hikingapp.utils.ElevationDataUtils
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.mapbox.geojson.FeatureCollection
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 object FirebaseUtils {
 
@@ -122,6 +131,82 @@ object FirebaseUtils {
 
     fun persistIncompleteNavigation(uid: String, userNavigationData: UserNavigationData) {
 
+    }
+
+    fun setElevationData(routeId: Long, start: Int, end: Int) {
+        database.getReference("navigationMapData")
+            .child(routeId.toString())
+            .child("serializedMapPoints")
+            .addValueEventListener(object: ValueEventListener {
+
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+                        val data = snapshot.value as MutableList<HashMap<String,*>>
+                        var elementsParsed = 0
+                        val thresshold = 48
+                        val points:MutableList<SerializableMapPoint> = mutableListOf()
+                        data.forEach {
+
+                            val point = SerializableMapPoint(
+                                it["pointId"] as String,
+                                it["index"] as Long,
+                                it["longitude"] as Double,
+                                it["latitude"] as Double,
+                                null
+                            )
+
+                            points.add(point)
+                        }
+                        points.forEach { point ->
+                            if (point.index in start..end) {
+
+                                val query = ElevationDataUtils.formElevationRequestQuery(point)
+
+                                query.enqueueCall(object : Callback<FeatureCollection> {
+                                    @RequiresApi(Build.VERSION_CODES.N)
+                                    override fun onResponse(
+                                        call: Call<FeatureCollection>,
+                                        response: Response<FeatureCollection>
+                                    ) {
+                                        if (response.isSuccessful) {
+
+                                            response.body()?.features()
+                                                ?.stream()
+                                                ?.mapToLong { feature ->
+                                                    feature.properties()?.get("ele")?.asLong!!
+                                                }
+                                                ?.max()
+                                                ?.ifPresent { max ->
+                                                    point.elevation = max
+                                                    elementsParsed++
+                                                }
+                                        }
+                                        if (elementsParsed == thresshold) {
+                                            FirebaseDatabase.getInstance()
+                                                .getReference("navDataWithElevation")
+                                                .child(routeId.toString())
+                                                .setValue(MapPointWrapper(points))
+                                        }
+                                    }
+
+                                    override fun onFailure(
+                                        call: Call<FeatureCollection>,
+                                        t: Throwable
+                                    ) {
+                                        TODO("Not yet implemented")
+                                    }
+
+                                })
+                            }
+                        }
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            })
     }
 
 }

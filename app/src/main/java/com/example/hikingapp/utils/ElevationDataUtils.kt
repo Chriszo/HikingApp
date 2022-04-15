@@ -3,8 +3,10 @@ package com.example.hikingapp.utils
 import android.os.Build
 import android.util.Log
 import com.example.hikingapp.domain.map.ExtendedMapPoint
+import com.example.hikingapp.domain.navigation.SerializableMapPoint
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
+import com.mapbox.geojson.Point
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -64,4 +66,27 @@ object ElevationDataUtils {
             .query(extendedPoint.point)
             .build()
     }
+
+
+    fun formElevationRequestQuery(serializableMapPoint: SerializableMapPoint): MapboxTilequery {
+        return MapboxTilequery.builder()
+            .accessToken("sk.eyJ1IjoiemNocjI3IiwiYSI6ImNrdGk3cWc3czBzdncyd3BhZnYwcTVlbmEifQ.6zEjANgTZ46qqQyfCcErUA")
+            .tilesetIds(GlobalUtils.TERRAIN_ID)
+            .limit(50)
+            .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
+            .query(Point.fromLngLat(serializableMapPoint.longitude, serializableMapPoint.latitude))
+            .build()
+    }
+
+    fun getMaxElevation(navigationData: MutableMap<String, SerializableMapPoint>): Long {
+        var maxElevation = -1L
+        navigationData.entries.forEach {
+            if (it.value.elevation!! > maxElevation) {
+                maxElevation = it.value.elevation!!
+            }
+        }
+        return maxElevation
+    }
+
+
 }
