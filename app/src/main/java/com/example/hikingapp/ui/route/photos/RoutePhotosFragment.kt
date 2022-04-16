@@ -20,6 +20,7 @@ import com.example.hikingapp.utils.PhotoItemDecorator
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.android.synthetic.main.fragment_photos.view.*
 
 class RoutePhotosFragment : Fragment(), OnItemClickedListener {
 
@@ -63,11 +64,19 @@ class RoutePhotosFragment : Fragment(), OnItemClickedListener {
         progressBar.visibility = View.VISIBLE
 
         routeViewModel.photos.observe(viewLifecycleOwner, {
-            photos = it
 
-            photosAdapter = PhotoAdapter(context, photos, itemClickedListener)
-            recyclerView.adapter = photosAdapter
-            progressBar.visibility = View.GONE
+            if (it.isNullOrEmpty()) {
+                recyclerView.visibility = View.GONE
+                view.no_photos_found.visibility = View.VISIBLE
+            } else {
+                recyclerView.visibility = View.VISIBLE
+                view.no_photos_found.visibility = View.GONE
+
+                photos = it
+                photosAdapter = PhotoAdapter(context, photos, itemClickedListener)
+                recyclerView.adapter = photosAdapter
+                progressBar.visibility = View.GONE
+            }
         })
 
         routeViewModel.route.observe(viewLifecycleOwner,{

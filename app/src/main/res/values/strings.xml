@@ -46,5 +46,12 @@
     <string name="deletion_text">You are going to submit a request for the deletion of you account. <br /><br /> <b>Do you want to proceed?</b></string>
     <string name="photos_label">Photos</string>
     <string name="remove_photos_text">Remove Photo(s)</string>
+    <string name="no_routes_saved">No Routes saved</string>
+    <string name="no_sights_saved">No Sights saved</string>
+    <string name="no_photos_saved">No Photos saved</string>
+    <string name="no_routes_completed">No Routes completed</string>
+    <string name="no_sights_on_completed_routes">No Sights on Completed Routes</string>
+    <string name="no_photos_found">No Photos found</string>
+    <string name="no_reviews_found">No Reviews found</string>
 
 </resources>

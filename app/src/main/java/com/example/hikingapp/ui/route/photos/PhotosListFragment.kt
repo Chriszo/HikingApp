@@ -17,6 +17,7 @@ import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
 import com.example.hikingapp.viewModels.RouteViewModel
+import kotlinx.android.synthetic.main.fragment_photos_list.view.*
 
 class PhotosListFragment : Fragment(), OnItemClickedListener {
 
@@ -53,10 +54,17 @@ class PhotosListFragment : Fragment(), OnItemClickedListener {
         progressBar.visibility = View.VISIBLE
 
         routeViewModel.photos.observe(viewLifecycleOwner, {
-            photos = it
-            photosAdapter = PhotoAdapter(context, photos, itemClickedListener)
-            recyclerView.adapter = photosAdapter
 
+            if (it.isNullOrEmpty()) {
+                recyclerView.visibility = View.GONE
+                view.no_photos_found.visibility = View.VISIBLE
+            } else {
+                recyclerView.visibility = View.VISIBLE
+                view.no_photos_found.visibility = View.GONE
+                photos = it
+                photosAdapter = PhotoAdapter(context, photos, itemClickedListener)
+                recyclerView.adapter = photosAdapter
+            }
             progressBar.visibility = View.GONE
         })
 

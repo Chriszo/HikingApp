@@ -185,7 +185,7 @@
             />
 
 
-        <include layout="@layout/fragment_photos"/>
+        <include layout="@layout/fragment_photos" android:id="@+id/photos_layout"/>
 
     </LinearLayout>
 

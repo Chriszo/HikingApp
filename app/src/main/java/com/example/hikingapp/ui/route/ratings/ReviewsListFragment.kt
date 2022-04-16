@@ -31,7 +31,6 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
-import kotlinx.android.synthetic.main.fragment_reviews_list.view.*
 
 class ReviewsListFragment : Fragment(), OnItemClickedListener {
 
@@ -76,7 +75,7 @@ class ReviewsListFragment : Fragment(), OnItemClickedListener {
 
             currentRoute = it
 
-            reviews = LocalDatabase.getReviewsForRoute(currentRoute!!.routeId)
+//            reviews = LocalDatabase.getReviewsForRoute(currentRoute!!.routeId)  // TODO Use service to update reviews periodically?
 
             if (reviews.isEmpty()) {
                 database.getReference("reviews").child(currentRoute!!.routeId.toString())
@@ -92,18 +91,14 @@ class ReviewsListFragment : Fragment(), OnItemClickedListener {
                                 reviewData.entries.forEach { reviewDataEntry ->
 
                                     val review = Review()
-                                    review.userName = reviewDataEntry.key
-                                    val user = User()
                                     reviewDataEntry.value.entries.forEach {
                                         when (it.key) {
                                             "review" -> review.review = it.value as String
-                                            "rating" -> review.rating =
-                                                (it.value as Number).toFloat()
+                                            "rating" -> review.rating = (it.value as Number).toFloat()
                                         }
                                     }
                                     setUser(
-                                        review.userName!!,
-                                        user,
+                                        reviewDataEntry.key,
                                         review,
                                         reviewData.entries.size
                                     )
@@ -120,7 +115,7 @@ class ReviewsListFragment : Fragment(), OnItemClickedListener {
                         }
                     })
             } else {
-                reviewsAdapter = ReviewsAdapter(requireContext(), reviews, this)
+                reviewsAdapter = ReviewsAdapter( requireContext(),reviews, this)
                 reviewsRecyclerView.adapter = reviewsAdapter
                 progressBar!!.visibility = View.GONE
             }
@@ -131,45 +126,51 @@ class ReviewsListFragment : Fragment(), OnItemClickedListener {
         return view
     }
 
-    private fun setUser(uid: String, user: User, review: Review, size: Int) {
+    private fun setUser(uid: String, review: Review, size: Int) {
 
         FirebaseDatabase.getInstance().getReference("users").child("user$uid")
             .addValueEventListener(object : ValueEventListener {
                 @RequiresApi(Build.VERSION_CODES.N)
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
+
                         val userData = snapshot.value as HashMap<String, *>
-                        user.uId = uid
-                        user.userName = userData["userName"] as String
-                        user.mail = userData["mail"] as String
-                        user.password = userData["password"] as String
-                        user.profileInfo = null
+                        val user = User(uid,userData["userName"] as String,userData["mail"] as String,userData["password"] as String, null)
+
+                        review.userName = user.userName
 
                         FirebaseStorage.getInstance().getReference("users").child(user.userName)
                             .child("${user.userName}_icon.png")
                             .getBytes(GlobalUtils.MEGABYTE * 5).addOnSuccessListener {
+
                                 val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                                 review.userImage = bitmap
-                                review.userName = user.userName
+
                                 reviews.add(review)
-                                if (reviews.size == size) {
+                                if (reviews.size == size && context != null) {
                                     LocalDatabase.setReviewsForRoute(
                                         currentRoute!!.routeId,
                                         reviews
                                     )
                                     reviewsAdapter =
-                                        ReviewsAdapter(context!!, reviews, itemClickedListener)
+                                        ReviewsAdapter( context!!,reviews, itemClickedListener)
                                     reviewsRecyclerView.adapter = reviewsAdapter
                                     progressBar!!.visibility = View.GONE
                                 }
                             }.addOnFailureListener {
                                 if (it is StorageException) {
                                     when (it.httpResultCode) {
-                                        404 -> Log.e(
-                                            ReviewsListFragment::class.java.simpleName,
-                                            "Image not found for user: ${user.userName}",
-                                            it
-                                        )
+                                        404 -> {
+                                            Log.e(ReviewsListFragment::class.java.simpleName,"Image not found for user: ${user.userName}",it)
+                                            reviews.add(review)
+                                            if (reviews.size == size && context != null) {
+                                                LocalDatabase.setReviewsForRoute(currentRoute!!.routeId, reviews)
+                                                reviewsAdapter = ReviewsAdapter( context!!,reviews, itemClickedListener)
+                                                reviewsRecyclerView.adapter = reviewsAdapter
+                                                progressBar!!.visibility = View.GONE
+                                            }
+
+                                        }
                                     }
                                 } else {
                                     Log.e(
@@ -177,19 +178,6 @@ class ReviewsListFragment : Fragment(), OnItemClickedListener {
                                         "Exception occured during loading of user Image for Review.",
                                         it
                                     )
-                                }
-
-                                review.userName = user.userName
-                                reviews.add(review)
-                                if (reviews.size == size) {
-                                    LocalDatabase.setReviewsForRoute(
-                                        currentRoute!!.routeId,
-                                        reviews
-                                    )
-                                    reviewsAdapter =
-                                        ReviewsAdapter(context!!, reviews, itemClickedListener)
-                                    reviewsRecyclerView.adapter = reviewsAdapter
-                                    progressBar!!.visibility = View.GONE
                                 }
                             }
                     }
@@ -209,4 +197,10 @@ class ReviewsListFragment : Fragment(), OnItemClickedListener {
         startActivity(intent)
     }
 
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        println("ON DESTROY VIEW CALLED...")
+        reviews = mutableListOf()
+    }
 }

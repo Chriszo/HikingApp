@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.RequiresApi
@@ -26,6 +27,8 @@ import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
 import kotlinx.android.synthetic.main.fragment_completed_route_info.view.*
+import kotlinx.android.synthetic.main.fragment_completed_route_info.view.progress_bar
+import kotlinx.android.synthetic.main.fragment_photos.view.*
 
 class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
@@ -106,13 +109,25 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
         completedPhotosRecyclerView.layoutManager = layoutManager
 
         completedViewModel.photos.observe(viewLifecycleOwner, {
-            completedRoutePhotos = it.toMutableList()
-            photosAdapter = PhotoAdapter(context,completedRoutePhotos, this)
-            completedPhotosRecyclerView.adapter = photosAdapter
 
-            val photoItemSpacing = PhotoItemDecorator(5)
-            completedPhotosRecyclerView.addItemDecoration(photoItemSpacing)
-            progressBar.visibility = View.GONE
+            val photosLayout = view.findViewById<FrameLayout>(R.id.photos_layout)
+
+            if (it.isNullOrEmpty()) {
+                completedPhotosRecyclerView.visibility = View.GONE
+                photosLayout.no_photos_found.visibility = View.VISIBLE
+            } else {
+
+                completedPhotosRecyclerView.visibility = View.VISIBLE
+                photosLayout.no_photos_found.visibility = View.GONE
+
+                completedRoutePhotos = it.toMutableList()
+                photosAdapter = PhotoAdapter(context,completedRoutePhotos, this)
+                completedPhotosRecyclerView.adapter = photosAdapter
+
+                val photoItemSpacing = PhotoItemDecorator(5)
+                completedPhotosRecyclerView.addItemDecoration(photoItemSpacing)
+                progressBar.visibility = View.GONE
+            }
         })
 
 

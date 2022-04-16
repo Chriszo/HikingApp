@@ -21,6 +21,8 @@ import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 import com.example.hikingapp.ui.route.cultureInfo.SightDetailsActivity
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.android.synthetic.main.fragment_completed.view.*
+import kotlinx.android.synthetic.main.fragment_saved.view.*
 import java.util.stream.Collectors
 
 class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListener {
@@ -74,11 +76,18 @@ class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedLi
         // TODO initialize sights list with sights
         profileViewModel.completedSights.observe(viewLifecycleOwner, {
 
-            sights = it as MutableList<Sight>
-            profileViewModel.user.value?.profileInfo?.completedSights =
-                sights.stream().map { it.sightId }.collect(Collectors.toList())
-            sightsAdapter = SightsProfileAdapter(context, sights, this,this)
-            sightsRecyclerView.adapter = sightsAdapter
+            if (it.isNullOrEmpty()) {
+                sightsRecyclerView.visibility = View.GONE
+                view.no_completed_sights.visibility = View.VISIBLE
+            } else {
+                sightsRecyclerView.visibility = View.VISIBLE
+                view.no_completed_sights.visibility = View.GONE
+                sights = it as MutableList<Sight>
+                profileViewModel.user.value?.profileInfo?.completedSights =
+                    sights.stream().map { it.sightId }.collect(Collectors.toList())
+                sightsAdapter = SightsProfileAdapter(context, sights, this,this)
+                sightsRecyclerView.adapter = sightsAdapter
+            }
         })
     }
 
@@ -90,11 +99,18 @@ class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedLi
 
         profileViewModel.completedRoutes.observe(viewLifecycleOwner, {
 
-            routes = it as MutableList<Route>
-            profileViewModel.user.value?.profileInfo?.completedRoutes =
-                routes.stream().map { it.routeId }.collect(Collectors.toList())
-            routesAdapter = RouteAdapter(requireContext(), null,routes, this)
-            routesRecyclerView.adapter = routesAdapter
+            if (it.isNullOrEmpty()) {
+                routesRecyclerView.visibility = View.GONE
+                view.no_completed_routes.visibility = View.VISIBLE
+            } else {
+                routesRecyclerView.visibility = View.VISIBLE
+                view.no_completed_routes.visibility = View.GONE
+                routes = it
+                profileViewModel.user.value?.profileInfo?.completedRoutes =
+                    routes.stream().map { it.routeId }.collect(Collectors.toList())
+                routesAdapter = RouteAdapter(requireContext(), null,routes, this)
+                routesRecyclerView.adapter = routesAdapter
+            }
         })
     }
 

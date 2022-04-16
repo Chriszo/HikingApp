@@ -23,6 +23,7 @@ import com.example.hikingapp.ui.route.photos.PhotoActivity
 import com.example.hikingapp.viewModels.ProfileViewModel
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.android.synthetic.main.fragment_saved.view.*
 import java.util.stream.Collectors
 
 class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListener {
@@ -40,7 +41,6 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
     private lateinit var photosLayoutManager: LinearLayoutManager
 
 
-
     private lateinit var routesRecyclerView: RecyclerView
     private lateinit var sightsRecyclerView: RecyclerView
     private lateinit var photosRecyclerView: RecyclerView
@@ -55,10 +55,6 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
 
     private var user: FirebaseUser? = null
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
@@ -207,14 +203,21 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
 
         profileViewModel.savedSights.observe(viewLifecycleOwner, { sightsList ->
 
-            sights = sightsList
-            profileViewModel.user.value?.profileInfo?.savedSights =
-                sights.stream().map { it.sightId }.collect(Collectors.toList())
-            sightsAdapter = SightsProfileAdapter(context, sights, this, this)
-            sightsRecyclerView.adapter = sightsAdapter
-            profileViewModel.savedSightsEnabled.observe(viewLifecycleOwner, {
-                sightsAdapter.setEnabled(it)
-            })
+            if (sightsList.isNullOrEmpty()) {
+                sightsRecyclerView.visibility = View.GONE
+                view.no_saved_sights.visibility = View.VISIBLE
+            } else {
+                sightsRecyclerView.visibility = View.VISIBLE
+                view.no_saved_sights.visibility = View.GONE
+                sights = sightsList
+                profileViewModel.user.value?.profileInfo?.savedSights =
+                    sights.stream().map { it.sightId }.collect(Collectors.toList())
+                sightsAdapter = SightsProfileAdapter(context, sights, this, this)
+                sightsRecyclerView.adapter = sightsAdapter
+                profileViewModel.savedSightsEnabled.observe(viewLifecycleOwner, {
+                    sightsAdapter.setEnabled(it)
+                })
+            }
         })
     }
 
@@ -225,16 +228,25 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
         routesRecyclerView.layoutManager = routesLayoutManager
 
         profileViewModel.savedRoutes.observe(viewLifecycleOwner, {
-            routes = it as MutableList<Route>
 
-            profileViewModel.user.value?.profileInfo?.savedRoutes =
-                routes.stream().map { it.routeId }.collect(Collectors.toList())
-            routesAdapter = RoutesProfileAdapter(context, routes, this, this)
-            routesRecyclerView.adapter = routesAdapter
+            if (it.isNullOrEmpty()) {
+                routesRecyclerView.visibility = View.GONE
+                view.no_saved_routes.visibility = View.VISIBLE
+            } else {
+                routesRecyclerView.visibility = View.VISIBLE
+                view.no_saved_routes.visibility = View.GONE
 
-            profileViewModel.savedRoutesEnabled.observe(viewLifecycleOwner, {
-                routesAdapter.setEnabled(it)
-            })
+                routes = it
+                profileViewModel.user.value?.profileInfo?.savedRoutes =
+                    routes.stream().map { it.routeId }.collect(Collectors.toList())
+                routesAdapter = RoutesProfileAdapter(context, routes, this, this)
+                routesRecyclerView.adapter = routesAdapter
+
+                profileViewModel.savedRoutesEnabled.observe(viewLifecycleOwner, {
+                    routesAdapter.setEnabled(it)
+                })
+            }
+
         })
     }
 
@@ -245,17 +257,23 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
         photosRecyclerView.layoutManager = photosLayoutManager
 
         profileViewModel.savedPhotos.observe(viewLifecycleOwner, {
-            photos = it as MutableList<PhotoItem>
 
-            /*profileViewModel.user.value?.profileInfo?.savedRoutes =
-                routes.stream().map { it.routeId }.collect(Collectors.toList())*/
+            if (it.isNullOrEmpty()) {
+                photosRecyclerView.visibility = View.GONE
+                view.no_saved_photos.visibility = View.VISIBLE
+            } else {
+                photosRecyclerView.visibility = View.VISIBLE
+                view.no_saved_photos.visibility = View.GONE
 
-            photosAdapter = PhotosProfileAdapter(context, photos, this, this)
-            photosRecyclerView.adapter = photosAdapter
+                photos = it
+                photosAdapter = PhotosProfileAdapter(context, photos, this, this)
+                photosRecyclerView.adapter = photosAdapter
 
-            profileViewModel.savedPhotosEnabled.observe(viewLifecycleOwner, {
-                photosAdapter.setEnabled(it)
-            })
+                profileViewModel.savedPhotosEnabled.observe(viewLifecycleOwner, {
+                    photosAdapter.setEnabled(it)
+                })
+            }
+
         })
     }
 

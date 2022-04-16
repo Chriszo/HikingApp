@@ -43,12 +43,28 @@
 
         </LinearLayout>
 
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/favoritesRoutesRView"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/no_saved_routes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:text="@string/no_routes_saved"
+                android:textSize="18sp"
+                android:textStyle="italic"
+                android:layout_gravity="center_horizontal"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/favoritesRoutesRView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp" />
+
+        </LinearLayout>
 
 
         <View
@@ -89,11 +105,31 @@
                 />
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/favoritesSightsRView"
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/no_saved_sights"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:text="@string/no_sights_saved"
+                android:textSize="18sp"
+                android:textStyle="italic"
+                android:layout_gravity="center_horizontal"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/favoritesSightsRView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp" />
+
+        </LinearLayout>
+
+
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -125,11 +161,30 @@
                 android:textStyle="bold"/>
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/favoritesPhotosView"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/no_saved_photos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:text="@string/no_photos_saved"
+                android:textSize="18sp"
+                android:textStyle="italic"
+                android:layout_gravity="center_horizontal"/>
+
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/favoritesPhotosView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp" />
+
+
+        </LinearLayout>
 
     </LinearLayout>
 
