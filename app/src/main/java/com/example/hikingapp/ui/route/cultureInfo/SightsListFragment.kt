@@ -13,14 +13,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.culture.CultureInfo
+import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.SightsAdapter
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.android.synthetic.main.fragment_culture_info.view.*
 
 class SightsListFragment : Fragment(), OnItemClickedListener {
 
+    private var currentRoute: Route? = null
     private var user: FirebaseUser? = null
     private val viewModel: RouteViewModel by activityViewModels()
     private val userViewModel: UserViewModel by activityViewModels()
@@ -61,12 +64,27 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
 
         progressBar.visibility = View.VISIBLE
 
-        viewModel.cultureInfo.observe(viewLifecycleOwner, { updatedCultureInfo ->
-            cultureInfo = updatedCultureInfo
+        viewModel.route.observe(viewLifecycleOwner,{
+            currentRoute = it
+        })
 
-            sightsAdapter = SightsAdapter(context, cultureInfo?.sights!!, itemClickedListener)
-            recyclerView.adapter = sightsAdapter
-            progressBar.visibility = View.GONE
+        viewModel.cultureInfo.observe(viewLifecycleOwner, { updatedCultureInfo ->
+
+            if (updatedCultureInfo == null || updatedCultureInfo.sights.isNullOrEmpty()) {
+
+                cultureInfoView.no_sights.visibility = View.VISIBLE
+                recyclerView.visibility = View.GONE
+                progressBar.visibility = View.GONE
+            } else {
+
+                cultureInfoView.no_sights.visibility = View.GONE
+                recyclerView.visibility = View.VISIBLE
+                cultureInfo = updatedCultureInfo
+
+                sightsAdapter = SightsAdapter(context, cultureInfo?.sights!!, itemClickedListener)
+                recyclerView.adapter = sightsAdapter
+                progressBar.visibility = View.GONE
+            }
         })
 
         userViewModel.user.observe(viewLifecycleOwner, {
@@ -81,6 +99,7 @@ class SightsListFragment : Fragment(), OnItemClickedListener {
         val sight = cultureInfo?.sights?.get(position)
         intent.putExtra("sightInfo", sight)
         intent.putExtra("action", "discover")
+        intent.putExtra("route", currentRoute)
         intent.putExtra("authInfo", user)
         startActivity(intent)
     }

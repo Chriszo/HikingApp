@@ -9,11 +9,13 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
+
+            <include layout="@layout/custom_toolbar" android:id="@+id/toolbarContainer"/>
 
             <ImageView
                 android:id="@+id/route_info_image"
@@ -25,14 +27,14 @@
                 app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toBottomOf="@id/toolbarContainer" />
 
             <RelativeLayout
                 android:id="@+id/saved_relative_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="0dp"
-                android:layout_marginTop="190dp"
+                android:layout_marginTop="240dp"
                 android:layout_marginBottom="136dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

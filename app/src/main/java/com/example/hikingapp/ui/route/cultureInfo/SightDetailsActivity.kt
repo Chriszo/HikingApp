@@ -8,19 +8,22 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.hikingapp.LoginActivity
-import com.example.hikingapp.R
+import com.example.hikingapp.*
 import com.example.hikingapp.databinding.ActivitySightDetailsBinding
 import com.example.hikingapp.domain.culture.Sight
+import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
+import com.example.hikingapp.ui.route.RouteFragment
 import com.example.hikingapp.ui.route.photos.PhotoActivity
 import com.example.hikingapp.utils.PhotoItemDecorator
 import com.example.hikingapp.viewModels.RouteViewModel
@@ -33,9 +36,11 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
+import kotlinx.android.synthetic.main.custom_toolbar.view.*
+import kotlinx.android.synthetic.main.fragment_saved_route.view.*
 import java.util.*
 
-class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
+class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener, BackButtonListener {
 
     private var authInfo: FirebaseUser? = null
     private lateinit var binding: ActivitySightDetailsBinding
@@ -83,6 +88,31 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
         val progressBar = binding.progressBar
 
         initializeButtonListeners()
+
+
+        binding.toolbarContainer.actionBarTitle.text = sightInfo.name
+
+        if (authInfo != null) {
+            binding.toolbarContainer.actionBarUser.visibility = View.GONE
+            binding.toolbarContainer.accountIcon.visibility = View.VISIBLE
+            binding.toolbarContainer.accountIcon.setImageResource(R.drawable.account_icon_foreground)
+        } else {
+            binding.toolbarContainer.actionBarUser.visibility = View.VISIBLE
+            binding.toolbarContainer.accountIcon.visibility = View.GONE
+        }
+
+        binding.toolbarContainer.actionBarUser.setOnClickListener {
+            if (authInfo == null) {
+                val loginIntent = Intent(this, LoginActivity::class.java)
+                loginIntent.putExtra("sightInfo", sightInfo)
+                loginIntent.putExtra("action", "discover")
+                loginIntent.putExtra(GlobalUtils.LAST_PAGE, SightDetailsActivity::class.java.simpleName)
+                startActivity(loginIntent)
+            }
+        }
+
+        setBackButtonListener()
+
 
 
         nameView.text = sightInfo.name
@@ -290,5 +320,22 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener {
         intent.putExtra("itemId", "S${sightInfo.sightId}")
         intent.putExtra("authInfo",authInfo)
         startActivity(intent)
+    }
+
+    override fun setBackButtonListener() {
+
+        val currentRoute = intent.extras?.get("route") as Route?
+        binding.toolbarContainer.backBtn.setOnClickListener {
+            var redirectIntent: Intent? = null
+            if (currentRoute != null) {
+                redirectIntent = Intent(this, RouteActivity::class.java)
+                redirectIntent.putExtra("route", currentRoute)
+            } else {
+                redirectIntent = Intent(this, MainActivity::class.java)
+            }
+            redirectIntent.putExtra("authInfo", authInfo)
+            redirectIntent.putExtra("action", "discover")
+            startActivity(redirectIntent)
+        }
     }
 }

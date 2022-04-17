@@ -9,14 +9,15 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.example.hikingapp.R
-import com.example.hikingapp.ReviewActivity
+import com.example.hikingapp.*
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
@@ -27,6 +28,7 @@ import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
+import com.example.hikingapp.ui.route.RouteFragment
 import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.google.firebase.auth.FirebaseUser
@@ -38,8 +40,9 @@ import com.google.firebase.storage.FirebaseStorage
 import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
+import kotlinx.android.synthetic.main.custom_toolbar.view.*
 import kotlinx.android.synthetic.main.fragment_completed_route.view.*
-import kotlinx.android.synthetic.main.route_fragment.view.*
+import kotlinx.android.synthetic.main.route_fragment.view.info_nav_view
 import kotlinx.android.synthetic.main.route_fragment.view.routeName
 import kotlinx.android.synthetic.main.route_fragment.view.routeRating
 import kotlinx.android.synthetic.main.route_fragment.view.route_info_image
@@ -57,7 +60,7 @@ import java.util.*
 import java.util.stream.Collectors
 import kotlin.collections.HashMap
 
-class CompletedRouteFragment : Fragment() {
+class CompletedRouteFragment : Fragment(), BackButtonListener {
 
     private var authInfo: FirebaseUser? = null
     private val storage: FirebaseStorage by lazy {
@@ -79,6 +82,8 @@ class CompletedRouteFragment : Fragment() {
         MapServiceImpl()
     }
 
+    private lateinit var routeView: View
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
@@ -89,7 +94,7 @@ class CompletedRouteFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        val view = inflater.inflate(R.layout.fragment_completed_route, container, false)
+        routeView = inflater.inflate(R.layout.fragment_completed_route, container, false)
 
         route = arguments?.get("route") as Route
         authInfo = arguments?.get("authInfo") as FirebaseUser?
@@ -97,6 +102,32 @@ class CompletedRouteFragment : Fragment() {
         if (completedViewModel.route.value == null) {
             completedViewModel.route.postValue(route)
         }
+
+
+        routeView.toolbarContainer.action_bar_title.text = route.routeName
+
+        val actionBarUser = routeView.toolbarContainer.action_bar_user as TextView
+        val accountIcon = routeView.toolbarContainer.account_icon as ImageView
+        if (authInfo != null) {
+            actionBarUser.visibility = View.GONE
+            accountIcon.visibility = View.VISIBLE
+            (accountIcon).setImageResource(R.drawable.account_icon_foreground)
+        } else {
+            actionBarUser.visibility = View.VISIBLE
+            accountIcon.visibility = View.GONE
+        }
+
+        actionBarUser.setOnClickListener {
+            if (authInfo == null) {
+                val loginIntent = Intent(context, LoginActivity::class.java)
+                loginIntent.putExtra("route", route)
+                loginIntent.putExtra("action", "discover")
+                loginIntent.putExtra(GlobalUtils.LAST_PAGE, RouteFragment::class.java.simpleName)
+                startActivity(loginIntent)
+            }
+        }
+
+        setBackButtonListener()
 
         val routeMapEntity = LocalDatabase.getRouteMapContent(route.routeId)
 
@@ -165,22 +196,22 @@ class CompletedRouteFragment : Fragment() {
         }
 
 
-        initializeNavigationComponents(view)
+        initializeNavigationComponents(routeView)
 
-        initializeButtonListeners(view)
+        initializeButtonListeners(routeView)
 
 
         val mainPhotoBitmap =
             LocalDatabase.getMainImage(route.routeId, Route::class.java.simpleName)
         if (mainPhotoBitmap != null) {
-            view.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhotoBitmap))
+            routeView.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhotoBitmap))
         } else {
             FirebaseStorage.getInstance()
                 .getReference("routes/mainPhotos/route_${route.routeId}_main.jpg")
                 .getBytes(1024 * 1024).addOnSuccessListener {
 
                     val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                    view.route_info_image.setImageDrawable(
+                    routeView.route_info_image.setImageDrawable(
                         BitmapDrawable(
                             resources,
                             bitmap
@@ -224,10 +255,10 @@ class CompletedRouteFragment : Fragment() {
             completedViewModel.photos.postValue(route.photos)
         }
 
-        view.routeName.text = route.routeName
-        view.stateName.text = route.stateName
-        view.routeRating.rating = route.routeInfo!!.rating!!
-        return view
+        routeView.routeName.text = route.routeName
+        routeView.stateName.text = route.stateName
+        routeView.routeRating.rating = route.routeInfo!!.rating!!
+        return routeView
     }
 
 
@@ -465,5 +496,13 @@ class CompletedRouteFragment : Fragment() {
             .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
             .query(extendedPoint.point)
             .build()
+    }
+
+    override fun setBackButtonListener() {
+        routeView.toolbarContainer.back_btn.setOnClickListener {
+            val redirectIntent = Intent(context, MainActivity::class.java)
+            redirectIntent.putExtra("authInfo", authInfo)
+            startActivity(redirectIntent)
+        }
     }
 }

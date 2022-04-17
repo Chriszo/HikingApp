@@ -56,7 +56,8 @@
                 android:text="@string/no_routes_saved"
                 android:textSize="18sp"
                 android:textStyle="italic"
-                android:layout_gravity="center_horizontal"/>
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/favoritesRoutesRView"
@@ -119,7 +120,8 @@
                 android:text="@string/no_sights_saved"
                 android:textSize="18sp"
                 android:textStyle="italic"
-                android:layout_gravity="center_horizontal"/>
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/favoritesSightsRView"
@@ -174,7 +176,8 @@
                 android:text="@string/no_photos_saved"
                 android:textSize="18sp"
                 android:textStyle="italic"
-                android:layout_gravity="center_horizontal"/>
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone"/>
 
 
             <androidx.recyclerview.widget.RecyclerView

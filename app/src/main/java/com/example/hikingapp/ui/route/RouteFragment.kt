@@ -48,7 +48,6 @@ import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import io.ktor.http.*
-import kotlinx.android.synthetic.main.activity_delete_contact.view.*
 import kotlinx.android.synthetic.main.custom_toolbar.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.toolbarContainer
@@ -92,14 +91,14 @@ class RouteFragment : Fragment(), BackButtonListener {
 
     private val sightRetrieveLimit: Int? = null
 
-    private lateinit var view: View
+    private lateinit var routeView: View
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        view = inflater.inflate(R.layout.route_fragment, container, false)
+        routeView = inflater.inflate(R.layout.route_fragment, container, false)
 
         //TODO Retrieve current Route Map information
         route = arguments?.get("route") as Route
@@ -109,10 +108,10 @@ class RouteFragment : Fragment(), BackButtonListener {
 
         userViewModel.user.postValue(authInfo)
 
-        view.toolbarContainer.action_bar_title.text = route.routeName
+        routeView.toolbarContainer.action_bar_title.text = route.routeName
 
-        val actionBarUser = view.toolbarContainer.action_bar_user as TextView
-        val accountIcon = view.toolbarContainer.account_icon as ImageView
+        val actionBarUser = routeView.toolbarContainer.action_bar_user as TextView
+        val accountIcon = routeView.toolbarContainer.account_icon as ImageView
         if (authInfo != null) {
             actionBarUser.visibility = View.GONE
             accountIcon.visibility = View.VISIBLE
@@ -146,8 +145,9 @@ class RouteFragment : Fragment(), BackButtonListener {
             .child("serializedMapPoints")
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-
-                    configureRouteNavigationMapData(snapshot)
+                    if (snapshot.exists()) {
+                        configureRouteNavigationMapData(snapshot)
+                    }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
@@ -265,6 +265,10 @@ class RouteFragment : Fragment(), BackButtonListener {
                                                                 persistedCultureInfo
                                                             loadSightsMainPhotos()
 //                                        viewModel.cultureInfo.postValue(persistedCultureInfo)
+                                                        } else {
+                                                            viewModel.cultureInfo.postValue(
+                                                                CultureInfo(mutableListOf())
+                                                            )
                                                         }
                                                     }
 
@@ -412,6 +416,8 @@ class RouteFragment : Fragment(), BackButtonListener {
                                         route.cultureInfo = persistedCultureInfo
                                         loadSightsMainPhotos()
 //                                        viewModel.cultureInfo.postValue(persistedCultureInfo)
+                                    } else {
+                                        viewModel.cultureInfo.postValue(CultureInfo(mutableListOf()))
                                     }
                                 }
 
@@ -447,19 +453,19 @@ class RouteFragment : Fragment(), BackButtonListener {
 
 
 
-        initializeNavigationComponents(view)
+        initializeNavigationComponents(routeView)
 
-        initializeButtonListeners(view)
+        initializeButtonListeners(routeView)
 
         val mainPhoto = LocalDatabase.getMainImage(route.routeId, Route::class.java.simpleName)
         if (mainPhoto != null) {
-            view.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhoto))
+            routeView.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhoto))
         } else {
             FirebaseStorage.getInstance().getReference("routes/mainPhotos/$mainPhotoName")
                 .getBytes(1024 * 1024).addOnSuccessListener {
 
                     val photoBitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                    view.route_info_image.setImageDrawable(
+                    routeView.route_info_image.setImageDrawable(
                         BitmapDrawable(
                             resources,
                             photoBitmap
@@ -503,11 +509,11 @@ class RouteFragment : Fragment(), BackButtonListener {
             viewModel.photos.postValue(route.photos)
         }
 
-        view.routeName.text = route.routeName
-        view.stateName.text = route.stateName
-        view.routeRating.rating = route.routeInfo!!.rating!!
+        routeView.routeName.text = route.routeName
+        routeView.stateName.text = route.stateName
+        routeView.routeRating.rating = route.routeInfo!!.rating!!
 
-        return view
+        return routeView
     }
 
     private fun configureRouteNavigationMapData(snapshot: DataSnapshot) {
@@ -911,7 +917,7 @@ class RouteFragment : Fragment(), BackButtonListener {
     }
 
     override fun setBackButtonListener() {
-        view.toolbarContainer.back_btn.setOnClickListener {
+        routeView.toolbarContainer.back_btn.setOnClickListener {
             val redirectIntent = Intent(context, MainActivity::class.java)
             redirectIntent.putExtra("authInfo", authInfo)
             startActivity(redirectIntent)

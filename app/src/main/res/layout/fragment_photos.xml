@@ -59,7 +59,8 @@
                 android:text="@string/no_photos_found"
                 android:textSize="18sp"
                 android:textStyle="italic"
-                android:layout_gravity="center_horizontal"/>
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/sight_photos_recycler_view"

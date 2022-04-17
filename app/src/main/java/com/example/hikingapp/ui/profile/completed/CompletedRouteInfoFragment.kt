@@ -119,7 +119,6 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
                 completedPhotosRecyclerView.visibility = View.VISIBLE
                 photosLayout.no_photos_found.visibility = View.GONE
-
                 completedRoutePhotos = it.toMutableList()
                 photosAdapter = PhotoAdapter(context,completedRoutePhotos, this)
                 completedPhotosRecyclerView.adapter = photosAdapter

@@ -35,7 +35,8 @@
                 android:layout_marginTop="30dp"
                 android:text="@string/no_routes_completed"
                 android:textSize="18sp"
-                android:textStyle="italic"/>
+                android:textStyle="italic"
+                android:visibility="gone"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/completedRoutesRView"
@@ -75,7 +76,8 @@
                 android:layout_marginTop="30dp"
                 android:text="@string/no_sights_on_completed_routes"
                 android:textSize="18sp"
-                android:textStyle="italic" />
+                android:textStyle="italic"
+                android:visibility="gone"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/completedSightsRView"
