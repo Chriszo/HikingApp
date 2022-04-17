@@ -70,8 +70,15 @@ class MainActivity : AppCompatActivity() {
             (intent.extras!!["authInfo"] as FirebaseUser?).apply {
                 userViewModel.user.postValue(this)
                 authInfo = this
-                toolbar.action_bar_user.visibility = View.GONE
-                toolbar.account_icon.visibility = View.VISIBLE
+                if (authInfo != null) {
+
+                    toolbar.action_bar_user.visibility = View.GONE
+                    toolbar.account_icon.visibility = View.VISIBLE
+                } else {
+
+                    toolbar.action_bar_user.visibility = View.VISIBLE
+                    toolbar.account_icon.visibility = View.GONE
+                }
             }
         }
 

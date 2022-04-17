@@ -103,9 +103,10 @@ class LoginActivity : AppCompatActivity() {
                 }
                 "RouteFragment" -> {
                     val currentRoute = intent.extras?.get("route") as Route?
+                    val action = intent.extras?.get("action") as String?
                     redirectIntent = Intent(this@LoginActivity, RouteActivity::class.java)
                     redirectIntent!!.putExtra("route", currentRoute)
-                    redirectIntent!!.putExtra("action", "discover")
+                    redirectIntent!!.putExtra("action", action)
                 }
                 "PhotoActivity" -> {
                     val imageName = intent.extras?.get("photo_item") as String?

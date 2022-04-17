@@ -10,15 +10,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.example.hikingapp.LoginActivity
-import com.example.hikingapp.MapActivity
-import com.example.hikingapp.NavigationActivity
-import com.example.hikingapp.R
+import com.example.hikingapp.*
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.map.ExtendedMapPoint
@@ -49,7 +48,10 @@ import com.mapbox.api.tilequery.MapboxTilequery
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import io.ktor.http.*
+import kotlinx.android.synthetic.main.activity_delete_contact.view.*
+import kotlinx.android.synthetic.main.custom_toolbar.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.*
+import kotlinx.android.synthetic.main.route_fragment.view.toolbarContainer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -64,7 +66,7 @@ import java.util.stream.Collectors
 import kotlin.Comparator
 import kotlin.collections.HashMap
 
-class RouteFragment : Fragment() {
+class RouteFragment : Fragment(), BackButtonListener {
 
     private val storage: FirebaseStorage by lazy {
         FirebaseStorage.getInstance()
@@ -90,12 +92,14 @@ class RouteFragment : Fragment() {
 
     private val sightRetrieveLimit: Int? = null
 
+    private lateinit var view: View
+
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.route_fragment, container, false)
+    ): View {
+        view = inflater.inflate(R.layout.route_fragment, container, false)
 
         //TODO Retrieve current Route Map information
         route = arguments?.get("route") as Route
@@ -104,6 +108,31 @@ class RouteFragment : Fragment() {
         authInfo = requireArguments()["authInfo"] as FirebaseUser?
 
         userViewModel.user.postValue(authInfo)
+
+        view.toolbarContainer.action_bar_title.text = route.routeName
+
+        val actionBarUser = view.toolbarContainer.action_bar_user as TextView
+        val accountIcon = view.toolbarContainer.account_icon as ImageView
+        if (authInfo != null) {
+            actionBarUser.visibility = View.GONE
+            accountIcon.visibility = View.VISIBLE
+            (accountIcon).setImageResource(R.drawable.account_icon_foreground)
+        } else {
+            actionBarUser.visibility = View.VISIBLE
+            accountIcon.visibility = View.GONE
+        }
+
+        actionBarUser.setOnClickListener {
+            if (authInfo == null) {
+                val loginIntent = Intent(context, LoginActivity::class.java)
+                loginIntent.putExtra("route", route)
+                loginIntent.putExtra("action", "discover")
+                loginIntent.putExtra(GlobalUtils.LAST_PAGE, RouteFragment::class.java.simpleName)
+                startActivity(loginIntent)
+            }
+        }
+
+        setBackButtonListener()
 
         val prefs =
             requireActivity().applicationContext.getSharedPreferences("mainPhotoPrefs", 0)
@@ -879,6 +908,14 @@ class RouteFragment : Fragment() {
             .layers(GlobalUtils.TILEQUERY_ATTRIBUTE_REQUESTED_ID)
             .query(extendedPoint.point)
             .build()
+    }
+
+    override fun setBackButtonListener() {
+        view.toolbarContainer.back_btn.setOnClickListener {
+            val redirectIntent = Intent(context, MainActivity::class.java)
+            redirectIntent.putExtra("authInfo", authInfo)
+            startActivity(redirectIntent)
+        }
     }
 
 }
