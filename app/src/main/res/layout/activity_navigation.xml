@@ -193,11 +193,14 @@
                 android:layout_marginBottom="5dp"
                 android:layout_marginStart="60dp"
                 android:background="@drawable/circular_button"
-                android:backgroundTint="@android:color/white"
-                android:drawableStart="@drawable/lost_icon_foreground"
-                android:paddingStart="-16dp"
-                android:paddingTop="19dp"
-                android:paddingEnd="-10dp" />
+                android:backgroundTint="@android:color/holo_red_dark"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="10dp"
+                android:paddingTop="10dp"
+                android:text="Lost"
+                android:textColor="@color/white"
+                android:textStyle="bold"/>
 
 
         </LinearLayout>
