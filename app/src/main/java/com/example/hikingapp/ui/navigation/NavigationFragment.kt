@@ -7,8 +7,12 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -22,7 +26,9 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
@@ -45,6 +51,7 @@ import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -74,6 +81,10 @@ import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.camera
+import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
@@ -119,7 +130,31 @@ import com.mapbox.navigation.ui.voice.model.SpeechError
 import com.mapbox.navigation.ui.voice.model.SpeechValue
 import com.mapbox.navigation.ui.voice.model.SpeechVolume
 import com.mapbox.turf.TurfMeasurement
+import kotlinx.android.synthetic.main.activity_navigation.*
+import kotlinx.android.synthetic.main.activity_navigation.view.*
 import kotlinx.android.synthetic.main.fragment_navigation.view.*
+import kotlinx.android.synthetic.main.fragment_navigation.view.cameraButton
+import kotlinx.android.synthetic.main.fragment_navigation.view.current_elevation
+import kotlinx.android.synthetic.main.fragment_navigation.view.lost_button
+import kotlinx.android.synthetic.main.fragment_navigation.view.maneuverView
+import kotlinx.android.synthetic.main.fragment_navigation.view.mapStyle_options
+import kotlinx.android.synthetic.main.fragment_navigation.view.mapView
+import kotlinx.android.synthetic.main.fragment_navigation.view.nav_options
+import kotlinx.android.synthetic.main.fragment_navigation.view.nav_toggle
+import kotlinx.android.synthetic.main.fragment_navigation.view.pause
+import kotlinx.android.synthetic.main.fragment_navigation.view.play
+import kotlinx.android.synthetic.main.fragment_navigation.view.recenter
+import kotlinx.android.synthetic.main.fragment_navigation.view.routeOverview
+import kotlinx.android.synthetic.main.fragment_navigation.view.satellite_map_style
+import kotlinx.android.synthetic.main.fragment_navigation.view.soundButton
+import kotlinx.android.synthetic.main.fragment_navigation.view.stop
+import kotlinx.android.synthetic.main.fragment_navigation.view.switchMapStyle
+import kotlinx.android.synthetic.main.fragment_navigation.view.terrain_map_style
+import kotlinx.android.synthetic.main.fragment_navigation.view.text_distance_covered
+import kotlinx.android.synthetic.main.fragment_navigation.view.text_distance_remaining
+import kotlinx.android.synthetic.main.fragment_navigation.view.text_time_estimated
+import kotlinx.android.synthetic.main.fragment_navigation.view.traffic_map_style
+import kotlinx.android.synthetic.main.fragment_navigation.view.tripProgressCard
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -132,6 +167,9 @@ import java.util.stream.Collectors
 class NavigationFragment : Fragment() {
 
     private var onNavigationMode = false
+
+    private var pointAnnotationManager: PointAnnotationManager? = null
+    private var checkPointsVisible = true
 
     private var elevationGraph: GraphView? = null
     private var series = LineGraphSeries<DataPoint>()
@@ -151,6 +189,7 @@ class NavigationFragment : Fragment() {
     private var textDistanceRemainingView: TextView? = null
     private var mapView: MapView? = null
     private var navigationView: View? = null
+    private var toggleCheckpointsButton: FloatingActionButton? = null
 
     private var playButton: Button? = null
     private var pauseButton: Button? = null
@@ -177,7 +216,7 @@ class NavigationFragment : Fragment() {
 
     private var timeCounter: Long = 0L
 
-    private var checkPoints: MutableList<Int> = mutableListOf()
+    private var checkPoints: MutableList<IndexedValue<Point>> = mutableListOf()
 
     private lateinit var navigationViewModel: NavigationViewModel
     private val routeViewModel: RouteViewModel by activityViewModels()
@@ -302,7 +341,7 @@ class NavigationFragment : Fragment() {
             // TODO need to test somehow
             // Re-define a new Route to the last passed checkpoint???
             val lastCheckPointRouteIndex =
-                if (checkPoints.isNullOrEmpty()) 0 else checkPoints[checkPointsIndex]
+                if (checkPoints.isNullOrEmpty()) 0 else checkPoints[checkPointsIndex].index
             if (!initialFilteredCoordinates.isNullOrEmpty()) {
                 initialFilteredCoordinates[lastCheckPointRouteIndex].let {
                     defineRoute(
@@ -760,6 +799,8 @@ class NavigationFragment : Fragment() {
             satelliteMapStyle = navigationView!!.satellite_map_style as ImageView
             terrainMapStyle = navigationView!!.terrain_map_style as ImageView
 
+            toggleCheckpointsButton = navigationView!!.toggle_checkpoints_fr as FloatingActionButton
+
             textDistanceRemainingView!!.text = getString(R.string.distance_remaining_empty)
 
             textDistanceCoveredView!!.text =
@@ -875,7 +916,7 @@ class NavigationFragment : Fragment() {
             )
 
             val traveledResources = RouteLineColorResources.Builder()
-                .routeLineTraveledColor(android.graphics.Color.LTGRAY).build()
+                .routeLineTraveledColor(Color.LTGRAY).build()
 
             // initialize route line, the withRouteLineBelowLayerId is specified to place
             // the route line below road labels layer on the map
@@ -1125,7 +1166,7 @@ class NavigationFragment : Fragment() {
                 lostButton!!.setOnClickListener {
                     pauseButton!!.performClick()
                     database.getReference("contacts")
-                        .child("${userAuthInfo!!.uid}")
+                        .child(userAuthInfo!!.uid)
                         .addValueEventListener(object : ValueEventListener {
                             @RequiresApi(Build.VERSION_CODES.N)
                             override fun onDataChange(snapshot: DataSnapshot) {
@@ -1228,6 +1269,16 @@ class NavigationFragment : Fragment() {
                     mapStyleOptions!!.visibility = View.GONE
                 }
 
+                toggleCheckpointsButton!!.setOnClickListener {
+                    if (checkPointsVisible) {
+                        removeCheckpointAnnotations()
+                        checkPointsVisible = false
+                    } else {
+                        addCheckpointAnnotations()
+                        checkPointsVisible = true
+                    }
+                }
+
                 // set initial sounds button state
                 navigationView!!.soundButton.unmute()
 
@@ -1237,6 +1288,64 @@ class NavigationFragment : Fragment() {
             }
         }
         return navigationView
+    }
+
+    private fun addCheckpointAnnotations() {
+        checkPoints.withIndex().forEach {
+            // First and last elements are start and destination of the route
+            if (it.index != 0 && it.index != checkPoints.size -1) {
+                addAnnotationToMap(it.value.value)
+            }
+        }
+    }
+
+    private fun removeCheckpointAnnotations() {
+        mapboxMap.getStyle {
+            mapView!!.annotations.cleanup()
+        }
+    }
+
+    private fun addAnnotationToMap(checkpoint: Point) {
+        // Create an instance of the Annotation API and get the PointAnnotationManager.
+        bitmapFromDrawableRes(
+            requireContext(),
+            R.drawable.pin_icon_foreground
+        )?.let {
+            val annotationApi = mapView?.annotations
+            val pointAnnotationManager = annotationApi?.createPointAnnotationManager(mapView!!)
+            // Set options for the resulting symbol layer.
+            val pointAnnotationOptions: PointAnnotationOptions = PointAnnotationOptions()
+                // Define a geographic coordinate.
+                .withPoint(checkpoint)
+                // Specify the bitmap you assigned to the point annotation
+                // The bitmap will be added to map style automatically.
+                .withIconImage(it)
+            // Add the resulting pointAnnotation to the map.
+            pointAnnotationManager?.create(pointAnnotationOptions)
+        }
+    }
+    private fun bitmapFromDrawableRes(context: Context, @DrawableRes resourceId: Int) =
+        convertDrawableToBitmap(AppCompatResources.getDrawable(context, resourceId))
+
+    private fun convertDrawableToBitmap(sourceDrawable: Drawable?): Bitmap? {
+        if (sourceDrawable == null) {
+            return null
+        }
+        return if (sourceDrawable is BitmapDrawable) {
+            sourceDrawable.bitmap
+        } else {
+            // copying drawable object to not manipulate on the same reference
+            val constantState = sourceDrawable.constantState ?: return null
+            val drawable = constantState.newDrawable().mutate()
+            val bitmap: Bitmap = Bitmap.createBitmap(
+                drawable.intrinsicWidth, drawable.intrinsicHeight,
+                Bitmap.Config.ARGB_8888
+            )
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            bitmap
+        }
     }
 
     private fun configureRouteNavigationMapData(snapshot: DataSnapshot) {
@@ -1402,7 +1511,7 @@ class NavigationFragment : Fragment() {
 
     private fun sendSMS(phoneNumber: String?) {
 
-        if (ContextCompat.checkSelfPermission(
+        if (checkSelfPermission(
                 requireContext(),
                 Manifest.permission.SEND_SMS
             )
@@ -1418,7 +1527,7 @@ class NavigationFragment : Fragment() {
                     requireActivity(),
                     arrayOf(Manifest.permission.SEND_SMS),
                     0
-                );
+                )
             }
         }
         val smsManager = SmsManager.getDefault()
@@ -1461,9 +1570,10 @@ class NavigationFragment : Fragment() {
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun requestCustomRoute(
         filteredCoordintates: List<Point>,
-        checkPoints: List<Int>,
+        checkPoints: List<IndexedValue<Point>>,
         wayPointsIncluded: Boolean,
         reversedRoute: Boolean,
         isInitial: Boolean
@@ -1479,7 +1589,7 @@ class NavigationFragment : Fragment() {
         //TODO Find a more efficient way to compute route points for the obtaining of instructions. This is fully customized to current route at fillopapou.
 
         if (wayPointsIncluded) {
-            mapMatchingBuilder.waypointIndices(*checkPoints.toTypedArray())
+            mapMatchingBuilder.waypointIndices(*(checkPoints.stream().map { it.index }.collect(Collectors.toList())).toTypedArray())
         }
         if (reversedRoute) {
             mapMatchingBuilder.coordinates(filteredCoordintates.reversed())
@@ -1579,7 +1689,7 @@ class NavigationFragment : Fragment() {
     private fun defineCheckPoints(
         filteredCoordintates: List<Point>,
         modulo: Int
-    ): MutableList<Int> {
+    ): MutableList<IndexedValue<Point>> {
 
         var mod = modulo
         var finalCheckPoints: MutableList<IndexedValue<Point>>?
@@ -1590,6 +1700,7 @@ class NavigationFragment : Fragment() {
                 if (it.index != 0 && it.index != filteredCoordintates.size - 1) {
                     if (it.index % mod == 0) {
                         finalCheckPoints.add(IndexedValue(it.index, it.value))
+                        addAnnotationToMap(it.value)
                     }
                 }
             }
@@ -1603,7 +1714,7 @@ class NavigationFragment : Fragment() {
                 mod--
             }
         } while (finalCheckPoints?.size!! < 3 && mod > 0)
-        return finalCheckPoints.stream().map { it.index }.collect(Collectors.toList())
+        return finalCheckPoints.stream().collect(Collectors.toList())
     }
 
     @RequiresApi(Build.VERSION_CODES.N)

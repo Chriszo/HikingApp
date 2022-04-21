@@ -2,13 +2,17 @@ package com.example.hikingapp
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.location.Location
 import android.net.Uri
 import android.os.Build
@@ -20,8 +24,10 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -70,6 +76,11 @@ import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.camera
+import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
@@ -159,11 +170,13 @@ import java.util.stream.Collectors
  */
 class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
+    private var pointAnnotationManager: PointAnnotationManager? = null
+    private var checkPointsVisible = true
     private var routeCompleted: Boolean = false
     private var initialFilteredCoordinates: List<Point> = mutableListOf()
     private var mainRoutes: MutableList<DirectionsRoute> = mutableListOf()
     private var currentLocation: Point? = null
-    private var checkPoints: MutableList<Int> = mutableListOf()
+    private var checkPoints: MutableList<IndexedValue<Point>> = mutableListOf()
     private var nearbyPointsOfInterest = mutableSetOf<Long>()
     private var checkPointsIndex = 0
     private var associatedSights: MutableList<Sight>? = null
@@ -661,7 +674,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             // TODO need to test somehow
             // Re-define a new Route to the last passed checkpoint???
             val lastCheckPointRouteIndex =
-                if (checkPoints.isNullOrEmpty()) 0 else checkPoints[checkPointsIndex]
+                if (checkPoints.isNullOrEmpty()) 0 else checkPoints[checkPointsIndex].index
             if (!initialFilteredCoordinates.isNullOrEmpty()) {
                 initialFilteredCoordinates[lastCheckPointRouteIndex].let {
                     defineRoute(
@@ -1184,8 +1197,19 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 binding.mapStyleOptions.visibility = View.GONE
             }
 
+            binding.toggleCheckpoints.setOnClickListener {
+                if (checkPointsVisible) {
+                    removeCheckpointAnnotations()
+                    checkPointsVisible = false
+                } else {
+                    addCheckpointAnnotations()
+                    checkPointsVisible = true
+                }
+            }
+
             // set initial sounds button state
             binding.soundButton.unmute()
+
 
             // start the trip session to being receiving location updates in free drive
             // and later when a route is set also receiving route progress updates
@@ -1199,6 +1223,81 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             )
             redirectIntent.putExtra("route", (intent.extras?.get("route") as Route?))
             startActivity(redirectIntent)
+        }
+    }
+
+    private fun removeCheckpointAnnotations() {
+        mapboxMap.getStyle {
+            mapView.annotations.cleanup()
+        }
+    }
+
+    private fun addCheckpointAnnotations() {
+        checkPoints.withIndex().forEach {
+            // First and last elements are start and destination of the route
+            if (it.index != 0 && it.index != checkPoints.size -1) {
+                addAnnotationToMap(it.value.value)
+            }
+        }
+    }
+
+    private fun addAnnotationToMap(checkpoint: Point) {
+            // Create an instance of the Annotation API and get the PointAnnotationManager.
+        bitmapFromDrawableRes(
+            this@NavigationActivity,
+            R.drawable.pin_icon_foreground
+        )?.let {
+            val annotationApi = mapView?.annotations
+            pointAnnotationManager = annotationApi?.createPointAnnotationManager(mapView!!)
+            // Set options for the resulting symbol layer.
+            val pointAnnotationOptions: PointAnnotationOptions = PointAnnotationOptions()
+            // Define a geographic coordinate.
+                .withPoint(checkpoint)
+            // Specify the bitmap you assigned to the point annotation
+            // The bitmap will be added to map style automatically.
+                .withIconImage(it)
+            // Add the resulting pointAnnotation to the map.
+            pointAnnotationManager?.create(pointAnnotationOptions)/*?.let { pa ->
+                pointAnnotations.add(pa)
+            }*/
+        }
+    }
+    private fun bitmapFromDrawableRes(
+        context: Context,
+        @DrawableRes resourceId: Int,
+        isVisible: Boolean? = null
+    ) =
+        if (resourceId == -1)
+            null
+        else
+            convertDrawableToBitmap(AppCompatResources.getDrawable(context, resourceId), isVisible)
+
+    private fun convertDrawableToBitmap(sourceDrawable: Drawable?, isVisible: Boolean? = null): Bitmap? {
+        if (sourceDrawable == null) {
+            return null
+        }
+        return if (sourceDrawable is BitmapDrawable) {
+            sourceDrawable.bitmap
+        } else {
+            // copying drawable object to not manipulate on the same reference
+            val constantState = sourceDrawable.constantState ?: return null
+            val drawable = constantState.newDrawable().mutate()
+            val bitmap: Bitmap = Bitmap.createBitmap(
+                drawable.intrinsicWidth, drawable.intrinsicHeight,
+                Bitmap.Config.ARGB_8888
+            )
+
+            if (isVisible != null && !isVisible) {
+                val canvas = Canvas()
+                drawable.setVisible(false,false)
+                drawable.draw(canvas)
+                null
+            } else {
+                val canvas = Canvas(bitmap)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                bitmap
+            }
         }
     }
 
@@ -1557,7 +1656,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
     private fun defineCheckPoints(
         filteredCoordintates: List<Point>,
         modulo: Int
-    ): MutableList<Int> {
+    ): MutableList<IndexedValue<Point>> {
 
         var mod = modulo
         var finalCheckPoints: MutableList<IndexedValue<Point>>?
@@ -1567,9 +1666,16 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             filteredCoordintates.withIndex().forEach {
                 if (it.index != 0 && it.index != filteredCoordintates.size - 1) {
                     if (it.index % mod == 0) {
+
                         finalCheckPoints.add(IndexedValue(it.index, it.value))
+
+                        // Add markers to checkpoints
+                        if (it.index != 0 && it.index != filteredCoordintates.size -1) {
+                            addAnnotationToMap(it.value)
+                        }
                     }
                 }
+
             }
             finalCheckPoints.add(
                 IndexedValue(
@@ -1581,7 +1687,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 mod--
             }
         } while (finalCheckPoints?.size!! < 3 && mod > 0)
-        return finalCheckPoints.stream().map { it.index }.collect(Collectors.toList())
+        return finalCheckPoints.stream().collect(Collectors.toList())
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -1613,9 +1719,10 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         return finalRoutePoints.stream().map { it.value }.collect(Collectors.toList())
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun requestCustomRoute(
         filteredCoordintates: List<Point>,
-        checkPoints: List<Int>,
+        checkPoints: MutableList<IndexedValue<Point>>,
         wayPointsIncluded: Boolean,
         reversedRoute: Boolean,
         isInitial: Boolean
@@ -1631,7 +1738,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         //TODO Find a more efficient way to compute route points for the obtaining of instructions. This is fully customized to current route at fillopapou.
 
         if (wayPointsIncluded) {
-            mapMatchingBuilder.waypointIndices(*checkPoints.toTypedArray())
+            mapMatchingBuilder.waypointIndices(*(checkPoints.stream().map { it.index }.collect(Collectors.toList())).toTypedArray())
         }
         if (reversedRoute) {
             mapMatchingBuilder.coordinates(filteredCoordintates.reversed())
