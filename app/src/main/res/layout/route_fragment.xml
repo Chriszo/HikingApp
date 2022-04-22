@@ -20,7 +20,35 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"/>
 
-            <ImageView
+
+            <RelativeLayout
+                app:layout_constraintTop_toBottomOf="@id/toolbarContainer"
+                android:layout_width="match_parent"
+                android:layout_height="400dp"
+                android:layout_gravity="center">
+
+                <ProgressBar
+                    android:id="@+id/progress_bar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_centerInParent="true"
+                    android:layout_marginTop="100dp"/>
+
+            </RelativeLayout>
+
+
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/viewPager"
+                android:layout_width="match_parent"
+                android:layout_height="400dp"
+                app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/toolbarContainer"/>
+
+            <!--<ImageView
                 android:id="@+id/route_info_image"
                 android:layout_width="match_parent"
                 android:layout_height="400dp"
@@ -30,7 +58,7 @@
                 app:layout_constraintBottom_toTopOf="@+id/actions_layout_id"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/toolbarContainer" />
+                app:layout_constraintTop_toBottomOf="@id/toolbarContainer" />-->
 
             <RelativeLayout
                 android:id="@+id/relative_layout"
@@ -146,7 +174,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/route_info_image">
+                app:layout_constraintTop_toBottomOf="@+id/viewPager">
 
                 <com.google.android.material.bottomnavigation.BottomNavigationView
                     android:id="@+id/info_nav_view"

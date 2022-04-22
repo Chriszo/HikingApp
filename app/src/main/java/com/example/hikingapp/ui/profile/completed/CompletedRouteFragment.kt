@@ -2,14 +2,15 @@ package com.example.hikingapp.ui.profile.completed
 
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -17,6 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.viewpager2.widget.ViewPager2
 import com.example.hikingapp.*
 import com.example.hikingapp.domain.map.ExtendedMapPoint
 import com.example.hikingapp.domain.map.MapInfo
@@ -27,6 +29,7 @@ import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
+import com.example.hikingapp.ui.adapters.ViewPagerAdapter
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 import com.example.hikingapp.ui.route.RouteFragment
 import com.example.hikingapp.utils.GlobalUtils
@@ -42,10 +45,10 @@ import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import kotlinx.android.synthetic.main.custom_toolbar.view.*
 import kotlinx.android.synthetic.main.fragment_completed_route.view.*
+import kotlinx.android.synthetic.main.route_fragment.*
 import kotlinx.android.synthetic.main.route_fragment.view.info_nav_view
 import kotlinx.android.synthetic.main.route_fragment.view.routeName
 import kotlinx.android.synthetic.main.route_fragment.view.routeRating
-import kotlinx.android.synthetic.main.route_fragment.view.route_info_image
 import kotlinx.android.synthetic.main.route_fragment.view.stateName
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -62,6 +65,8 @@ import kotlin.collections.HashMap
 
 class CompletedRouteFragment : Fragment(), BackButtonListener {
 
+    private var viewPagerProgressBar: ProgressBar? = null
+    private var viewPagerAdapter: ViewPagerAdapter? = null
     private var authInfo: FirebaseUser? = null
     private val storage: FirebaseStorage by lazy {
         FirebaseStorage.getInstance()
@@ -201,7 +206,7 @@ class CompletedRouteFragment : Fragment(), BackButtonListener {
         initializeButtonListeners(routeView)
 
 
-        val mainPhotoBitmap =
+        /*val mainPhotoBitmap =
             LocalDatabase.getMainImage(route.routeId, Route::class.java.simpleName)
         if (mainPhotoBitmap != null) {
             routeView.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhotoBitmap))
@@ -218,10 +223,13 @@ class CompletedRouteFragment : Fragment(), BackButtonListener {
                         )
                     )
                 }
-        }
+        }*/
 
 
 
+        viewPagerProgressBar = routeView.progress_bar as ProgressBar
+
+        viewPagerProgressBar!!.visibility = View.VISIBLE
         route.photos = LocalDatabase.getImages(route.routeId, Route::class.java.simpleName)
 
         if (route.photos.isNullOrEmpty()) {
@@ -236,7 +244,7 @@ class CompletedRouteFragment : Fragment(), BackButtonListener {
                                 route.photos = mutableListOf()
                             }
 
-                            val photoItem = PhotoItem(photoReference.path.split("/").last(),bitmap)
+                            val photoItem = PhotoItem(photoReference.path.split("/").last(), bitmap)
                             route.photos!!.add(photoItem)
                             LocalDatabase.saveImage(
                                 route.routeId,
@@ -247,18 +255,48 @@ class CompletedRouteFragment : Fragment(), BackButtonListener {
                             )
                             if (route?.photos?.size == routePhotosFolder.items.size) {
                                 completedViewModel.photos.postValue(route.photos)
+                                configureViewPager()
                             }
                         }
                     }
                 }
         } else {
             completedViewModel.photos.postValue(route.photos)
+            configureViewPager()
         }
 
         routeView.routeName.text = route.routeName
         routeView.stateName.text = route.stateName
         routeView.routeRating.rating = route.routeInfo!!.rating!!
         return routeView
+    }
+
+    private fun configureViewPager() {
+
+        viewPagerAdapter = ViewPagerAdapter(route.photos)
+        viewPager.adapter = viewPagerAdapter
+        viewPager.orientation = ViewPager2.ORIENTATION_HORIZONTAL
+
+         viewPagerProgressBar!!.visibility = View.GONE
+
+        val handler = Handler()
+        var currentPage = 0
+        val update = Runnable {
+            if (currentPage == route.photos!!.size) {
+                currentPage = 0
+            }
+
+            //The second parameter ensures smooth scrolling
+            viewPager.setCurrentItem(currentPage++, true)
+        }
+
+        Timer().schedule(object : TimerTask() {
+            // task to be scheduled
+            override fun run() {
+                handler.post(update)
+            }
+        }, 3500, 3500)
+
     }
 
 
@@ -270,14 +308,21 @@ class CompletedRouteFragment : Fragment(), BackButtonListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
                         rateButton?.setOnClickListener {
-                            Toast.makeText(context, "Review already submitted for route: ${route.routeName}.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                "Review already submitted for route: ${route.routeName}.",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     } else {
                         rateButton?.setOnClickListener {
                             val reviewIntent = Intent(context, ReviewActivity::class.java)
                             reviewIntent.putExtra("route", route)
                             reviewIntent.putExtra("authInfo", authInfo)
-                            reviewIntent.putExtra("fromIntent", CompletedRouteFragment::class.java.simpleName)
+                            reviewIntent.putExtra(
+                                "fromIntent",
+                                CompletedRouteFragment::class.java.simpleName
+                            )
                             startActivity(reviewIntent)
                         }
                     }

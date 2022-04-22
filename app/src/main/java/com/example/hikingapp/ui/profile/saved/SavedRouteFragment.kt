@@ -6,17 +6,20 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.viewpager2.widget.ViewPager2
 import com.example.hikingapp.*
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.culture.Sight
@@ -33,9 +36,10 @@ import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
+import com.example.hikingapp.ui.adapters.ViewPagerAdapter
 import com.example.hikingapp.ui.route.RouteFragment
-import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.utils.GlobalUtils
+import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
@@ -51,11 +55,11 @@ import io.ktor.http.*
 import kotlinx.android.synthetic.main.custom_toolbar.view.*
 import kotlinx.android.synthetic.main.fragment_saved_route.view.*
 import kotlinx.android.synthetic.main.fragment_saved_route.view.toolbarContainer
+import kotlinx.android.synthetic.main.route_fragment.*
 import kotlinx.android.synthetic.main.route_fragment.view.info_nav_view
 import kotlinx.android.synthetic.main.route_fragment.view.navigate
 import kotlinx.android.synthetic.main.route_fragment.view.routeName
 import kotlinx.android.synthetic.main.route_fragment.view.routeRating
-import kotlinx.android.synthetic.main.route_fragment.view.route_info_image
 import kotlinx.android.synthetic.main.route_fragment.view.show_map
 import kotlinx.android.synthetic.main.route_fragment.view.stateName
 import kotlinx.coroutines.GlobalScope
@@ -72,6 +76,8 @@ import java.util.stream.Collectors
 
 class SavedRouteFragment : Fragment(), BackButtonListener {
 
+    private var viewPagerProgressBar: ProgressBar? = null
+    private var viewPagerAdapter: ViewPagerAdapter? = null
     private var authInfo: FirebaseUser? = null
     private val storage: FirebaseStorage by lazy {
         FirebaseStorage.getInstance()
@@ -404,7 +410,7 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
 
         initializeButtonListeners(routeView)
 
-        val mainPhotoBitmap =
+        /*val mainPhotoBitmap =
             LocalDatabase.getMainImage(route.routeId, Route::class.java.simpleName)
         if (mainPhotoBitmap != null) {
             routeView.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhotoBitmap))
@@ -422,11 +428,13 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
                     )
                 }
         }
-
+*/
+        viewPagerProgressBar = routeView.progress_bar as ProgressBar
+        viewPagerProgressBar!!.visibility = View.VISIBLE
         route.photos = LocalDatabase.getImages(route.routeId, Route::class.java.simpleName)
 
         if (route.photos.isNullOrEmpty()) {
-            storage?.reference?.child("routes/${route.routeId}/photos")?.listAll()!!
+            storage.reference.child("routes/${route.routeId}/photos").listAll()!!
                 .addOnSuccessListener { routePhotosFolder ->
 
                     routePhotosFolder.items.forEach { photoReference ->
@@ -436,7 +444,7 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
                             if (route.photos.isNullOrEmpty()) {
                                 route.photos = mutableListOf()
                             }
-                            val photoItem = PhotoItem(photoReference.path.split("/").last(),bitmap)
+                            val photoItem = PhotoItem(photoReference.path.split("/").last(), bitmap)
                             route.photos!!.add(photoItem)
                             LocalDatabase.saveImage(
                                 route.routeId,
@@ -447,18 +455,48 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
                             )
                             if (route?.photos?.size == routePhotosFolder.items.size) {
                                 viewModel.photos.postValue(route.photos)
+                                configureViewPager()
                             }
                         }
                     }
                 }
         } else {
             viewModel.photos.postValue(route.photos)
+            configureViewPager()
         }
 
         routeView.routeName.text = route.routeName
         routeView.stateName.text = route.stateName
         routeView.routeRating.rating = route.routeInfo!!.rating!!
         return routeView
+    }
+
+    private fun configureViewPager() {
+
+        viewPagerAdapter = ViewPagerAdapter(route.photos)
+        viewPager.adapter = viewPagerAdapter
+        viewPager.orientation = ViewPager2.ORIENTATION_HORIZONTAL
+
+        viewPagerProgressBar!!.visibility = View.GONE
+
+        val handler = Handler()
+        var currentPage = 0
+        val update = Runnable {
+            if (currentPage == route.photos!!.size) {
+                currentPage = 0
+            }
+
+            //The second parameter ensures smooth scrolling
+            viewPager.setCurrentItem(currentPage++, true)
+        }
+
+        Timer().schedule(object : TimerTask() {
+            // task to be scheduled
+            override fun run() {
+                handler.post(update)
+            }
+        }, 3500, 3500)
+
     }
 
 
@@ -482,7 +520,7 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
                             sight.sightId,
                             Sight::class.java.simpleName,
                             "sight_${sight.sightId}_main.jpg",
-                            PhotoItem("sight_${sight.sightId}_main.jpg",bitmap),
+                            PhotoItem("sight_${sight.sightId}_main.jpg", bitmap),
                             true
                         )
                         if (sightMainPhotos.size == route.cultureInfo!!.sights?.size ?: mutableListOf<Sight>()) {

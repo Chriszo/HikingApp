@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -17,6 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.viewpager2.widget.ViewPager2
 import com.example.hikingapp.*
 import com.example.hikingapp.domain.culture.CultureInfo
 import com.example.hikingapp.domain.culture.Sight
@@ -34,6 +36,7 @@ import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.services.weather.WeatherService
 import com.example.hikingapp.services.weather.WeatherServiceImpl
+import com.example.hikingapp.ui.adapters.ViewPagerAdapter
 import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.viewModels.UserViewModel
@@ -49,6 +52,7 @@ import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import io.ktor.http.*
 import kotlinx.android.synthetic.main.custom_toolbar.view.*
+import kotlinx.android.synthetic.main.route_fragment.*
 import kotlinx.android.synthetic.main.route_fragment.view.*
 import kotlinx.android.synthetic.main.route_fragment.view.toolbarContainer
 import kotlinx.coroutines.GlobalScope
@@ -93,6 +97,8 @@ class RouteFragment : Fragment(), BackButtonListener {
 
     private lateinit var routeView: View
 
+    private var viewPagerAdapter: ViewPagerAdapter? = null
+
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -102,7 +108,6 @@ class RouteFragment : Fragment(), BackButtonListener {
 
         //TODO Retrieve current Route Map information
         route = arguments?.get("route") as Route
-
 
         authInfo = requireArguments()["authInfo"] as FirebaseUser?
 
@@ -457,7 +462,7 @@ class RouteFragment : Fragment(), BackButtonListener {
 
         initializeButtonListeners(routeView)
 
-        val mainPhoto = LocalDatabase.getMainImage(route.routeId, Route::class.java.simpleName)
+        /*val mainPhoto = LocalDatabase.getMainImage(route.routeId, Route::class.java.simpleName)
         if (mainPhoto != null) {
             routeView.route_info_image.setImageDrawable(BitmapDrawable(resources, mainPhoto))
         } else {
@@ -472,9 +477,10 @@ class RouteFragment : Fragment(), BackButtonListener {
                         )
                     )
                 }
-        }
+        }*/
 
 
+        routeView.progress_bar.visibility = View.VISIBLE
         route.photos = LocalDatabase.getImages(route.routeId, Route::class.java.simpleName)
 
         if (route.photos.isNullOrEmpty()) {
@@ -501,12 +507,13 @@ class RouteFragment : Fragment(), BackButtonListener {
                             )
                             if (route?.photos?.size == routePhotosFolder.items.size) {
                                 viewModel.photos.postValue(route.photos)
+                                configureViewPager()
                             }
                         }
                     }
                 }
         } else {
-            viewModel.photos.postValue(route.photos)
+            configureViewPager()
         }
 
         routeView.routeName.text = route.routeName
@@ -514,6 +521,35 @@ class RouteFragment : Fragment(), BackButtonListener {
         routeView.routeRating.rating = route.routeInfo!!.rating!!
 
         return routeView
+    }
+
+    private fun configureViewPager() {
+
+
+        viewPagerAdapter = ViewPagerAdapter(route.photos)
+        viewPager.adapter = viewPagerAdapter
+        viewPager.orientation = ViewPager2.ORIENTATION_HORIZONTAL
+
+        routeView.progress_bar.visibility = View.GONE
+
+        val handler = Handler()
+        var currentPage = 0
+        val update = Runnable {
+            if (currentPage == route.photos!!.size) {
+                currentPage = 0
+            }
+
+            //The second parameter ensures smooth scrolling
+            viewPager.setCurrentItem(currentPage++, true)
+        }
+
+        Timer().schedule(object : TimerTask() {
+            // task to be scheduled
+            override fun run() {
+                handler.post(update)
+            }
+        }, 3500, 3500)
+
     }
 
     private fun configureRouteNavigationMapData(snapshot: DataSnapshot) {

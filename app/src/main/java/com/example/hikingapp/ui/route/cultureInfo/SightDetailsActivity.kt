@@ -1,20 +1,18 @@
 package com.example.hikingapp.ui.route.cultureInfo
 
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.example.hikingapp.*
 import com.example.hikingapp.databinding.ActivitySightDetailsBinding
 import com.example.hikingapp.domain.culture.Sight
@@ -23,11 +21,11 @@ import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
-import com.example.hikingapp.ui.route.RouteFragment
+import com.example.hikingapp.ui.adapters.ViewPagerAdapter
 import com.example.hikingapp.ui.route.photos.PhotoActivity
+import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.utils.PhotoItemDecorator
 import com.example.hikingapp.viewModels.RouteViewModel
-import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
@@ -36,12 +34,12 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
-import kotlinx.android.synthetic.main.custom_toolbar.view.*
-import kotlinx.android.synthetic.main.fragment_saved_route.view.*
+import kotlinx.android.synthetic.main.route_fragment.*
 import java.util.*
 
 class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener, BackButtonListener {
 
+    private var viewPagerAdapter: ViewPagerAdapter? = null
     private var authInfo: FirebaseUser? = null
     private lateinit var binding: ActivitySightDetailsBinding
 
@@ -83,7 +81,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener, BackBut
 
         val nameView = binding.sightName
         val descriptionView = binding.sightState
-        val mainPhotoView = binding.sightImage
+//        val mainPhotoView = binding.sightImage
         val ratingView = binding.sightRating
         val progressBar = binding.progressBar
 
@@ -106,7 +104,10 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener, BackBut
                 val loginIntent = Intent(this, LoginActivity::class.java)
                 loginIntent.putExtra("sightInfo", sightInfo)
                 loginIntent.putExtra("action", "discover")
-                loginIntent.putExtra(GlobalUtils.LAST_PAGE, SightDetailsActivity::class.java.simpleName)
+                loginIntent.putExtra(
+                    GlobalUtils.LAST_PAGE,
+                    SightDetailsActivity::class.java.simpleName
+                )
                 startActivity(loginIntent)
             }
         }
@@ -118,44 +119,44 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener, BackBut
         nameView.text = sightInfo.name
         descriptionView.text = sightInfo.description
 
-        sightInfo.mainPhoto =
-            LocalDatabase.getMainImage(sightInfo.sightId, Sight::class.java.simpleName)
-        if (sightInfo.mainPhoto == null) {
-            FirebaseStorage.getInstance().reference.child("sights/mainPhotos/sight_${sightInfo.sightId}_main.jpg")
-                .getBytes(GlobalUtils.MEGABYTE * 5).addOnSuccessListener {
-                    val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                    sightInfo.mainPhoto = bitmap
-                    sightInfo.mainPhoto?.let {
-                        mainPhotoView.setImageDrawable(
-                            BitmapDrawable(
-                                this.resources,
-                                it
-                            )
-                        )
-                    }
-                }.addOnFailureListener {
-                    if (it is StorageException) {
-                        when (it.httpResultCode) {
-                            404 -> Log.i(
-                                this.toString(),
-                                "Main photo does not exist for sight with id: ${sightInfo.sightId}"
-                            )
-                        }
-                    }
-                }
-        } else {
-            sightInfo.mainPhoto?.let {
-                mainPhotoView.setImageDrawable(
-                    BitmapDrawable(
-                        this.resources,
-                        it
-                    )
-                )
-            }
-        }
+        /* sightInfo.mainPhoto =
+             LocalDatabase.getMainImage(sightInfo.sightId, Sight::class.java.simpleName)
+         if (sightInfo.mainPhoto == null) {
+             FirebaseStorage.getInstance().reference.child("sights/mainPhotos/sight_${sightInfo.sightId}_main.jpg")
+                 .getBytes(GlobalUtils.MEGABYTE * 5).addOnSuccessListener {
+                     val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                     sightInfo.mainPhoto = bitmap
+                     sightInfo.mainPhoto?.let {
+                         mainPhotoView.setImageDrawable(
+                             BitmapDrawable(
+                                 this.resources,
+                                 it
+                             )
+                         )
+                     }
+                 }.addOnFailureListener {
+                     if (it is StorageException) {
+                         when (it.httpResultCode) {
+                             404 -> Log.i(
+                                 this.toString(),
+                                 "Main photo does not exist for sight with id: ${sightInfo.sightId}"
+                             )
+                         }
+                     }
+                 }
+         } else {
+             sightInfo.mainPhoto?.let {
+                 mainPhotoView.setImageDrawable(
+                     BitmapDrawable(
+                         this.resources,
+                         it
+                     )
+                 )
+             }
+         }*/
 
         progressBar.visibility = View.VISIBLE
-
+        binding.viewpagerProgressBar.visibility = View.VISIBLE
         photos = LocalDatabase.getImages(sightInfo.sightId, Sight::class.java.simpleName)
             ?: mutableListOf()
         if (photos.isNullOrEmpty()) {
@@ -169,15 +170,23 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener, BackBut
                             }
 
                             val imageName = photoReference.path.split("/").last()
-                            val photoItem = PhotoItem(imageName,bitmap)
+                            val photoItem = PhotoItem(imageName, bitmap)
                             photos.add(photoItem)
 
-                            LocalDatabase.saveImage(sightInfo.sightId, Sight::class.java.simpleName,imageName,photoItem,false)
+                            LocalDatabase.saveImage(
+                                sightInfo.sightId,
+                                Sight::class.java.simpleName,
+                                imageName,
+                                photoItem,
+                                false
+                            )
 
                             if (photos.size == sightPhotos.items.size) {
                                 photosAdapter = PhotoAdapter(this, photos, itemClickedListener)
                                 recyclerView.adapter = photosAdapter
                                 progressBar.visibility = View.GONE
+
+                                configureViewPager()
                             }
                         }.addOnFailureListener {
                             if (it is StorageException) {
@@ -195,6 +204,8 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener, BackBut
                                                 PhotoAdapter(this, photos, itemClickedListener)
                                             recyclerView.adapter = photosAdapter
                                             progressBar.visibility = View.GONE
+
+                                            configureViewPager()
                                         }
                                     }
                                 }
@@ -207,6 +218,33 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener, BackBut
         }
 
         sightInfo.rating?.let { ratingView.rating = it }
+
+    }
+
+    private fun configureViewPager() {
+        viewPagerAdapter = ViewPagerAdapter(photos)
+        viewPager.adapter = viewPagerAdapter
+        viewPager.orientation = ViewPager2.ORIENTATION_HORIZONTAL
+
+        binding.viewpagerProgressBar.visibility = View.GONE
+
+        val handler = Handler()
+        var currentPage = 0
+        val update = Runnable {
+            if (currentPage == photos!!.size) {
+                currentPage = 0
+            }
+
+            //The second parameter ensures smooth scrolling
+            viewPager.setCurrentItem(currentPage++, true)
+        }
+
+        Timer().schedule(object : TimerTask() {
+            // task to be scheduled
+            override fun run() {
+                handler.post(update)
+            }
+        }, 3500, 3500)
 
     }
 
@@ -318,7 +356,7 @@ class SightDetailsActivity : AppCompatActivity(), OnItemClickedListener, BackBut
         val intent = Intent(this, PhotoActivity::class.java)
         intent.putExtra("photo_item", photos[position]!!.imageName)
         intent.putExtra("itemId", "S${sightInfo.sightId}")
-        intent.putExtra("authInfo",authInfo)
+        intent.putExtra("authInfo", authInfo)
         startActivity(intent)
     }
 
