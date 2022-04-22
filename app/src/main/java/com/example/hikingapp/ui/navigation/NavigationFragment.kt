@@ -1070,10 +1070,7 @@ class NavigationFragment : Fragment() {
                         mapView!!.location.addOnIndicatorPositionChangedListener(
                             onPositionChangedListener
                         )
-
-//                mapboxMap.addOnMapLoadedListener {
-//                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
-//                }
+                        routeLineView.hideOriginAndDestinationPoints(it)
                     },
                     object : OnMapLoadErrorListener {
                         override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
@@ -1309,7 +1306,7 @@ class NavigationFragment : Fragment() {
         // Create an instance of the Annotation API and get the PointAnnotationManager.
         bitmapFromDrawableRes(
             requireContext(),
-            R.drawable.pin_icon_foreground
+            R.drawable.pin_custom_icon
         )?.let {
             val annotationApi = mapView?.annotations
             val pointAnnotationManager = annotationApi?.createPointAnnotationManager(mapView!!)

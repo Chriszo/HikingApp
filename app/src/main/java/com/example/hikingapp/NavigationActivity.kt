@@ -77,7 +77,6 @@ import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.annotation.annotations
-import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
@@ -1025,6 +1024,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                         ),
                 {
                     mapView.location.addOnIndicatorPositionChangedListener(onPositionChangedListener)
+                    routeLineView.hideOriginAndDestinationPoints(it)
 //                mapboxMap.addOnMapLoadedListener {
 //                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
 //                }
@@ -1245,7 +1245,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             // Create an instance of the Annotation API and get the PointAnnotationManager.
         bitmapFromDrawableRes(
             this@NavigationActivity,
-            R.drawable.pin_icon_foreground
+            R.drawable.pin_custom_icon
         )?.let {
             val annotationApi = mapView?.annotations
             pointAnnotationManager = annotationApi?.createPointAnnotationManager(mapView!!)
@@ -1493,6 +1493,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                     }),
             {
                 updateCamera(mapInfo, null)
+                routeLineView.hideOriginAndDestinationPoints(it)
             },
             object : OnMapLoadErrorListener {
                 override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
