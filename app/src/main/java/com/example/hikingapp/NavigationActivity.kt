@@ -273,7 +273,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 val mainIntent =
                     Intent(this@NavigationActivity, EndOfNavigationActivity::class.java)
                 mainIntent.putExtra("route", currentRoute)
-                intent.putExtra("authInfo", userAuthInfo)
+                mainIntent.putExtra("authInfo", userAuthInfo)
                 mainIntent.putExtra("userNavigationData", userNavigationData)
 
                 LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
