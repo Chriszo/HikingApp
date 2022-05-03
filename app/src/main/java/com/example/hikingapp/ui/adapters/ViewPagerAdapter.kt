@@ -14,8 +14,8 @@ class ViewPagerAdapter(private val photos: MutableList<PhotoItem?>?): RecyclerVi
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
 
         val photoIcon: ImageView = itemView.findViewById(R.id.photo_id)
-        val voteIcon: ImageView = itemView.findViewById(R.id.vote_icon)
-        val bookmarkIcon: ImageView = itemView.findViewById(R.id.bookmark_photo_icon)
+       /* val voteIcon: ImageView = itemView.findViewById(R.id.vote_icon)
+        val bookmarkIcon: ImageView = itemView.findViewById(R.id.bookmark_photo_icon)*/
 
     }
 

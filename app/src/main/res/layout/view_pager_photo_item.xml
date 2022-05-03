@@ -14,7 +14,7 @@
         android:scaleType="fitXY"
         />
 
-    <RelativeLayout
+    <!--<RelativeLayout
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_width="match_parent"
@@ -42,6 +42,6 @@
 
 
 
-    </RelativeLayout>
+    </RelativeLayout>-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

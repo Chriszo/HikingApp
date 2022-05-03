@@ -78,6 +78,8 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
 
     private var viewPagerProgressBar: ProgressBar? = null
     private var viewPagerAdapter: ViewPagerAdapter? = null
+    private var viewPager: ViewPager2? = null
+
     private var authInfo: FirebaseUser? = null
     private val storage: FirebaseStorage by lazy {
         FirebaseStorage.getInstance()
@@ -473,9 +475,13 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
 
     private fun configureViewPager() {
 
+        if (viewPager == null) {
+            viewPager = routeView.findViewById(R.id.viewPager)
+        }
+
         viewPagerAdapter = ViewPagerAdapter(route.photos)
-        viewPager.adapter = viewPagerAdapter
-        viewPager.orientation = ViewPager2.ORIENTATION_HORIZONTAL
+        viewPager!!.adapter = viewPagerAdapter
+        viewPager!!.orientation = ViewPager2.ORIENTATION_HORIZONTAL
 
         viewPagerProgressBar!!.visibility = View.GONE
 
@@ -487,7 +493,7 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
             }
 
             //The second parameter ensures smooth scrolling
-            viewPager.setCurrentItem(currentPage++, true)
+            viewPager!!.setCurrentItem(currentPage++, true)
         }
 
         Timer().schedule(object : TimerTask() {

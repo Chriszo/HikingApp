@@ -99,6 +99,8 @@ class RouteFragment : Fragment(), BackButtonListener {
 
     private var viewPagerAdapter: ViewPagerAdapter? = null
 
+    private var viewPager: ViewPager2? = null
+
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -525,10 +527,13 @@ class RouteFragment : Fragment(), BackButtonListener {
 
     private fun configureViewPager() {
 
+        if (viewPager == null) {
+            viewPager = routeView.findViewById(R.id.viewPager)
+        }
 
         viewPagerAdapter = ViewPagerAdapter(route.photos)
-        viewPager.adapter = viewPagerAdapter
-        viewPager.orientation = ViewPager2.ORIENTATION_HORIZONTAL
+        viewPager!!.adapter = viewPagerAdapter
+        viewPager!!.orientation = ViewPager2.ORIENTATION_HORIZONTAL
 
         routeView.progress_bar.visibility = View.GONE
 
@@ -540,7 +545,7 @@ class RouteFragment : Fragment(), BackButtonListener {
             }
 
             //The second parameter ensures smooth scrolling
-            viewPager.setCurrentItem(currentPage++, true)
+            viewPager!!.setCurrentItem(currentPage++, true)
         }
 
         Timer().schedule(object : TimerTask() {
