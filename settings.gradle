@@ -1,2 +1,3 @@
 rootProject.name = "HikingApp"
 include ':app'
+include ':helpers'

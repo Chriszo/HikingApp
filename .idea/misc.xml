@@ -79,6 +79,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_share.xml" value="0.25" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_sight_details.xml" value="0.25" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/activity_sign_up.xml" value="0.20364583333333333" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/cloud_anchor_fragment.xml" value="0.1" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/contact_item.xml" value="0.25" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/content_main.xml" value="0.2171875" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/custom_action_bar.xml" value="0.1" />
@@ -89,6 +90,7 @@
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_completed_route_info.xml" value="0.33" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_completed_route_info2.xml" value="0.1359375" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_culture_info.xml" value="0.25" />
+        <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_custom_ar.xml" value="0.14583333333333334" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_discover.xml" value="0.2" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_favorites.xml" value="0.18854166666666666" />
         <entry key="..\:/Users/Chris/StudioProjects/HikingApp/app/src/main/res/layout/fragment_favorites_route.xml" value="0.25" />

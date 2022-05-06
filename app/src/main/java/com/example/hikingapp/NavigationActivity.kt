@@ -31,6 +31,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.example.hikingapp.anchors.ArActivity
 import com.example.hikingapp.databinding.ActivityNavigationBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DistanceUnitType
@@ -699,35 +700,30 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 response: Response<FeatureCollection>
             ) {
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (response.isSuccessful) {
 
-                    if (response.isSuccessful) {
-
-                        response.body()?.features()
-                            ?.stream()
-                            ?.mapToLong { feature ->
-                                feature.properties()?.get("ele")?.asLong!!
+                    response.body()?.features()
+                        ?.stream()
+                        ?.mapToLong { feature ->
+                            feature.properties()?.get("ele")?.asLong!!
+                        }
+                        ?.max()
+                        ?.ifPresent { max ->
+                            if (Objects.isNull(userNavigationData)) {
+                                userNavigationData = UserNavigationData(currentRoute!!.routeId)
                             }
-                            ?.max()
-                            ?.ifPresent { max ->
-                                if (Objects.isNull(userNavigationData)) {
-                                    userNavigationData = UserNavigationData(currentRoute!!.routeId)
-                                }
-                                userNavigationData?.currentElevation?.add(max)
-                                binding.currentElevation.text =
-                                    getString(
-                                        R.string.elevation_content,
-                                        max.toString()
-                                    )
+                            userNavigationData?.currentElevation?.add(max)
+                            binding.currentElevation.text =
+                                getString(
+                                    R.string.elevation_content,
+                                    max.toString()
+                                )
 
-                                addPointToGraph(max)
-                            }
-                        call.cancel()
-                    } else {
-                        println("handle wrong")
-                    }
+                            addPointToGraph(max)
+                        }
+                    call.cancel()
                 } else {
-                    //TODO add implementation for backwards compatibility
+                    println("handle wrong")
                 }
             }
 
@@ -815,7 +811,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             binding = ActivityNavigationBinding.inflate(layoutInflater)
             setContentView(binding.root)
             setBackButtonListener()
-            (binding.toolbarContainer.actionBarTitle as TextView).text = currentRoute!!.routeName
+            binding.toolbarContainer.actionBarTitle.text = currentRoute!!.routeName
 
 
             mapboxMap = binding.mapView.getMapboxMap()
@@ -837,9 +833,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
             binding.currentElevation.text = ""
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                configureGraphAttributes()
-            }
+            configureGraphAttributes()
 
             // initialize the location puck
             binding.mapView.location.apply {
@@ -948,7 +942,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             )
 
             val traveledResources = RouteLineColorResources.Builder()
-                .routeLineTraveledColor(android.graphics.Color.LTGRAY).build()
+                .routeLineTraveledColor(Color.LTGRAY).build()
 
             // initialize route line, the withRouteLineBelowLayerId is specified to place
             // the route line below road labels layer on the map
@@ -1041,11 +1035,9 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
             // initialize view interactions
             binding.stop.setOnClickListener {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    clearRouteAndStopNavigation()
-                }
+                clearRouteAndStopNavigation()
                 onNavigationMode = false
-                var intent: Intent? = null
+                var intent: Intent?
                 if (routeCompleted) {
                     intent = Intent(this, EndOfNavigationActivity::class.java)
                     userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
@@ -1083,15 +1075,12 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                         (mapInfo!!.jsonRoute as LineString).coordinates()
                     }
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        defineRoute(
-                            routePoints!!.toList(),
-                            wayPointsIncluded = true,
-                            reversedRoute = false,
-                            isInitial = true
-                        )
-
-                    }
+                    defineRoute(
+                        routePoints!!.toList(),
+                        wayPointsIncluded = true,
+                        reversedRoute = false,
+                        isInitial = true
+                    )
 
                     binding.stop.visibility = View.VISIBLE
 
@@ -1154,16 +1143,18 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             }
             binding.cameraButton.setOnClickListener {
 
-                //TODO change permission granting
-                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
-                    requestPermissions(
-                        arrayOf(Manifest.permission.CAMERA),
-                        GlobalUtils.CAMERA_REQUEST
-                    )
+                startActivity(Intent(this, ArActivity::class.java))
 
-
-                val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                startActivityForResult(cameraIntent, GlobalUtils.CAMERA_REQUEST)
+//                //TODO change permission granting
+//                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
+//                    requestPermissions(
+//                        arrayOf(Manifest.permission.CAMERA),
+//                        GlobalUtils.CAMERA_REQUEST
+//                    )
+//
+//
+//                val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+//                startActivityForResult(cameraIntent, GlobalUtils.CAMERA_REQUEST)
             }
 
             binding.switchMapStyle.setOnClickListener {
@@ -1362,7 +1353,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                     this,
                     arrayOf(Manifest.permission.SEND_SMS),
                     0
-                );
+                )
             }
         }
         val smsManager = SmsManager.getDefault()
@@ -1600,11 +1591,8 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
         val modulo = 10
 
-        val filteredCoordintates = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        val filteredCoordintates =
             defineRoutePoints(routePoints, modulo)
-        } else {
-            TODO("VERSION.SDK_INT < N")
-        }
 
         if (isInitial) {
             checkPoints = defineCheckPoints(filteredCoordintates, modulo)
