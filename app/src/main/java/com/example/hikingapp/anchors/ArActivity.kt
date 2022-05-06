@@ -31,10 +31,17 @@ class ArActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_ar)
+
+        var bundle: Bundle? = null
+        val routeId = (intent.extras?.get("routeId") as Long?)?.let {
+            bundle = Bundle()
+            bundle!!.putLong("routeId", it)
+        }
         val fm = supportFragmentManager
         var frag = fm.findFragmentById(R.id.fragment_container)
         if (frag == null) {
             frag = CloudAnchorFragment()
+            frag.arguments = bundle
             fm.beginTransaction().add(R.id.fragment_container, frag).commit()
         }
     }

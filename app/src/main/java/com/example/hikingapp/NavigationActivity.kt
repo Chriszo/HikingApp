@@ -1143,7 +1143,9 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             }
             binding.cameraButton.setOnClickListener {
 
-                startActivity(Intent(this, ArActivity::class.java))
+                val arIntent = Intent(this, ArActivity::class.java)
+                arIntent.putExtra("routeId", currentRoute!!.routeId)
+                startActivity(arIntent)
 
 //                //TODO change permission granting
 //                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)

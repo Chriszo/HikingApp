@@ -122,6 +122,8 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
 
     private Button resolveButton;
 
+    private Long routeId;
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
@@ -155,19 +157,29 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
         resolveButton = rootView.findViewById(R.id.resolve_button);
         resolveButton.setOnClickListener(v -> this.onResolveButtonPressed());
 
+
+        routeId = getArguments().getLong("routeId");
+
         FirebaseDatabase.getInstance()
                 .getReference()
                 .child("shared_anchor_codelab_root")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        HashMap<String,String> data = (HashMap<String, String>) snapshot.getValue();
+                        HashMap<String, Object> data = (HashMap<String, Object>) snapshot.getValue();
                         if (data != null) {
                             data.forEach((key, cloudAnchorId) -> {
 
                                 if (!key.trim().equals("next_short_code")) {
-                                    int shortCode = Integer.parseInt(key.split(";")[1]);
-                                    cloudAnchorManager.resolveCloudAnchor(session, cloudAnchorId, anchor -> onResolvedAnchorAvailable(anchor, shortCode));
+
+                                    String[] cloudAnchorTokens = key.split(";");
+                                    if (cloudAnchorTokens.length == 3) {
+                                        Long retrievedRouteId = Long.parseLong(cloudAnchorTokens[1]);
+                                        int shortCode = Integer.parseInt(cloudAnchorTokens[2]);
+                                        if (routeId.equals(retrievedRouteId)) {
+                                            cloudAnchorManager.resolveCloudAnchor(session, (String) cloudAnchorId, anchor -> onResolvedAnchorAvailable(anchor, shortCode));
+                                        }
+                                    }
                                 }
                             });
                         }
@@ -377,7 +389,7 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
                     session.getAllTrackables(Plane.class), camera.getDisplayOrientedPose(), projmtx);
 
             if (!anchors.isEmpty()) {
-                for (Anchor anchor: anchors) {
+                for (Anchor anchor : anchors) {
                     if (anchor != null && anchor.getTrackingState() == TrackingState.TRACKING) {
                         anchor.getPose().toMatrix(anchorMatrix, 0);
                         // Update and draw the model and its shadow.
@@ -464,8 +476,8 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
         if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
             String cloudAnchorId = anchor.getCloudAnchorId();
             firebaseManager.nextShortCode(shortCode -> {
-                if (shortCode != null) {
-                    firebaseManager.storeUsingShortCode(shortCode, cloudAnchorId);
+                if (shortCode != null && routeId != null) {
+                    firebaseManager.storeUsingShortCode(routeId + ";" + shortCode, cloudAnchorId);
                     messageSnackbarHelper.showMessage(getActivity(), "Cloud Anchor Hosted. Short code: " + shortCode);
                 } else {
                     // Firebase could not provide a short code.
