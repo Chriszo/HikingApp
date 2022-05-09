@@ -113,7 +113,9 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
     // Temporary matrix allocated here to reduce number of allocations for each frame.
     private final float[] anchorMatrix = new float[16];
     private static final String SEARCHING_PLANE_MESSAGE = "Searching for surfaces...";
-    private final float[] andyColor = {139.0f, 195.0f, 74.0f, 255.0f};
+//    private final float[] andyColor = {139.0f, 195.0f, 74.0f, 255.0f};
+    private final float[] pinColor = { 195.0f, 0.0f,0.0f, 255.0f};
+
 
     @Nullable
     private Anchor currentAnchor = null;
@@ -301,7 +303,7 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
             planeRenderer.createOnGlThread(getContext(), "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(getContext());
 
-            virtualObject.createOnGlThread(getContext(), "models/andy.obj", "models/andy.png");
+            virtualObject.createOnGlThread(getContext(), "models/map_pin.obj", "models/andy.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
             virtualObjectShadow
@@ -396,22 +398,22 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
                         virtualObject.updateModelMatrix(anchorMatrix, 1f);
                         virtualObjectShadow.updateModelMatrix(anchorMatrix, 1f);
 
-                        virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, andyColor);
-                        virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, andyColor);
+                        virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
+                        virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
                     }
                 }
             }
 
 
-//            if (currentAnchor != null && currentAnchor.getTrackingState() == TrackingState.TRACKING) {
-//                currentAnchor.getPose().toMatrix(anchorMatrix, 0);
-//                // Update and draw the model and its shadow.
-//                virtualObject.updateModelMatrix(anchorMatrix, 1f);
-//                virtualObjectShadow.updateModelMatrix(anchorMatrix, 1f);
-//
-//                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, andyColor);
-//                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, andyColor);
-//            }
+            if (currentAnchor != null && currentAnchor.getTrackingState() == TrackingState.TRACKING) {
+                currentAnchor.getPose().toMatrix(anchorMatrix, 0);
+                // Update and draw the model and its shadow.
+                virtualObject.updateModelMatrix(anchorMatrix, 1f);
+                virtualObjectShadow.updateModelMatrix(anchorMatrix, 1f);
+
+                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
+                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
+            }
         } catch (Throwable t) {
             // Avoid crashing the application due to unhandled exceptions.
             Log.e(TAG, "Exception on the OpenGL thread", t);
