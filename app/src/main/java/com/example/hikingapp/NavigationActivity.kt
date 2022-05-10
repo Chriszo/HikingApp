@@ -631,6 +631,9 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             }
         )
         // update user navigation data
+        if (userNavigationData == null) {
+            userNavigationData = UserNavigationData(currentRoute!!.routeId)
+        }
         userNavigationData!!.distanceCovered = routeProgress.distanceTraveled.toDouble()
 //        userNavigationData.timeSpent = System.currentTimeMillis() - timeCounter
 
@@ -1141,10 +1144,14 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 // mute/unmute voice instructions
                 isVoiceInstructionsMuted = !isVoiceInstructionsMuted
             }
-            binding.cameraButton.setOnClickListener {
+            binding.arButton.setOnClickListener {
 
                 val arIntent = Intent(this, ArActivity::class.java)
                 arIntent.putExtra("routeId", currentRoute!!.routeId)
+                arIntent.putExtra("authInfo", userAuthInfo)
+                arIntent.putExtra("route", currentRoute)
+//                arIntent.putExtra("currentLocation", currentLocation)
+
                 startActivity(arIntent)
 
 //                //TODO change permission granting

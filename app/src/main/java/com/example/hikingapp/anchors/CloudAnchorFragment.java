@@ -16,23 +16,41 @@
 
 package com.example.hikingapp.anchors;
 
+import static android.app.Activity.RESULT_OK;
+import static androidx.core.content.ContextCompat.checkSelfPermission;
+
+import android.Manifest;
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
+import com.example.hikingapp.NavigationActivity;
 import com.example.hikingapp.R;
+import com.example.hikingapp.domain.route.Route;
+import com.example.hikingapp.utils.GlobalUtils;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Camera;
@@ -66,13 +84,20 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.gson.Gson;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -103,9 +128,12 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
     private StorageManager storageManager = new StorageManager();
     private FirebaseManager firebaseManager;
 
+    private FrameLayout bottomSheetView;
+
 
     private final BackgroundRenderer backgroundRenderer = new BackgroundRenderer();
-    private final ObjectRenderer virtualObject = new ObjectRenderer();
+    private ObjectRenderer virtualObject = new ObjectRenderer();
+    private ObjectRenderer virtualObjectCopy = new ObjectRenderer();
     private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
     private final PlaneRenderer planeRenderer = new PlaneRenderer();
     private final PointCloudRenderer pointCloudRenderer = new PointCloudRenderer();
@@ -113,8 +141,10 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
     // Temporary matrix allocated here to reduce number of allocations for each frame.
     private final float[] anchorMatrix = new float[16];
     private static final String SEARCHING_PLANE_MESSAGE = "Searching for surfaces...";
-//    private final float[] andyColor = {139.0f, 195.0f, 74.0f, 255.0f};
-    private final float[] pinColor = { 195.0f, 0.0f,0.0f, 255.0f};
+    //    private final float[] andyColor = {139.0f, 195.0f, 74.0f, 255.0f};
+    private final float[] pinColor = {195.0f, 0.0f, 0.0f, 255.0f};
+
+    private boolean modelsVisible;
 
 
     @Nullable
@@ -123,6 +153,7 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
     private List<Anchor> anchors = null;
 
     private Long routeId;
+    private String currentPath;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -153,6 +184,8 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
 
 
         routeId = getArguments().getLong("routeId");
+
+        modelsVisible = true;
 
         FirebaseDatabase.getInstance()
                 .getReference()
@@ -185,7 +218,111 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
                     }
                 });
 
+        bottomSheetView = rootView.findViewById(R.id.bottom_sheet_ar);
+
+        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetView);
+        bottomSheetBehavior.setPeekHeight(0);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+        FloatingActionButton cameraButton = bottomSheetView.findViewById(R.id.cameraButton);
+        FloatingActionButton arButton = bottomSheetView.findViewById(R.id.ar_button);
+
+        cameraButton.setOnClickListener(view -> {
+            Toast.makeText(getContext(), "Camera button clicked", Toast.LENGTH_LONG).show();
+
+            if (checkSelfPermission(getContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
+                requestPermissions(new String[]{Manifest.permission.CAMERA}, GlobalUtils.CAMERA_REQUEST);
+
+            Intent photoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(photoIntent, GlobalUtils.CAMERA_REQUEST);
+        });
+
+        arButton.setOnClickListener(view -> {
+
+            if (modelsVisible) {
+                Gson json = new Gson();
+                virtualObjectCopy = json.fromJson(json.toJson(virtualObject), ObjectRenderer.class);
+                virtualObject = new ObjectRenderer();
+                modelsVisible = false;
+                Toast.makeText(getContext(), "3D Models removed", Toast.LENGTH_LONG).show();
+                arButton.setImageResource(R.drawable.ar_2_icon);
+            } else {
+                virtualObject = virtualObjectCopy;
+                modelsVisible = true;
+                Toast.makeText(getContext(), "3D Models added", Toast.LENGTH_LONG).show();
+                arButton.setImageResource(R.drawable.ar_2_icon_remove);
+            }
+        });
+
+        ImageView backButton = rootView.findViewById(R.id.back_btn);
+
+        backButton.setOnClickListener(v -> {
+
+            Intent navigationIntent = new Intent(getContext(), NavigationActivity.class);
+            navigationIntent.putExtra("route", (Route)getArguments().get("route"));
+            navigationIntent.putExtra("authInfo", (FirebaseUser)getArguments().get("authInfo"));
+            startActivity(navigationIntent);
+        });
+
         return rootView;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+
+        if (requestCode == GlobalUtils.CAMERA_REQUEST && resultCode == RESULT_OK) {
+            Bitmap imageBitmap = (Bitmap) data.getExtras().get("data");
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
+            byte[] byteArray = outputStream.toByteArray();
+
+            storage.getReference("routes/" + routeId.toString() + "/photos")
+                    .listAll()
+                    .addOnSuccessListener(listResult -> {
+
+                        int nextIndex = listResult.getItems().size() + 1;
+                        storage.getReference("routes/" + routeId.toString() + "/photos/photo_" + routeId.toString() + "_" + nextIndex + ".jpg")
+                                .putBytes(byteArray)
+                                .addOnSuccessListener(taskSnapshot -> {
+                                    System.out.println("Successfully uploaded image.");
+                                    Toast.makeText(getContext(), "Photo saved successfully.", Toast.LENGTH_LONG).show();
+                                });
+                    });
+//            dispatchTakePictureIntent()
+//            imageView.setImageBitmap(imageBitmap)
+        }
+    }
+
+
+    private void dispatchTakePictureIntent() throws IOException {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        takePictureIntent.resolveActivity(getActivity().getPackageManager());
+        File photoFile = createImageFile();
+
+        Uri photoURI = FileProvider.getUriForFile(getContext(), "com.example.android.fileprovider", photoFile);
+
+        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+        startActivityForResult(takePictureIntent, GlobalUtils.CAMERA_REQUEST);
+    }
+
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        ContextWrapper contextWrapper = new ContextWrapper(getContext());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File storageDir = contextWrapper.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
+        File newPhotoFile = File.createTempFile(
+                "JPEG_${timeStamp}_", /* prefix */
+                ".jpg", /* suffix */
+                storageDir /* directory */
+        );
+
+        currentPath = newPhotoFile.getAbsolutePath();
+        return newPhotoFile;
     }
 
     @Override
@@ -298,6 +435,7 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
             virtualObject.createOnGlThread(getContext(), "models/map_pin.obj", "models/andy.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
+
             virtualObjectShadow
                     .createOnGlThread(getContext(), "models/andy_shadow.obj", "models/andy_shadow.png");
             virtualObjectShadow.setBlendMode(BlendMode.Shadow);
@@ -374,9 +512,9 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
             }
 
             // No tracking error at this point. If we didn't detect any plane, show searchingPlane message.
-            if (!hasTrackingPlane()) {
-                messageSnackbarHelper.showMessage(getActivity(), SEARCHING_PLANE_MESSAGE);
-            }
+//            if (!hasTrackingPlane()) {
+//                messageSnackbarHelper.showMessage(getActivity(), SEARCHING_PLANE_MESSAGE);
+//            }
 
             // Visualize planes.
             planeRenderer.drawPlanes(
@@ -384,31 +522,26 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
 
             if (!anchors.isEmpty()) {
                 for (Anchor anchor : anchors) {
-                    if (anchor != null && anchor.getTrackingState() == TrackingState.TRACKING) {
-                        anchor.getPose().toMatrix(anchorMatrix, 0);
-                        // Update and draw the model and its shadow.
-                        virtualObject.updateModelMatrix(anchorMatrix, 1f);
-                        virtualObjectShadow.updateModelMatrix(anchorMatrix, 1f);
-
-                        virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
-                        virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
-                    }
+                    drawModel(anchor, viewmtx, projmtx,colorCorrectionRgba);
                 }
             }
 
-
-            if (currentAnchor != null && currentAnchor.getTrackingState() == TrackingState.TRACKING) {
-                currentAnchor.getPose().toMatrix(anchorMatrix, 0);
-                // Update and draw the model and its shadow.
-                virtualObject.updateModelMatrix(anchorMatrix, 1f);
-                virtualObjectShadow.updateModelMatrix(anchorMatrix, 1f);
-
-                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
-                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
-            }
+            drawModel(currentAnchor, viewmtx,projmtx,colorCorrectionRgba);
         } catch (Throwable t) {
             // Avoid crashing the application due to unhandled exceptions.
             Log.e(TAG, "Exception on the OpenGL thread", t);
+        }
+    }
+
+    private void drawModel(Anchor anchor, float[] viewmtx, float[] projmtx, float[] colorCorrectionRgba) {
+        if (anchor != null && anchor.getTrackingState() == TrackingState.TRACKING) {
+            anchor.getPose().toMatrix(anchorMatrix, 0);
+            // Update and draw the model and its shadow.
+            virtualObject.updateModelMatrix(anchorMatrix, 1f);
+            virtualObjectShadow.updateModelMatrix(anchorMatrix, 1f);
+
+            virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
+            virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, pinColor);
         }
     }
 

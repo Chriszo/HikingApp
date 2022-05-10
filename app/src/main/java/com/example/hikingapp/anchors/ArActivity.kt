@@ -18,7 +18,9 @@ package com.example.hikingapp.anchors
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.R
+import com.example.hikingapp.domain.route.Route
 import com.google.ar.core.codelab.cloudanchor.helpers.FullScreenHelper
+import com.google.firebase.auth.FirebaseUser
 
 /**
  * Main Activity for the Cloud Anchors Codelab.
@@ -32,11 +34,20 @@ class ArActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_ar)
 
-        var bundle: Bundle? = null
-        val routeId = (intent.extras?.get("routeId") as Long?)?.let {
-            bundle = Bundle()
-            bundle!!.putLong("routeId", it)
+        var bundle = Bundle()
+        val routeId = intent.extras?.get("routeId") as Long?
+
+        val currentRoute = intent.extras?.get("route") as Route?
+        val authInfo = intent.extras?.get("authInfo") as FirebaseUser?
+
+        if (routeId != null) {
+            bundle.putLong("routeId", routeId)
         }
+
+        bundle.putSerializable("route", currentRoute)
+        bundle.putParcelable("authInfo", authInfo)
+
+
         val fm = supportFragmentManager
         var frag = fm.findFragmentById(R.id.fragment_container)
         if (frag == null) {
