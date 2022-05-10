@@ -122,8 +122,6 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
 
     private List<Anchor> anchors = null;
 
-    private Button resolveButton;
-
     private Long routeId;
 
     @Override
@@ -152,12 +150,6 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
         surfaceView.setRenderer(this);
         surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
         surfaceView.setWillNotDraw(false);
-
-        Button clearButton = rootView.findViewById(R.id.clear_button);
-        clearButton.setOnClickListener(v -> onClearButtonPressed());
-
-        resolveButton = rootView.findViewById(R.id.resolve_button);
-        resolveButton.setOnClickListener(v -> this.onResolveButtonPressed());
 
 
         routeId = getArguments().getLong("routeId");
@@ -444,7 +436,6 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
                     // space. This anchor is created on the Plane to place the 3D model
                     // in the correct position relative both to the world and to the plane.
                     currentAnchor = hit.createAnchor();
-                    getActivity().runOnUiThread(() -> resolveButton.setEnabled(false));
                     messageSnackbarHelper.showMessage(getActivity(), "Hosting anchor...");
                     cloudAnchorManager.hostCloudAnchor(session, currentAnchor, 300, this::onHostedAnchorAvailable);
                     break;
@@ -468,7 +459,6 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
     private synchronized void onClearButtonPressed() {
         // Clear the anchor from the scene.
         cloudAnchorManager.clearListeners();
-        resolveButton.setEnabled(true);
         currentAnchor = null;
     }
 
@@ -506,7 +496,6 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
                         "A Cloud Anchor ID for the short code " + shortCode + " was not found.");
                 return;
             }
-            resolveButton.setEnabled(false);
             cloudAnchorManager.resolveCloudAnchor(
                     session,
                     cloudAnchorId,
@@ -529,7 +518,6 @@ public class CloudAnchorFragment extends Fragment implements GLSurfaceView.Rende
                     getActivity(),
                     "Error while resolving anchor with short code " + shortCode + ". Error: "
                             + cloudState.toString());
-            resolveButton.setEnabled(true);
         }
     }
 

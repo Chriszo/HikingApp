@@ -285,7 +285,7 @@
                 app:backgroundTint="#FFFFFF"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/soundButton"
-                app:srcCompat="@drawable/photo_camera_interface_symbol_for_button" />
+                app:srcCompat="@drawable/ar_2_icon" />
 
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
