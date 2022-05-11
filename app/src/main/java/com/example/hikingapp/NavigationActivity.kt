@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Bitmap
+
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
@@ -22,7 +23,6 @@ import android.provider.MediaStore
 import android.telephony.SmsManager
 import android.util.Log
 import android.view.View
-import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
@@ -43,6 +43,7 @@ import com.example.hikingapp.persistence.firebase.FirebaseUtils
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
 import com.example.hikingapp.services.map.MapServiceImpl
+import com.example.hikingapp.ui.navigation.MapFragment
 import com.example.hikingapp.utils.ElevationDataUtils
 import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.auth.FirebaseUser
@@ -170,6 +171,7 @@ import java.util.stream.Collectors
  */
 class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
+    private var mapView: MapView? = null
     private var pointAnnotationManager: PointAnnotationManager? = null
     private var checkPointsVisible = true
     private var routeCompleted: Boolean = false
@@ -268,6 +270,12 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 ).show()
                 mapboxNavigation.setRoutes(mainRoutes, checkPointsIndex)
                 isOutOfRoute = false
+
+                binding.navActionsId.visibility = View.VISIBLE
+                binding.tripProgressCard.visibility = View.VISIBLE
+                binding.elevationGraph.visibility = View.VISIBLE
+                binding.offRouteActionsId.visibility = View.INVISIBLE
+
             } else {
                 routeCompleted = true
                 val mainIntent =
@@ -666,6 +674,10 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
     private val offRouteObserver = OffRouteObserver { offRoute ->
         if (offRoute) {
             isOutOfRoute = true
+            binding.offRouteActionsId.visibility = View.VISIBLE
+            binding.navActionsId.visibility = View.INVISIBLE
+            binding.tripProgressCard.visibility = View.INVISIBLE
+            binding.elevationGraph.visibility = View.INVISIBLE
             runOnUiThread {
                 Toast.makeText(
                     this@NavigationActivity,
@@ -689,6 +701,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             }
         }
     }
+
 
     private fun callElevationDataAPIAsync(
         currentLocation: Location
@@ -816,8 +829,19 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             setBackButtonListener()
             binding.toolbarContainer.actionBarTitle.text = currentRoute!!.routeName
 
+            val mapFragment: MapFragment =
+                (supportFragmentManager.findFragmentById(R.id.map_fragment) as MapFragment).apply {
+                    this.setListener(object : MapFragment.OnTouchListener{
+                        override fun onTouch() {
+                            binding.navigationScrollView.requestDisallowInterceptTouchEvent(true)
+                        }
 
-            mapboxMap = binding.mapView.getMapboxMap()
+                    })
+                }
+            mapView = mapFragment.view?.findViewById(R.id.mapView)
+
+
+            mapboxMap = mapView!!.getMapboxMap()
 
             val routeMapEntity = LocalDatabase.getRouteMapContent(currentRoute!!.routeId)
 
@@ -839,7 +863,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             configureGraphAttributes()
 
             // initialize the location puck
-            binding.mapView.location.apply {
+            mapView!!.location.apply {
                 this.locationPuck = LocationPuck2D(
                     bearingImage = ContextCompat.getDrawable(
                         this@NavigationActivity,
@@ -857,7 +881,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                     NavigationOptions.Builder(this.applicationContext)
                         .accessToken(getString(R.string.mapbox_access_token))
                         // comment out the location engine setting block to disable simulation
-                        .locationEngine(replayLocationEngine)
+//                        .locationEngine(replayLocationEngine)
                         .build()
                 )
             }
@@ -866,12 +890,12 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             viewportDataSource = MapboxNavigationViewportDataSource(mapboxMap)
             navigationCamera = NavigationCamera(
                 mapboxMap,
-                binding.mapView.camera,
+                mapView!!.camera,
                 viewportDataSource
             )
             // set the animations lifecycle listener to ensure the NavigationCamera stops
             // automatically following the user location when the map is interacted with
-            binding.mapView.camera.addCameraAnimationsLifecycleListener(
+            mapView!!.camera.addCameraAnimationsLifecycleListener(
                 NavigationBasicGesturesHandler(navigationCamera)
             )
             navigationCamera.registerNavigationCameraStateChangeObserver { navigationCameraState ->
@@ -1000,6 +1024,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                                     )
                                 )
                             }
+
                             +image(GlobalUtils.RED_MARKER_ID) {
                                 bitmap(
                                     BitmapFactory.decodeResource(
@@ -1020,8 +1045,10 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                         }
                         ),
                 {
-                    mapView.location.addOnIndicatorPositionChangedListener(onPositionChangedListener)
-                    routeLineView.hideOriginAndDestinationPoints(it)
+                    mapView!!.location.addOnIndicatorPositionChangedListener(
+                        onPositionChangedListener
+                    )
+//                    routeLineView.hideOriginAndDestinationPoints(it)
 //                mapboxMap.addOnMapLoadedListener {
 //                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
 //                }
@@ -1035,6 +1062,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                     }
                 }
             )
+
 
             // initialize view interactions
             binding.stop.setOnClickListener {
@@ -1228,33 +1256,33 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
     private fun removeCheckpointAnnotations() {
         mapboxMap.getStyle {
-            mapView.annotations.cleanup()
+            mapView!!.annotations.cleanup()
         }
     }
 
     private fun addCheckpointAnnotations() {
         checkPoints.withIndex().forEach {
             // First and last elements are start and destination of the route
-            if (it.index != 0 && it.index != checkPoints.size -1) {
+            if (it.index != 0 && it.index != checkPoints.size - 1) {
                 addAnnotationToMap(it.value.value)
             }
         }
     }
 
     private fun addAnnotationToMap(checkpoint: Point) {
-            // Create an instance of the Annotation API and get the PointAnnotationManager.
+        // Create an instance of the Annotation API and get the PointAnnotationManager.
         bitmapFromDrawableRes(
             this@NavigationActivity,
             R.drawable.pin_custom_icon
         )?.let {
-            val annotationApi = mapView?.annotations
+            val annotationApi = mapView!!.annotations
             pointAnnotationManager = annotationApi?.createPointAnnotationManager(mapView!!)
             // Set options for the resulting symbol layer.
             val pointAnnotationOptions: PointAnnotationOptions = PointAnnotationOptions()
-            // Define a geographic coordinate.
+                // Define a geographic coordinate.
                 .withPoint(checkpoint)
-            // Specify the bitmap you assigned to the point annotation
-            // The bitmap will be added to map style automatically.
+                // Specify the bitmap you assigned to the point annotation
+                // The bitmap will be added to map style automatically.
                 .withIconImage(it)
             // Add the resulting pointAnnotation to the map.
             pointAnnotationManager?.create(pointAnnotationOptions)/*?.let { pa ->
@@ -1262,6 +1290,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             }*/
         }
     }
+
     private fun bitmapFromDrawableRes(
         context: Context,
         @DrawableRes resourceId: Int,
@@ -1272,7 +1301,10 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         else
             convertDrawableToBitmap(AppCompatResources.getDrawable(context, resourceId), isVisible)
 
-    private fun convertDrawableToBitmap(sourceDrawable: Drawable?, isVisible: Boolean? = null): Bitmap? {
+    private fun convertDrawableToBitmap(
+        sourceDrawable: Drawable?,
+        isVisible: Boolean? = null
+    ): Bitmap? {
         if (sourceDrawable == null) {
             return null
         }
@@ -1289,7 +1321,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
             if (isVisible != null && !isVisible) {
                 val canvas = Canvas()
-                drawable.setVisible(false,false)
+                drawable.setVisible(false, false)
                 drawable.draw(canvas)
                 null
             } else {
@@ -1339,9 +1371,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 currentRoute!!.routeInfo!!.navigationData!!.entries.size
             )
         }
-
         elevationGraph!!.addSeries(series)
-
     }
 
     private fun sendSMS(phoneNumber: String?) {
@@ -1493,7 +1523,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                     }),
             {
                 updateCamera(mapInfo, null)
-                routeLineView.hideOriginAndDestinationPoints(it)
+//                routeLineView.hideOriginAndDestinationPoints(it)
             },
             object : OnMapLoadErrorListener {
                 override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
@@ -1600,15 +1630,15 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
         val modulo = 10
 
-        val filteredCoordintates =
+        val filteredCoordinates =
             defineRoutePoints(routePoints, modulo)
 
         if (isInitial) {
-            checkPoints = defineCheckPoints(filteredCoordintates, modulo)
+            checkPoints = defineCheckPoints(filteredCoordinates, modulo)
         }
 
         requestCustomRoute(
-            filteredCoordintates,
+            filteredCoordinates,
             checkPoints,
             wayPointsIncluded,
             reversedRoute,
@@ -1668,7 +1698,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                         finalCheckPoints.add(IndexedValue(it.index, it.value))
 
                         // Add markers to checkpoints
-                        if (it.index != 0 && it.index != filteredCoordintates.size -1) {
+                        if (it.index != 0 && it.index != filteredCoordintates.size - 1) {
                             addAnnotationToMap(it.value)
                         }
                     }
@@ -1736,7 +1766,8 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
         //TODO Find a more efficient way to compute route points for the obtaining of instructions. This is fully customized to current route at fillopapou.
 
         if (wayPointsIncluded) {
-            mapMatchingBuilder.waypointIndices(*(checkPoints.stream().map { it.index }.collect(Collectors.toList())).toTypedArray())
+            mapMatchingBuilder.waypointIndices(*(checkPoints.stream().map { it.index }
+                .collect(Collectors.toList())).toTypedArray())
         }
         if (reversedRoute) {
             mapMatchingBuilder.coordinates(filteredCoordintates.reversed())
@@ -1761,12 +1792,19 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
             ) {
                 if (response.isSuccessful) {
                     response.body()?.matchings()?.let { matchingList ->
-                        matchingList[0].toDirectionRoute().apply {
-                            if (isInitial) {
-                                mainRoutes = mutableListOf(this)
-                                initialFilteredCoordinates = filteredCoordintates
+                        if (!matchingList.isNullOrEmpty()) {
+                            matchingList[0].toDirectionRoute().apply {
+                                if (isInitial) {
+                                    mainRoutes = mutableListOf(this)
+                                    initialFilteredCoordinates = filteredCoordintates
+                                }
+//                                routeLineView.showPrimaryRoute(mapboxMap.getStyle()!!)
+                                routeLineView.hideAlternativeRoutes(mapboxMap.getStyle()!!)
+                                setRouteAndStartNavigation(listOf(this))
                             }
-                            setRouteAndStartNavigation(listOf(this))
+                        } else {
+                            routeLineView.showAlternativeRoutes(mapboxMap.getStyle()!!)
+//                            routeLineView.hidePrimaryRoute(mapboxMap.getStyle()!!)
                         }
                     }
 

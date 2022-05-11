@@ -4,27 +4,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".NavigationActivity">
+    tools:context=".NavigationActivity"
+    android:id="@+id/navigationScrollView">
 
 <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
 
     <include
         android:id="@+id/toolbarContainer"
         layout="@layout/custom_toolbar" />
 
 
-    <com.mapbox.maps.MapView
-        android:id="@+id/mapView"
-        android:layout_width="wrap_content"
+    <fragment
+        android:id="@+id/map_fragment"
+        class="com.example.hikingapp.ui.navigation.MapFragment"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintHeight_percent="0.5"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.5"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbarContainer">
-
-    </com.mapbox.maps.MapView>
+        app:layout_constraintTop_toBottomOf="@id/toolbarContainer" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/tripProgressCard"
@@ -126,7 +127,7 @@
         app:cardUseCompatPadding="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/mapView">
+        app:layout_constraintTop_toBottomOf="@+id/map_fragment">
 
 
         <!--Card Divider element -->
@@ -136,6 +137,7 @@
             android:background="@android:color/darker_gray" />
 
         <LinearLayout
+            android:id="@+id/navActionsId"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal"
@@ -205,6 +207,41 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/offRouteActionsId"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="invisible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="You are out of route."
+                android:textColor="#FF0000"
+                android:layout_marginTop="5dp"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/lost_button_2"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/circular_button"
+                android:backgroundTint="@android:color/holo_red_dark"
+                android:paddingStart="6dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="10dp"
+                android:text="Lost"
+                android:textColor="@color/white"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
     </androidx.cardview.widget.CardView>
 
 
@@ -258,22 +295,29 @@
         app:layout_constraintTop_toBottomOf="@id/routing_options_layout"
         app:srcCompat="@drawable/more_icon_foreground" />
 
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/nav_toggle"
+        app:layout_constraintStart_toStartOf="@id/nav_toggle"
+        android:elevation="12dp"
+        >
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
         <LinearLayout
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             android:id="@+id/nav_options"
             android:layout_width="60dp"
             android:layout_height="400dp"
-            app:layout_constraintEnd_toEndOf="@id/nav_toggle"
-            app:layout_constraintTop_toBottomOf="@id/nav_toggle"
             android:orientation="vertical"
             android:visibility="gone"
-            android:gravity="center_horizontal"
-            >
+            android:gravity="center_horizontal">
 
-            <RelativeLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                >
+
 
                 <com.mapbox.navigation.ui.voice.view.MapboxSoundButton
                     android:id="@+id/soundButton"
@@ -282,7 +326,6 @@
                     android:layout_marginTop="8dp"
                     app:layout_constraintEnd_toEndOf="parent"/>
 
-            </RelativeLayout>
 
 
 
@@ -325,7 +368,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/mapStyle_options"
                 android:layout_width="45dp"
-                android:layout_height="180dp"
+                android:layout_height="300dp"
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="@id/switchMapStyle"
                 app:layout_constraintTop_toBottomOf="@id/switchMapStyle">
@@ -397,6 +440,11 @@
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </FrameLayout>
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

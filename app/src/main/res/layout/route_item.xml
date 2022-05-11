@@ -6,102 +6,119 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
-    <ImageView
-        android:id="@+id/route_imageView"
-        android:layout_width="300dp"
-        android:layout_height="200dp"
-        android:layout_margin="10dp"
-        android:scaleType="fitXY"
-        android:layout_marginTop="10dp"
-        android:src="@mipmap/olympus_foreground"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
-
-    <TextView
-        android:id="@+id/route_name"
-        android:layout_width="130dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:ellipsize="none"
-        android:singleLine="false"
-        android:text="TextView"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="@id/route_imageView"
-        app:layout_constraintTop_toBottomOf="@+id/route_imageView" />
-
-    <TextView
-        android:id="@+id/route_state"
-        android:layout_width="130dp"
-        android:layout_height="wrap_content"
-        android:ellipsize="none"
-        android:singleLine="false"
-        android:text="TextView"
-        android:textSize="13sp"
-        app:layout_constraintStart_toStartOf="@+id/route_name"
-        app:layout_constraintTop_toBottomOf="@+id/route_name" />
-
-
-    <RatingBar
-        android:id="@+id/routeRating"
-        android:layout_width="233dp"
-        android:layout_height="40dp"
-        android:layout_marginVertical="5dp"
-        android:numStars="5"
-        android:rating="3"
-        android:scaleX="0.3"
-        android:scaleY="0.3"
-        android:theme="@style/RatingBar"
-        android:transformPivotX="10dp"
-        android:isIndicator="true"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/route_state" />
-
-    <RelativeLayout
-        android:id="@+id/relative_layout"
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="16dp">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_margin="10dp"
+        app:cardElevation="10dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/route_imageView"
+                android:layout_width="300dp"
+                android:layout_height="200dp"
+                android:layout_margin="10dp"
+                android:scaleType="fitXY"
+                android:layout_marginTop="10dp"
+                android:src="@mipmap/olympus_foreground"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:srcCompat="@tools:sample/avatars" />
+
+            <TextView
+                android:id="@+id/route_name"
+                android:layout_width="130dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:ellipsize="none"
+                android:singleLine="false"
+                android:text="TextView"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="@id/route_imageView"
+                app:layout_constraintTop_toBottomOf="@+id/route_imageView" />
+
+            <TextView
+                android:id="@+id/route_state"
+                android:layout_width="130dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="none"
+                android:singleLine="false"
+                android:text="TextView"
+                android:textSize="13sp"
+                app:layout_constraintStart_toStartOf="@+id/route_name"
+                app:layout_constraintTop_toBottomOf="@+id/route_name" />
 
 
-    </RelativeLayout>
+            <RatingBar
+                android:id="@+id/routeRating"
+                android:layout_width="233dp"
+                android:layout_height="40dp"
+                android:layout_marginVertical="5dp"
+                android:numStars="5"
+                android:rating="3"
+                android:scaleX="0.3"
+                android:scaleY="0.3"
+                android:theme="@style/RatingBar"
+                android:transformPivotX="10dp"
+                android:isIndicator="true"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/route_state" />
 
-   <!-- <Button
-        android:id="@+id/difficulty_level"
-        android:layout_width="60dp"
-        android:layout_height="30dp"
-        android:text="test"
-        android:textSize="9sp"
-        android:backgroundTint="@android:color/darker_gray"
-        app:layout_constraintEnd_toEndOf="@+id/route_imageView"
-        app:layout_constraintTop_toBottomOf="@+id/route_imageView"
-        android:layout_marginTop="5dp"
-        android:textAlignment="textEnd"
-        />-->
+            <RelativeLayout
+                android:id="@+id/relative_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:layout_editor_absoluteX="0dp"
+                tools:layout_editor_absoluteY="16dp">
 
-    <TextView
-        android:id="@+id/difficulty_level"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/rounded"
-        android:textColor="@android:color/white"
-        android:layout_marginTop="5dp"
-        android:ellipsize="none"
-        android:padding="5dp"
-        android:singleLine="false"
-        android:textAlignment="textEnd"
-        android:text="TextView"
-        android:textSize="13sp"
-        app:layout_constraintEnd_toEndOf="@+id/route_imageView"
-        app:layout_constraintTop_toBottomOf="@+id/route_imageView" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="5dp"
-        android:background="@android:color/darker_gray"
-        app:layout_constraintTop_toBottomOf="@+id/relative_layout" />
+            </RelativeLayout>
+
+            <!-- <Button
+                 android:id="@+id/difficulty_level"
+                 android:layout_width="60dp"
+                 android:layout_height="30dp"
+                 android:text="test"
+                 android:textSize="9sp"
+                 android:backgroundTint="@android:color/darker_gray"
+                 app:layout_constraintEnd_toEndOf="@+id/route_imageView"
+                 app:layout_constraintTop_toBottomOf="@+id/route_imageView"
+                 android:layout_marginTop="5dp"
+                 android:textAlignment="textEnd"
+                 />-->
+
+            <TextView
+                android:id="@+id/difficulty_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="5dp"
+                android:ellipsize="none"
+                android:padding="5dp"
+                android:singleLine="false"
+                android:textAlignment="textEnd"
+                android:text="TextView"
+                android:textSize="13sp"
+                app:layout_constraintEnd_toEndOf="@+id/route_imageView"
+                app:layout_constraintTop_toBottomOf="@+id/route_imageView" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:background="@android:color/darker_gray"
+                app:layout_constraintTop_toBottomOf="@+id/relative_layout" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
