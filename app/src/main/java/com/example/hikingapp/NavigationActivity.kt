@@ -2,11 +2,14 @@ package com.example.hikingapp
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.database.Cursor
 import android.graphics.Bitmap
 
 import android.graphics.BitmapFactory
@@ -169,7 +172,7 @@ import java.util.stream.Collectors
  * - At any point in time you can finish guidance or select a new destination.
  * - You can use buttons to mute/unmute voice instructions, recenter the camera, or show the route overview.
  */
-class NavigationActivity : AppCompatActivity(), BackButtonListener {
+class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecutor {
 
     private var mapView: MapView? = null
     private var pointAnnotationManager: PointAnnotationManager? = null
@@ -203,6 +206,8 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
     private var datapoints: MutableList<DataPoint> = mutableListOf()
 
     private var mapInfo: MapInfo? = null
+
+    private lateinit var navigationDataPrefs: SharedPreferences
 
     private val mapService: MapService by lazy {
         MapServiceImpl()
@@ -821,12 +826,25 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
 
         if (intent?.extras?.containsKey("authInfo") == true && intent!!.extras!!.get("authInfo") != null) {
 
+            navigationDataPrefs = getSharedPreferences("navaDataPrefs", MODE_PRIVATE)
+
+
             userAuthInfo = intent!!.extras!!.get("authInfo") as FirebaseUser?
             currentRoute = intent!!.extras!!.get("route") as Route?
 
             binding = ActivityNavigationBinding.inflate(layoutInflater)
             setContentView(binding.root)
+
             setBackButtonListener()
+
+            val wasOnNavigationMode = navigationDataPrefs.getBoolean("onNavigation", false)
+
+            if (wasOnNavigationMode) {
+                userNavigationData = loadUserNavigationData(userAuthInfo!!.uid, currentRoute!!.routeId)
+            } else {
+                userNavigationData = UserNavigationData()
+            }
+
             binding.toolbarContainer.actionBarTitle.text = currentRoute!!.routeName
 
             val mapFragment: MapFragment =
@@ -1173,6 +1191,14 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 isVoiceInstructionsMuted = !isVoiceInstructionsMuted
             }
             binding.arButton.setOnClickListener {
+
+                if (onNavigationMode) {
+                    binding.pause.performClick()
+                    navigationDataPrefs.edit().putBoolean("onNavigation", true).apply()
+                    saveUserNavigationData(userNavigationData!!)
+                } else {
+                    navigationDataPrefs.edit().putBoolean("onNavigation", false).apply()
+                }
 
                 val arIntent = Intent(this, ArActivity::class.java)
                 arIntent.putExtra("routeId", currentRoute!!.routeId)
@@ -1936,5 +1962,37 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener {
                 startActivity(intent)
             }
         }
+    }
+
+    override fun saveUserNavigationData(userNavigationData: UserNavigationData) {
+        val localDB = this.openOrCreateDatabase("localDB.db", Context.MODE_PRIVATE,null)
+
+        localDB.execSQL("create table if not exists userNavigationData (userID String, routeID Long, distanceCovered Double, timeSpent Long )")
+
+        val data = ContentValues()
+
+        data.put("userID", userAuthInfo!!.uid)
+        data.put("routeId", currentRoute!!.routeId)
+        data.put("distanceCovered", userNavigationData.distanceCovered)
+        data.put("timeSpent", userNavigationData.timeSpent)
+
+        localDB.insert("userNavigationData", null, data)
+    }
+
+    override fun loadUserNavigationData(userID: String, routeId: Long): UserNavigationData? {
+
+        var userNavigationData: UserNavigationData? = null
+        val localDB = this.openOrCreateDatabase("localDB.db", Context.MODE_PRIVATE,null)
+
+        localDB.execSQL("create table if not exists userNavigationData (userID String, routeID Long, distanceCovered Double, timeSpent Long )")
+
+        val c: Cursor = localDB.rawQuery("select * from userNavigationData where userID=? and routeID=?",arrayOf(userID, routeId.toString()))
+        if (c.moveToNext()) {
+
+            val distanceCovered = c.getDouble(2)
+            val timeSpent = c.getLong(3)
+            userNavigationData = UserNavigationData(routeId,distanceCovered,timeSpent, emptyList<Long>().toMutableList())
+        }
+        return userNavigationData
     }
 }
