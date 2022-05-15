@@ -11,7 +11,6 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.database.Cursor
 import android.graphics.Bitmap
-
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
@@ -38,6 +37,7 @@ import com.example.hikingapp.anchors.ArActivity
 import com.example.hikingapp.databinding.ActivityNavigationBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DistanceUnitType
+import com.example.hikingapp.domain.enums.NavigationState
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.navigation.SerializableMapPoint
 import com.example.hikingapp.domain.navigation.UserNavigationData
@@ -196,7 +196,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
     private var userNavigationData: UserNavigationData? = null
     private var timeCounter: Long = 0L
     private var isOutOfRoute = false
-    private var onNavigationMode = false
+    private lateinit var navigationState: NavigationState
 
     lateinit var currentPhotoPath: String
 
@@ -290,6 +290,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
                 mainIntent.putExtra("userNavigationData", userNavigationData)
 
                 LocalDatabase.saveNavigationDataLocally(userAuthInfo!!.uid, userNavigationData!!)
+                saveNavigationStateLocally(NavigationState.FINISHED.name)
                 FirebaseUtils.persistNavigation(userAuthInfo!!.uid, userNavigationData!!)
 
                 startActivity(mainIntent)
@@ -527,15 +528,26 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
             currentLocation =
                 Point.fromLngLat(enhancedLocation.longitude, enhancedLocation.latitude)
 
-            if (onNavigationMode) {
+            when (navigationState) {
+                NavigationState.STARTED -> {
+                    val locationKey =
+                        "${currentLocation!!.longitude()}_${currentLocation!!.latitude()}"
 
-                val locationKey = "${currentLocation!!.longitude()}_${currentLocation!!.latitude()}"
-
-                if (currentRoute!!.routeInfo!!.navigationData!!.containsKey(locationKey)) {
-                    addPointToGraph(currentRoute!!.routeInfo!!.navigationData!![locationKey])
+                    if (currentRoute!!.routeInfo!!.navigationData!!.containsKey(locationKey)) {
+                        addPointToGraph(currentRoute!!.routeInfo!!.navigationData!![locationKey])
+                    }
                 }
-
             }
+//
+//            if (onNavigationMode) {
+//
+//                val locationKey = "${currentLocation!!.longitude()}_${currentLocation!!.latitude()}"
+//
+//                if (currentRoute!!.routeInfo!!.navigationData!!.containsKey(locationKey)) {
+//                    addPointToGraph(currentRoute!!.routeInfo!!.navigationData!![locationKey])
+//                }
+//
+//            }
 
 //            else {
 //                GlobalScope.launch {
@@ -716,6 +728,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 
         elevationQuery.enqueueCall(object : Callback<FeatureCollection> {
 
+            @RequiresApi(Build.VERSION_CODES.N)
             override fun onResponse(
                 call: Call<FeatureCollection>,
                 response: Response<FeatureCollection>
@@ -837,19 +850,23 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 
             setBackButtonListener()
 
-            val wasOnNavigationMode = navigationDataPrefs.getBoolean("onNavigation", false)
+//            val wasOnNavigationMode = navigationDataPrefs.getBoolean("onNavigation", false)
 
-            if (wasOnNavigationMode) {
-                userNavigationData = loadUserNavigationData(userAuthInfo!!.uid, currentRoute!!.routeId)
-            } else {
-                userNavigationData = UserNavigationData()
-            }
+            navigationState =
+                NavigationState.from(navigationDataPrefs.getString("navigationState", null))
+
+//
+//            if (wasOnNavigationMode) {
+//                userNavigationData = loadUserNavigationData(userAuthInfo!!.uid, currentRoute!!.routeId)
+//            } else {
+//                userNavigationData = UserNavigationData()
+//            }
 
             binding.toolbarContainer.actionBarTitle.text = currentRoute!!.routeName
 
             val mapFragment: MapFragment =
                 (supportFragmentManager.findFragmentById(R.id.map_fragment) as MapFragment).apply {
-                    this.setListener(object : MapFragment.OnTouchListener{
+                    this.setListener(object : MapFragment.OnTouchListener {
                         override fun onTouch() {
                             binding.navigationScrollView.requestDisallowInterceptTouchEvent(true)
                         }
@@ -867,6 +884,20 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
                 routeMapEntity!!.routeMapContent,
                 routeMapEntity.routeMapName
             )
+
+            when (navigationState) {
+                NavigationState.NOT_STARTED -> userNavigationData = UserNavigationData()
+                NavigationState.SAVED_PAUSED -> {
+                    userNavigationData =
+                        loadUserNavigationData(userAuthInfo!!.uid, currentRoute!!.routeId)
+                    pauseNavigation()
+                }
+                NavigationState.SAVED_STARTED -> {
+                    userNavigationData =
+                        loadUserNavigationData(userAuthInfo!!.uid, currentRoute!!.routeId)
+                    playNavigation(resumed = true)
+                }
+            }
 
             associatedSights = LocalDatabase.getSightsOfRoute(currentRoute!!.routeId)
 
@@ -892,17 +923,10 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
                 enabled = true
             }
             // initialize Mapbox Navigation
-            mapboxNavigation = if (MapboxNavigationProvider.isCreated()) {
-                MapboxNavigationProvider.retrieve()
-            } else {
-                MapboxNavigationProvider.create(
-                    NavigationOptions.Builder(this.applicationContext)
-                        .accessToken(getString(R.string.mapbox_access_token))
-                        // comment out the location engine setting block to disable simulation
-//                        .locationEngine(replayLocationEngine)
-                        .build()
-                )
+            if (!MapboxNavigationProvider.isCreated()) {
+                initializeMapboxNavigationInstance()
             }
+
 
             // initialize Navigation Camera
             viewportDataSource = MapboxNavigationViewportDataSource(mapboxMap)
@@ -1084,67 +1108,15 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 
             // initialize view interactions
             binding.stop.setOnClickListener {
-                clearRouteAndStopNavigation()
-                onNavigationMode = false
-                var intent: Intent?
-                if (routeCompleted) {
-                    intent = Intent(this, EndOfNavigationActivity::class.java)
-                    userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
-                    intent.putExtra("route", currentRoute)
-                    intent.putExtra("userNavigationData", userNavigationData)
-                    LocalDatabase.saveNavigationDataLocally(
-                        userAuthInfo!!.uid,
-                        userNavigationData!!
-                    )
-                    FirebaseUtils.persistNavigation(userAuthInfo!!.uid, userNavigationData!!)
-
-                } else {
-                    intent = Intent(this, MainActivity::class.java)
-                    LocalDatabase.saveNavigationDataLocally(
-                        userAuthInfo!!.uid,
-                        userNavigationData!!
-                    )
-                    FirebaseUtils.persistUserInCompletedRoute(
-                        userAuthInfo!!.uid,
-                        userNavigationData!!.routeId
-                    )
-                }
-                intent.putExtra("authInfo", userAuthInfo)
-                startActivity(intent)
-                finish()
+                stopNavigation()
             }
-
             // Action which starts the Navigation
             binding.play.setOnClickListener {
-                if (mapboxNavigation.getRoutes().isEmpty()) {
-
-                    val routePoints = if (mapInfo!!.jsonRoute is MultiLineString) {
-                        (mapInfo!!.jsonRoute as MultiLineString).coordinates()[0]
-                    } else {
-                        (mapInfo!!.jsonRoute as LineString).coordinates()
-                    }
-
-                    defineRoute(
-                        routePoints!!.toList(),
-                        wayPointsIncluded = true,
-                        reversedRoute = false,
-                        isInitial = true
-                    )
-
-                    binding.stop.visibility = View.VISIBLE
-
-                } else {
-                    resumeNavigation()
-                }
-                binding.play.visibility = View.GONE
-                binding.pause.visibility = View.VISIBLE
-                onNavigationMode = true
+                playNavigation()
             }
             binding.pause.setOnClickListener {
                 pauseNavigation()
-                binding.play.visibility = View.VISIBLE
-                binding.pause.visibility = View.GONE
-                onNavigationMode = false
+//                onNavigationMode = false
             }
             binding.lostButton.setOnClickListener {
                 binding.pause.performClick()
@@ -1178,6 +1150,10 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
                     })
             }
 
+            binding.findLastCheckpoint.setOnClickListener {
+                binding.play.performClick()
+            }
+
             binding.recenter.setOnClickListener {
                 navigationCamera.requestNavigationCameraToFollowing()
                 binding.routeOverview.showTextAndExtend(BUTTON_ANIMATION_DURATION)
@@ -1192,13 +1168,26 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
             }
             binding.arButton.setOnClickListener {
 
-                if (onNavigationMode) {
-                    binding.pause.performClick()
-                    navigationDataPrefs.edit().putBoolean("onNavigation", true).apply()
-                    saveUserNavigationData(userNavigationData!!)
-                } else {
-                    navigationDataPrefs.edit().putBoolean("onNavigation", false).apply()
+                when (navigationState) {
+                    NavigationState.STARTED -> {
+                        binding.pause.performClick()
+                        saveNavigationStateLocally(NavigationState.SAVED_STARTED.name)
+                        saveUserNavigationData(userNavigationData!!)
+                    }
+                    NavigationState.PAUSED -> {
+                        saveNavigationStateLocally(NavigationState.SAVED_PAUSED.name)
+                        saveUserNavigationData(userNavigationData!!)
+                    }
+
                 }
+
+//                if (onNavigationMode) {
+//                    binding.pause.performClick()
+//                    navigationDataPrefs.edit().putString("navigationState", NavigationState.SAVED.name).apply()
+//                    saveUserNavigationData(userNavigationData!!)
+//                } else {
+//                    navigationDataPrefs.edit().putBoolean("onNavigation", false).apply()
+//                }
 
                 val arIntent = Intent(this, ArActivity::class.java)
                 arIntent.putExtra("routeId", currentRoute!!.routeId)
@@ -1278,6 +1267,90 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
             redirectIntent.putExtra("route", (intent.extras?.get("route") as Route?))
             startActivity(redirectIntent)
         }
+    }
+
+    private fun stopNavigation() {
+
+        clearRouteAndStopNavigation()
+//                onNavigationMode = false
+        var intent: Intent?
+        if (routeCompleted) {
+            intent = Intent(this, EndOfNavigationActivity::class.java)
+            userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
+            intent.putExtra("route", currentRoute)
+            intent.putExtra("userNavigationData", userNavigationData)
+            LocalDatabase.saveNavigationDataLocally(
+                userAuthInfo!!.uid,
+                userNavigationData!!
+            )
+            FirebaseUtils.persistNavigation(userAuthInfo!!.uid, userNavigationData!!)
+
+        } else {
+            intent = Intent(this, MainActivity::class.java)
+            LocalDatabase.saveNavigationDataLocally(
+                userAuthInfo!!.uid,
+                userNavigationData!!
+            )
+            FirebaseUtils.persistUserInCompletedRoute(
+                userAuthInfo!!.uid,
+                userNavigationData!!.routeId
+            )
+        }
+        navigationState = NavigationState.STOPPED
+        saveNavigationStateLocally(navigationState.name)
+
+        intent.putExtra("authInfo", userAuthInfo)
+        startActivity(intent)
+        finish()
+    }
+
+    private fun playNavigation(resumed: Boolean = false) {
+        initializeMapboxNavigationInstance()
+        if (mapboxNavigation.getRoutes().isEmpty()) {
+
+            val routePoints = if (mapInfo!!.jsonRoute is MultiLineString) {
+                (mapInfo!!.jsonRoute as MultiLineString).coordinates()[0]
+            } else {
+                (mapInfo!!.jsonRoute as LineString).coordinates()
+            }
+
+            defineRoute(
+                routePoints!!.toList(),
+                wayPointsIncluded = true,
+                reversedRoute = false,
+                isInitial = true
+            )
+
+            binding.stop.visibility = View.VISIBLE
+
+        } else {
+            if (resumed) {
+                binding.stop.visibility = View.VISIBLE
+            }
+            resumeNavigation()
+        }
+        binding.play.visibility = View.GONE
+        binding.pause.visibility = View.VISIBLE
+        navigationState = NavigationState.STARTED
+//                onNavigationMode = true
+    }
+
+    private fun initializeMapboxNavigationInstance() {
+        mapboxNavigation = if (MapboxNavigationProvider.isCreated()) {
+            MapboxNavigationProvider.retrieve()
+        } else {
+            MapboxNavigationProvider.create(
+                NavigationOptions.Builder(this.applicationContext)
+                    .accessToken(getString(R.string.mapbox_access_token))
+                    // comment out the location engine setting block to disable simulation
+                    .locationEngine(replayLocationEngine)
+                    .build()
+            )
+        }
+    }
+
+    private fun saveNavigationStateLocally(navigationState: String?) {
+        navigationDataPrefs.edit().putString("navigationState", navigationState).apply()
     }
 
     private fun removeCheckpointAnnotations() {
@@ -1643,7 +1716,9 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
         MapboxNavigationProvider.destroy()
         speechApi.cancel()
         voiceInstructionsPlayer.shutdown()
-
+        if (navigationState != NavigationState.FINISHED && navigationState != null && navigationState != NavigationState.STOPPED) {
+            saveNavigationStateLocally(null)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -1880,13 +1955,17 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
     }
 
     private fun pauseNavigation() {
-
+        initializeMapboxNavigationInstance()
         if (TripSessionState.STARTED == mapboxNavigation.getTripSessionState()) {
             mapboxNavigation.stopTripSession()
             userNavigationData!!.timeSpent = System.currentTimeMillis() - timeCounter
             // stop simulation
             mapboxReplayer.stop()
         }
+        binding.play.visibility = View.VISIBLE
+        binding.pause.visibility = View.GONE
+        binding.stop.visibility = View.VISIBLE
+        navigationState = NavigationState.PAUSED
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -1965,9 +2044,9 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
     }
 
     override fun saveUserNavigationData(userNavigationData: UserNavigationData) {
-        val localDB = this.openOrCreateDatabase("localDB.db", Context.MODE_PRIVATE,null)
+        val localDB = this.openOrCreateDatabase("localDB.db", Context.MODE_PRIVATE, null)
 
-        localDB.execSQL("create table if not exists userNavigationData (userID String, routeID Long, distanceCovered Double, timeSpent Long )")
+        localDB.execSQL("create table if not exists userNavigationData (userID String, routeID Long, distanceCovered Double, timeSpent Long, created_at DATETIME DEFAULT CURRENT_TIMESTAMP )")
 
         val data = ContentValues()
 
@@ -1982,16 +2061,24 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
     override fun loadUserNavigationData(userID: String, routeId: Long): UserNavigationData? {
 
         var userNavigationData: UserNavigationData? = null
-        val localDB = this.openOrCreateDatabase("localDB.db", Context.MODE_PRIVATE,null)
+        val localDB = this.openOrCreateDatabase("localDB.db", Context.MODE_PRIVATE, null)
 
         localDB.execSQL("create table if not exists userNavigationData (userID String, routeID Long, distanceCovered Double, timeSpent Long )")
 
-        val c: Cursor = localDB.rawQuery("select * from userNavigationData where userID=? and routeID=?",arrayOf(userID, routeId.toString()))
+        val c: Cursor = localDB.rawQuery(
+            "select * from userNavigationData where userID=? and routeID=?",
+            arrayOf(userID, routeId.toString())
+        )
         if (c.moveToNext()) {
 
             val distanceCovered = c.getDouble(2)
             val timeSpent = c.getLong(3)
-            userNavigationData = UserNavigationData(routeId,distanceCovered,timeSpent, emptyList<Long>().toMutableList())
+            userNavigationData = UserNavigationData(
+                routeId,
+                distanceCovered,
+                timeSpent,
+                emptyList<Long>().toMutableList()
+            )
         }
         return userNavigationData
     }

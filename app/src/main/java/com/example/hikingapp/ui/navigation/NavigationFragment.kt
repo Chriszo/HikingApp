@@ -1,12 +1,14 @@
 package com.example.hikingapp.ui.navigation
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -16,7 +18,6 @@ import android.graphics.drawable.Drawable
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.telephony.SmsManager
 import android.util.Log
 import android.view.LayoutInflater
@@ -28,6 +29,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -35,8 +37,10 @@ import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.hikingapp.*
+import com.example.hikingapp.anchors.ArActivity
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DistanceUnitType
+import com.example.hikingapp.domain.enums.NavigationState
 import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.navigation.SerializableMapPoint
 import com.example.hikingapp.domain.navigation.UserNavigationData
@@ -82,7 +86,6 @@ import com.mapbox.maps.extension.style.style
 import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.annotation.annotations
-import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
@@ -130,31 +133,7 @@ import com.mapbox.navigation.ui.voice.model.SpeechError
 import com.mapbox.navigation.ui.voice.model.SpeechValue
 import com.mapbox.navigation.ui.voice.model.SpeechVolume
 import com.mapbox.turf.TurfMeasurement
-import kotlinx.android.synthetic.main.activity_navigation.*
-import kotlinx.android.synthetic.main.activity_navigation.view.*
 import kotlinx.android.synthetic.main.fragment_navigation.view.*
-import kotlinx.android.synthetic.main.fragment_navigation.view.cameraButton
-import kotlinx.android.synthetic.main.fragment_navigation.view.current_elevation
-import kotlinx.android.synthetic.main.fragment_navigation.view.lost_button
-import kotlinx.android.synthetic.main.fragment_navigation.view.maneuverView
-import kotlinx.android.synthetic.main.fragment_navigation.view.mapStyle_options
-import kotlinx.android.synthetic.main.fragment_navigation.view.mapView
-import kotlinx.android.synthetic.main.fragment_navigation.view.nav_options
-import kotlinx.android.synthetic.main.fragment_navigation.view.nav_toggle
-import kotlinx.android.synthetic.main.fragment_navigation.view.pause
-import kotlinx.android.synthetic.main.fragment_navigation.view.play
-import kotlinx.android.synthetic.main.fragment_navigation.view.recenter
-import kotlinx.android.synthetic.main.fragment_navigation.view.routeOverview
-import kotlinx.android.synthetic.main.fragment_navigation.view.satellite_map_style
-import kotlinx.android.synthetic.main.fragment_navigation.view.soundButton
-import kotlinx.android.synthetic.main.fragment_navigation.view.stop
-import kotlinx.android.synthetic.main.fragment_navigation.view.switchMapStyle
-import kotlinx.android.synthetic.main.fragment_navigation.view.terrain_map_style
-import kotlinx.android.synthetic.main.fragment_navigation.view.text_distance_covered
-import kotlinx.android.synthetic.main.fragment_navigation.view.text_distance_remaining
-import kotlinx.android.synthetic.main.fragment_navigation.view.text_time_estimated
-import kotlinx.android.synthetic.main.fragment_navigation.view.traffic_map_style
-import kotlinx.android.synthetic.main.fragment_navigation.view.tripProgressCard
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -164,11 +143,10 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 
-class NavigationFragment : Fragment() {
+class NavigationFragment : Fragment(), LocalDBExecutor {
 
-    private var onNavigationMode = false
-
-    private var pointAnnotationManager: PointAnnotationManager? = null
+    private lateinit var navigationState: NavigationState
+    private lateinit var navigationDataPrefs: SharedPreferences
     private var checkPointsVisible = true
 
     private var elevationGraph: GraphView? = null
@@ -194,6 +172,7 @@ class NavigationFragment : Fragment() {
     private var playButton: Button? = null
     private var pauseButton: Button? = null
     private var stopButton: Button? = null
+    private var findLastCheckpointButton: Button? = null
 
     private var checkPointsIndex = 0
 
@@ -330,6 +309,10 @@ class NavigationFragment : Fragment() {
     private val offRouteObserver = OffRouteObserver { offRoute ->
         if (offRoute) {
             isOutOfRoute = true
+            navigationView!!.offRouteActionsId.visibility = View.VISIBLE
+            navigationView!!.navActionsId.visibility = View.INVISIBLE
+            navigationView!!.tripProgressCard.visibility = View.INVISIBLE
+            navigationView!!.elevation_graph_nav.visibility = View.INVISIBLE
             requireActivity().runOnUiThread {
                 Toast.makeText(
                     requireContext(),
@@ -423,6 +406,9 @@ class NavigationFragment : Fragment() {
             }
         )
         // update user navigation data
+        if (userNavigationData == null) {
+            userNavigationData = UserNavigationData(currentRoute!!.routeId)
+        }
         userNavigationData!!.distanceCovered = routeProgress.distanceTraveled.toDouble()
 //        userNavigationData.timeSpent = System.currentTimeMillis() - timeCounter
 
@@ -469,14 +455,15 @@ class NavigationFragment : Fragment() {
             currentLocation =
                 Point.fromLngLat(enhancedLocation.longitude, enhancedLocation.latitude)
 
-            if (onNavigationMode) {
+            when (navigationState) {
+                NavigationState.STARTED -> {
+                    val locationKey =
+                        "${currentLocation!!.longitude()}_${currentLocation!!.latitude()}"
 
-                val locationKey = "${currentLocation!!.longitude()}_${currentLocation!!.latitude()}"
-
-                if (currentRoute!!.routeInfo!!.navigationData!!.containsKey(locationKey)) {
-                    addPointToGraph(currentRoute!!.routeInfo!!.navigationData!![locationKey])
+                    if (currentRoute!!.routeInfo!!.navigationData!!.containsKey(locationKey)) {
+                        addPointToGraph(currentRoute!!.routeInfo!!.navigationData!![locationKey])
+                    }
                 }
-
             }
 
             /*GlobalScope.launch {
@@ -560,7 +547,8 @@ class NavigationFragment : Fragment() {
 
         viewport.isYAxisBoundsManual = true
         viewport.setMinY(0.0)
-        val maxElevation = ElevationDataUtils.getMaxElevation(currentRoute!!.routeInfo!!.navigationData!!)
+        val maxElevation =
+            ElevationDataUtils.getMaxElevation(currentRoute!!.routeInfo!!.navigationData!!)
         viewport.setMaxY(maxElevation.toDouble() + 10.0)
         viewport.isScrollable = true
         viewport.isXAxisBoundsManual = true
@@ -643,6 +631,11 @@ class NavigationFragment : Fragment() {
                 ).show()
                 mapboxNavigation.setRoutes(mainRoutes, checkPointsIndex)
                 isOutOfRoute = false
+
+                navigationView!!.navActionsId.visibility = View.VISIBLE
+                navigationView!!.tripProgressCard.visibility = View.VISIBLE
+                navigationView!!.elevation_graph_nav.visibility = View.VISIBLE
+                navigationView!!.offRouteActionsId.visibility = View.INVISIBLE
             } else {
                 routeCompleted = true
                 val mainIntent =
@@ -655,6 +648,7 @@ class NavigationFragment : Fragment() {
                     userViewModel.user.value!!.uid,
                     userNavigationData!!
                 )
+                saveNavigationStateLocally(NavigationState.FINISHED.name)
                 FirebaseUtils.persistNavigation(
                     userViewModel.user.value!!.uid,
                     userNavigationData!!
@@ -677,6 +671,10 @@ class NavigationFragment : Fragment() {
             ).show()
         }
 
+    }
+
+    private fun saveNavigationStateLocally(navigationState: String?) {
+        navigationDataPrefs.edit().putString("navigationState", navigationState).apply()
     }
 
     private fun callElevationDataAPI(
@@ -766,21 +764,34 @@ class NavigationFragment : Fragment() {
             startActivity(redirectIntent)
         } else {
 
+            navigationDataPrefs = requireActivity().getSharedPreferences(
+                "navaDataPrefs",
+                AppCompatActivity.MODE_PRIVATE
+            )
+
+            navigationState =
+                NavigationState.from(navigationDataPrefs.getString("navigationState", null))
+
+
             // initialize Mapbox Navigation
-            mapboxNavigation = if (MapboxNavigationProvider.isCreated()) {
-                MapboxNavigationProvider.retrieve()
-            } else {
-                MapboxNavigationProvider.create(
-                    NavigationOptions.Builder(requireActivity().applicationContext)
-                        .accessToken(getString(R.string.mapbox_access_token))
-                        // comment out the location engine setting block to disable simulation
-                        .locationEngine(replayLocationEngine)
-                        .build()
-                )
+            if (!MapboxNavigationProvider.isCreated()) {
+                initializeMapboxNavigationInstance()
             }
 
 
-            mapView = navigationView!!.mapView as MapView
+            val mapFragment: MapFragment =
+                (childFragmentManager.findFragmentById(R.id.map_fragment) as MapFragment).apply {
+                    this.setListener(object : MapFragment.OnTouchListener {
+                        override fun onTouch() {
+                            navigationView!!.navigation_fragment_id.requestDisallowInterceptTouchEvent(
+                                true
+                            )
+                        }
+
+                    })
+                }
+            mapView = mapFragment.view?.findViewById(R.id.mapView)
+
 
             mapboxMap = mapView!!.getMapboxMap()
 
@@ -793,6 +804,7 @@ class NavigationFragment : Fragment() {
             pauseButton = navigationView!!.pause as Button
             stopButton = navigationView!!.stop as Button
             lostButton = navigationView!!.lost_button as Button
+            findLastCheckpointButton = navigationView!!.find_last_checkpoint as Button
 
             mapStyleOptions = navigationView!!.mapStyle_options as MaterialCardView
             trafficMapStyle = navigationView!!.traffic_map_style as ImageView
@@ -954,7 +966,8 @@ class NavigationFragment : Fragment() {
 
                 database.getReference("navDataWithElevation")
                     .child(currentRoute!!.routeId.toString())
-                    .child("serializedMapPoints").addValueEventListener(object : ValueEventListener {
+                    .child("serializedMapPoints")
+                    .addValueEventListener(object : ValueEventListener {
                         override fun onDataChange(snapshot: DataSnapshot) {
                             configureRouteNavigationMapData(snapshot)
                             configureGraphAttributes(navigationView!!)
@@ -976,6 +989,20 @@ class NavigationFragment : Fragment() {
                     routeMapEntity!!.routeMapContent,
                     routeMapEntity.routeMapName
                 )
+
+                when (navigationState) {
+                    NavigationState.NOT_STARTED -> userNavigationData = UserNavigationData()
+                    NavigationState.SAVED_PAUSED -> {
+                        userNavigationData =
+                            loadUserNavigationData(userAuthInfo!!.uid, currentRoute!!.routeId)
+                        pauseNavigation()
+                    }
+                    NavigationState.SAVED_STARTED -> {
+                        userNavigationData =
+                            loadUserNavigationData(userAuthInfo!!.uid, currentRoute!!.routeId)
+                        playNavigation(resumed = true)
+                    }
+                }
 
                 /*  database.getReference("routeMaps")
                       .addValueEventListener(object : ValueEventListener {
@@ -1070,7 +1097,7 @@ class NavigationFragment : Fragment() {
                         mapView!!.location.addOnIndicatorPositionChangedListener(
                             onPositionChangedListener
                         )
-                        routeLineView.hideOriginAndDestinationPoints(it)
+//                        routeLineView.hideOriginAndDestinationPoints(it)
                     },
                     object : OnMapLoadErrorListener {
                         override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
@@ -1084,81 +1111,17 @@ class NavigationFragment : Fragment() {
 
                 // initialize view interactions
                 stopButton!!.setOnClickListener {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        clearRouteAndStopNavigation()
-                    }
-                    onNavigationMode = false
-
-                    var intent: Intent? = null
-                    if (routeCompleted) {
-                        intent =
-                            Intent(context, EndOfNavigationActivity::class.java)
-                        userNavigationData?.timeSpent =
-                            System.currentTimeMillis() - timeCounter
-                        intent.putExtra("route", currentRoute)
-                        intent.putExtra(
-                            "userNavigationData",
-                            userNavigationData
-                        )
-                        LocalDatabase.saveNavigationDataLocally(
-                            userAuthInfo!!.uid,
-                            userNavigationData!!
-                        )
-                        FirebaseUtils.persistNavigation(
-                            userAuthInfo!!.uid,
-                            userNavigationData!!
-                        )
-
-                    } else {
-                        intent = Intent(context, MainActivity::class.java)
-                        LocalDatabase.saveNavigationDataLocally(
-                            userAuthInfo!!.uid,
-                            userNavigationData!!
-                        )
-                        FirebaseUtils.persistUserInCompletedRoute(
-                            userAuthInfo!!.uid,
-                            userNavigationData!!.routeId
-                        )
-                    }
-                    intent.putExtra("authInfo", userAuthInfo)
-                    startActivity(intent)
-//                    finish()
+                   stopNavigation()
                 }
 
                 // Action which starts the Navigation
                 playButton!!.setOnClickListener {
-                    if (mapboxNavigation.getRoutes().isEmpty()) {
-
-                        val routePoints =
-                            if (mapInfo!!.jsonRoute is MultiLineString) {
-                                (mapInfo!!.jsonRoute as MultiLineString).coordinates()[0]
-                            } else {
-                                (mapInfo!!.jsonRoute as LineString).coordinates()
-                            }
-
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                            defineRoute(
-                                routePoints!!.toList(),
-                                wayPointsIncluded = true,
-                                reversedRoute = false,
-                                isInitial = true
-                            )
-                        }
-
-                        stopButton!!.visibility = View.VISIBLE
-                    } else {
-                        resumeNavigation()
-                    }
-                    playButton!!.visibility = View.GONE
-                    pauseButton!!.visibility = View.VISIBLE
-                    onNavigationMode = true
+                    playNavigation()
                 }
                 pauseButton!!.setOnClickListener {
                     pauseNavigation()
                     playButton!!.visibility = View.VISIBLE
                     pauseButton!!.visibility = View.GONE
-                    onNavigationMode = false
-
                 }
                 lostButton!!.setOnClickListener {
                     pauseButton!!.performClick()
@@ -1200,6 +1163,10 @@ class NavigationFragment : Fragment() {
                         })
                 }
 
+                findLastCheckpointButton!!.setOnClickListener {
+                    playButton!!.performClick()
+                }
+
                 navigationView!!.recenter.setOnClickListener {
                     navigationCamera.requestNavigationCameraToFollowing()
                     navigationView!!.routeOverview.showTextAndExtend(
@@ -1214,7 +1181,7 @@ class NavigationFragment : Fragment() {
                     // mute/unmute voice instructions
                     isVoiceInstructionsMuted = !isVoiceInstructionsMuted
                 }
-                navigationView!!.cameraButton.setOnClickListener {
+                navigationView!!.arButton.setOnClickListener {
 
                     //TODO change permission granting
                     if (checkSelfPermission(
@@ -1227,12 +1194,11 @@ class NavigationFragment : Fragment() {
                             GlobalUtils.CAMERA_REQUEST
                         )
 
-
-                    val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                    startActivityForResult(
-                        cameraIntent,
-                        GlobalUtils.CAMERA_REQUEST
-                    )
+                    val arIntent = Intent(context, ArActivity::class.java)
+                    arIntent.putExtra("routeId", currentRoute!!.routeId)
+                    arIntent.putExtra("authInfo", userAuthInfo)
+                    arIntent.putExtra("route", currentRoute)
+                    startActivity(arIntent)
                 }
 
                 navigationView!!.nav_toggle.setOnClickListener {
@@ -1287,10 +1253,86 @@ class NavigationFragment : Fragment() {
         return navigationView
     }
 
+    private fun initializeMapboxNavigationInstance() {
+        mapboxNavigation = if (MapboxNavigationProvider.isCreated()) {
+            MapboxNavigationProvider.retrieve()
+        } else {
+            MapboxNavigationProvider.create(
+                NavigationOptions.Builder(requireContext().applicationContext)
+                    .accessToken(getString(R.string.mapbox_access_token))
+                    // comment out the location engine setting block to disable simulation
+                    .locationEngine(replayLocationEngine)
+                    .build()
+            )
+        }
+    }
+
+    private fun playNavigation(resumed: Boolean = false) {
+        initializeMapboxNavigationInstance()
+        if (mapboxNavigation.getRoutes().isEmpty()) {
+
+            val routePoints =
+                if (mapInfo!!.jsonRoute is MultiLineString) {
+                    (mapInfo!!.jsonRoute as MultiLineString).coordinates()[0]
+                } else {
+                    (mapInfo!!.jsonRoute as LineString).coordinates()
+                }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                defineRoute(
+                    routePoints!!.toList(),
+                    wayPointsIncluded = true,
+                    reversedRoute = false,
+                    isInitial = true
+                )
+            }
+
+            stopButton!!.visibility = View.VISIBLE
+        } else {
+            resumeNavigation()
+        }
+        playButton!!.visibility = View.GONE
+        pauseButton!!.visibility = View.VISIBLE
+    }
+
+    private fun stopNavigation() {
+
+        clearRouteAndStopNavigation()
+//                onNavigationMode = false
+        var intent: Intent?
+        if (routeCompleted) {
+            intent = Intent(context, EndOfNavigationActivity::class.java)
+            userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
+            intent!!.putExtra("route", currentRoute)
+            intent!!.putExtra("userNavigationData", userNavigationData)
+            LocalDatabase.saveNavigationDataLocally(
+                userViewModel.user.value!!.uid,
+                userNavigationData!!
+            )
+            FirebaseUtils.persistNavigation(userViewModel.user.value!!.uid, userNavigationData!!)
+
+        } else {
+            intent = Intent(context, MainActivity::class.java)
+            LocalDatabase.saveNavigationDataLocally(
+                userViewModel.user.value!!.uid,
+                userNavigationData!!
+            )
+            FirebaseUtils.persistUserInCompletedRoute(
+                userViewModel.user.value!!.uid,
+                userNavigationData!!.routeId
+            )
+        }
+        navigationState = NavigationState.STOPPED
+        saveNavigationStateLocally(navigationState.name)
+
+        intent.putExtra("authInfo", userViewModel.user.value!!.uid)
+        startActivity(intent)
+    }
+
     private fun addCheckpointAnnotations() {
         checkPoints.withIndex().forEach {
             // First and last elements are start and destination of the route
-            if (it.index != 0 && it.index != checkPoints.size -1) {
+            if (it.index != 0 && it.index != checkPoints.size - 1) {
                 addAnnotationToMap(it.value.value)
             }
         }
@@ -1321,6 +1363,7 @@ class NavigationFragment : Fragment() {
             pointAnnotationManager?.create(pointAnnotationOptions)
         }
     }
+
     private fun bitmapFromDrawableRes(context: Context, @DrawableRes resourceId: Int) =
         convertDrawableToBitmap(AppCompatResources.getDrawable(context, resourceId))
 
@@ -1358,7 +1401,7 @@ class NavigationFragment : Fragment() {
                 it["elevation"] as Long
             )
 
-            if (currentRoute!!.routeInfo == null){
+            if (currentRoute!!.routeInfo == null) {
                 currentRoute!!.routeInfo = RouteInfo()
             }
 
@@ -1586,7 +1629,8 @@ class NavigationFragment : Fragment() {
         //TODO Find a more efficient way to compute route points for the obtaining of instructions. This is fully customized to current route at fillopapou.
 
         if (wayPointsIncluded) {
-            mapMatchingBuilder.waypointIndices(*(checkPoints.stream().map { it.index }.collect(Collectors.toList())).toTypedArray())
+            mapMatchingBuilder.waypointIndices(*(checkPoints.stream().map { it.index }
+                .collect(Collectors.toList())).toTypedArray())
         }
         if (reversedRoute) {
             mapMatchingBuilder.coordinates(filteredCoordintates.reversed())
@@ -1603,12 +1647,19 @@ class NavigationFragment : Fragment() {
             ) {
                 if (response.isSuccessful) {
                     response.body()?.matchings()?.let { matchingList ->
-                        matchingList[0].toDirectionRoute().apply {
-                            if (isInitial) {
-                                mainRoutes = mutableListOf(this)
-                                initialFilteredCoordinates = filteredCoordintates
+                        if (!matchingList.isNullOrEmpty()) {
+                            matchingList[0].toDirectionRoute().apply {
+                                if (isInitial) {
+                                    mainRoutes = mutableListOf(this)
+                                    initialFilteredCoordinates = filteredCoordintates
+                                }
+//                                routeLineView.showPrimaryRoute(mapboxMap.getStyle()!!)
+                                routeLineView.hideAlternativeRoutes(mapboxMap.getStyle()!!)
+                                setRouteAndStartNavigation(listOf(this))
                             }
-                            setRouteAndStartNavigation(listOf(this))
+                        } else {
+                            routeLineView.showAlternativeRoutes(mapboxMap.getStyle()!!)
+//                            routeLineView.hidePrimaryRoute(mapboxMap.getStyle()!!)
                         }
                     }
 
@@ -1760,18 +1811,68 @@ class NavigationFragment : Fragment() {
     }
 
     private fun pauseNavigation() {
-
+        initializeMapboxNavigationInstance()
         if (TripSessionState.STARTED == mapboxNavigation.getTripSessionState()) {
             mapboxNavigation.stopTripSession()
             userNavigationData!!.timeSpent = System.currentTimeMillis() - timeCounter
             // stop simulation
             mapboxReplayer.stop()
         }
+        playButton!!.visibility = View.VISIBLE
+        pauseButton!!.visibility = View.GONE
+        stopButton!!.visibility = View.VISIBLE
+        navigationState = NavigationState.PAUSED
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
 //        _binding = null
         navigationView = null
+        if (navigationState != NavigationState.FINISHED && navigationState != null && navigationState != NavigationState.STOPPED) {
+            saveNavigationStateLocally(null)
+        }
+    }
+
+    override fun saveUserNavigationData(userNavigationData: UserNavigationData) {
+        val localDB =
+            requireActivity().openOrCreateDatabase("localDB.db", Context.MODE_PRIVATE, null)
+
+        localDB.execSQL("create table if not exists userNavigationData (userID String, routeID Long, distanceCovered Double, timeSpent Long, created_at DATETIME DEFAULT CURRENT_TIMESTAMP  )")
+
+        val data = ContentValues()
+
+        data.put("userID", userViewModel.user.value!!.uid)
+        data.put("routeId", currentRoute!!.routeId)
+        data.put("distanceCovered", userNavigationData.distanceCovered)
+        data.put("timeSpent", userNavigationData.timeSpent)
+
+        localDB.insert("userNavigationData", null, data)
+    }
+
+    override fun loadUserNavigationData(userID: String, routeId: Long): UserNavigationData? {
+
+        var userNavigationData: UserNavigationData? = null
+        val localDB =
+            requireActivity().openOrCreateDatabase("localDB.db", Context.MODE_PRIVATE, null)
+
+        localDB.execSQL("create table if not exists userNavigationData (userID String, routeID Long, distanceCovered Double, timeSpent Long , created_at DATETIME DEFAULT CURRENT_TIMESTAMP )")
+
+        val c: Cursor = localDB.rawQuery(
+            "select * from userNavigationData where userID=? and routeID=?",
+            arrayOf(userID, routeId.toString())
+        )
+        if (c.moveToNext()) {
+
+            val distanceCovered = c.getDouble(2)
+            val timeSpent = c.getLong(3)
+            userNavigationData = UserNavigationData(
+                routeId,
+                distanceCovered,
+                timeSpent,
+                emptyList<Long>().toMutableList(),
+
+                )
+        }
+        return userNavigationData
     }
 }

@@ -12,16 +12,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <com.mapbox.maps.MapView
-            android:id="@+id/mapView"
+        <fragment
+            android:id="@+id/map_fragment"
+            class="com.example.hikingapp.ui.navigation.MapFragment"
             android:layout_width="match_parent"
-            android:layout_height="470dp"
+            android:layout_height="0dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_percent="0.4"
+            app:layout_constraintHeight_percent="0.5"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-        </com.mapbox.maps.MapView>
+            app:layout_constraintTop_toTopOf="parent"
+            />
 
         <androidx.cardview.widget.CardView
             android:id="@+id/tripProgressCard"
@@ -118,7 +119,7 @@
             app:cardUseCompatPadding="false"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/mapView">
+            app:layout_constraintTop_toBottomOf="@+id/map_fragment">
 
 
             <!--Card Divider element -->
@@ -128,6 +129,7 @@
                 android:background="@android:color/darker_gray" />
 
             <LinearLayout
+                android:id="@+id/navActionsId"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
@@ -193,6 +195,64 @@
                     android:text="Lost"
                     android:textColor="@color/white"
                     android:textStyle="bold"/>
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/offRouteActionsId"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="invisible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="You are out of route."
+                    android:textColor="#FF0000"
+                    android:layout_marginTop="5dp"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/find_last_checkpoint"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
+                        android:layout_marginEnd="60dp"
+                        android:background="@drawable/circular_button"
+                        android:backgroundTint="@color/white"
+                        android:drawableStart="@drawable/ic_play_foreground"
+                        android:paddingStart="-25dp"
+                        android:paddingEnd="-25dp" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/lost_button_2"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="5dp"
+                        android:background="@drawable/circular_button"
+                        android:backgroundTint="@android:color/holo_red_dark"
+                        android:paddingStart="6dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="6dp"
+                        android:paddingBottom="10dp"
+                        android:text="Lost"
+                        android:textColor="@color/white"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
 
 
             </LinearLayout>
@@ -276,7 +336,7 @@
 
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/cameraButton"
+                android:id="@+id/arButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
