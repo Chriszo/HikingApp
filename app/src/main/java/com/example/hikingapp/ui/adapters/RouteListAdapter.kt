@@ -18,12 +18,13 @@ class RouteListAdapter(
     var categories: List<String>,
     var routes: List<Route>,
     val context: Context,
-    private val itemClickedListener: OnItemClickedListener
+    private val itemClickedListener: OnItemClickedListener,
+    private val itemCheckedListener: OnItemCheckedListener
 ) : RecyclerView.Adapter<RouteListAdapter.ViewHolder>() {
 
     private var indexesList = mutableListOf<Long>()
 
-    class ViewHolder(view: View, val itemClickedListener: OnItemClickedListener) : RecyclerView.ViewHolder(view), View.OnClickListener {
+    class ViewHolder(view: View, val itemClickedListener: OnItemClickedListener, val itemCheckedListener: OnItemCheckedListener) : RecyclerView.ViewHolder(view), View.OnClickListener {
 
          var category: TextView
          var recyclerView: RecyclerView
@@ -42,7 +43,7 @@ class RouteListAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
 
         val view = LayoutInflater.from(parent.context).inflate(R.layout.route_list, parent, false)
-        return ViewHolder(view, itemClickedListener)
+        return ViewHolder(view, itemClickedListener, itemCheckedListener)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -71,7 +72,7 @@ class RouteListAdapter(
             }
         }
 
-        val routeAdapter = RouteAdapter(context,indexesList,routesCategorizedList,itemClickedListener)
+        val routeAdapter = RouteAdapter(context,indexesList,routesCategorizedList,itemClickedListener, itemCheckedListener)
 
         holder.category.text = selectedCategory
         holder.recyclerView.layoutManager = layoutManager

@@ -38,6 +38,7 @@ import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.persistence.utils.DBUtils
 import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
+import com.example.hikingapp.ui.adapters.OnItemCheckedListener
 import com.example.hikingapp.utils.SearchUtils
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteListAdapter
@@ -62,7 +63,7 @@ import java.util.stream.Collectors
 import kotlin.concurrent.schedule
 
 
-class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
+class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, OnItemCheckedListener {
 
     private var _binding: FragmentDiscoverBinding? = null
 
@@ -90,6 +91,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     private lateinit var categories: MutableList<String>
 
     private lateinit var itemClickedListener: OnItemClickedListener
+    private lateinit var itemCheckedListener: OnItemCheckedListener
+
 
     private val database: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance()
@@ -113,6 +116,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         itemClickedListener = this
+        itemCheckedListener = this
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -325,7 +329,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                             categories,
                             currentRoutes,
                             requireContext(),
-                            itemClickedListener
+                            itemClickedListener,
+                            itemCheckedListener
                         )
                     routesRecyclerView.adapter = routeListAdapter
                     routesRecyclerView.setHasFixedSize(true)
@@ -348,7 +353,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
                                 categories,
                                 currentRoutes,
                                 requireContext(),
-                                itemClickedListener
+                                itemClickedListener,
+                                itemCheckedListener
                             )
                         routesRecyclerView.adapter = routeListAdapter
                         routesRecyclerView.setHasFixedSize(true)
@@ -638,8 +644,46 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener {
         startActivity(intent)
     }
 
+    override fun onItemChecked(position: Int) {
+        var routesForNavigation = routeViewModel.routesSelectedForNavigation.value
+        if (routesForNavigation.isNullOrEmpty()) {
+            routesForNavigation = mutableListOf()
+        }
+        routesForNavigation.add(currentRoutes[position])
+        routeViewModel.routesSelectedForNavigation.postValue(routesForNavigation)
+        logRouteIds(routesForNavigation)
+    }
+
 
     override fun onLocationChanged(location: Location) {
         userLocation = Point.fromLngLat(location.longitude, location.latitude)
     }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun onItemUnchecked(position: Int) {
+        var routesForNavigation = routeViewModel.routesSelectedForNavigation.value
+        var indexToRemove = 0
+        if (!routesForNavigation.isNullOrEmpty()) {
+
+            routesForNavigation.forEach { route ->
+                if (currentRoutes.indexOf(route) == position) {
+                    indexToRemove = routesForNavigation.indexOf(route)
+                }
+            }
+            routesForNavigation.removeAt(indexToRemove)
+            routeViewModel.routesSelectedForNavigation.postValue(routesForNavigation)
+            logRouteIds(routesForNavigation)
+        }
+    }
+
+
+    // TEST - DEBUG
+    private fun logRouteIds(routeList: MutableList<Route>) {
+        Log.i(DiscoverFragment::class.java.simpleName, "#### LOGGING ROUTE IDS SELECTED FOR NAVIGATION... ####")
+        routeList.forEach {
+            Log.i(DiscoverFragment::class.java.simpleName, "logRouteId stored: ${it.routeId}")
+        }
+    }
+
+
 }

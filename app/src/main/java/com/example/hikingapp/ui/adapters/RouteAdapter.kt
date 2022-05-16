@@ -7,10 +7,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.RatingBar
 import android.widget.TextView
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
@@ -22,14 +24,16 @@ class RouteAdapter(
     val context: Context,
     private var indexesList: MutableList<Long>?,
     val routes: List<Route>,
-    private val itemClickedListener: OnItemClickedListener
+    private val itemClickedListener: OnItemClickedListener,
+    val itemCheckedListener: OnItemCheckedListener? = null
 ) : RecyclerView.Adapter<RouteAdapter.ViewHolder>() {
 
     class ViewHolder(
         val view: View,
         var indexesList: MutableList<Long>?,
-        private val itemClickedListener: OnItemClickedListener
-    ) :
+        private val itemClickedListener: OnItemClickedListener,
+        private val itemCheckedListener: OnItemCheckedListener
+        ) :
         RecyclerView.ViewHolder(view), View.OnClickListener {
 
         var imageView: ImageView
@@ -37,6 +41,8 @@ class RouteAdapter(
         var stateView: TextView
         var ratingView: RatingBar
         var difficultyLevelView: TextView
+        var selectedForNavigation: ImageView
+        var routeIsChecked = false
 
         init {
             view.setOnClickListener(this)
@@ -45,6 +51,19 @@ class RouteAdapter(
             stateView = view.findViewById(R.id.route_state)
             ratingView = view.findViewById(R.id.routeRating)
             difficultyLevelView = view.findViewById(R.id.difficulty_level)
+            selectedForNavigation = view.findViewById(R.id.navigation_selected)
+
+            selectedForNavigation.setOnClickListener {
+                if (routeIsChecked) {
+                    selectedForNavigation.setImageResource(R.drawable.not_selected_icon_foreground)
+                    routeIsChecked = false
+                    itemCheckedListener.onItemUnchecked(indexesList!![adapterPosition].toInt())
+                } else {
+                    selectedForNavigation.setImageResource(R.drawable.selected_icon_foreground)
+                    routeIsChecked = true
+                    itemCheckedListener.onItemChecked(indexesList!![adapterPosition].toInt())
+                }
+            }
         }
 
         override fun onClick(v: View?) {
@@ -63,7 +82,7 @@ class RouteAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
 
         val view = LayoutInflater.from(parent.context).inflate(R.layout.route_item, parent, false)
-        return ViewHolder(view, indexesList, itemClickedListener)
+        return ViewHolder(view, indexesList, itemClickedListener, itemCheckedListener!!)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)

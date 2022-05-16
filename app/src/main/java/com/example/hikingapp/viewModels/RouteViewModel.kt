@@ -12,6 +12,8 @@ class RouteViewModel : ViewModel(), Serializable {
 
     val currentRoutes = MutableLiveData<List<Route>>()
 
+    val routesSelectedForNavigation = MutableLiveData<MutableList<Route>>()
+
     val route = MutableLiveData<Route>()
 
     val elevationData = MutableLiveData<List<Long>>()
