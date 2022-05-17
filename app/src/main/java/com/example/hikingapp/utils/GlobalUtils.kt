@@ -7,6 +7,7 @@ import com.example.hikingapp.domain.route.Route
 
 object GlobalUtils {
 
+
     const val LINE_LAYER_ID = "linelayer"
     const val SYMBOL_LAYER_ID = "symbolLayer"
     const val LINE_SOURCE_ID = "line"
@@ -20,6 +21,8 @@ object GlobalUtils {
     const val CAMERA_REQUEST = 1888
 
     const val LAST_PAGE = "lastPage"
+
+    const val routeIdsForNavigation = "routeIdsForNavigation"
 
 
     fun getRoutePair(route: Route): Pair<Route, Bitmap?> {

@@ -14,18 +14,24 @@ import com.example.hikingapp.RouteActivity
 import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.databinding.ActivitySearchResultsBinding
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.ui.adapters.OnItemCheckedListener
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteAdapter
+import com.example.hikingapp.utils.GlobalUtils
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 
-class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
+class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener, OnItemCheckedListener {
 
     private lateinit var binding: ActivitySearchResultsBinding
     private lateinit var recyclerView: RecyclerView
     private lateinit var layoutManager: LinearLayoutManager
     private lateinit var routesAdapter: RouteAdapter
     private lateinit var routes: MutableList<Route>
+    private lateinit var itemCheckedListener: OnItemCheckedListener
+    private lateinit var itemClickedListener: OnItemClickedListener
+
+    private var routesForNavigation = mutableListOf<Route>()
 
     private lateinit var appViewModel: AppViewModel
 
@@ -37,18 +43,26 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
         applicationContext.getSharedPreferences("mainPhotoPrefs", 0)
     }
 
+    private val checkedRoutesPrefs: SharedPreferences by lazy {
+        applicationContext.getSharedPreferences("checkedRoutePrefs", 0)
+    }
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        itemCheckedListener  = this
+        itemClickedListener = this
         binding = ActivitySearchResultsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val progressBar = binding.progressBar
         val confirmButton = binding.confirmButton
 
-        appViewModel = ViewModelProvider(this).get(AppViewModel::class.java)
+        appViewModel = ViewModelProvider(this)[AppViewModel::class.java]
 
-        val bundle = intent.extras?.get("routesBundle") as Bundle
-        routes = bundle.get("routes") as MutableList<Route>
+        routes = intent.extras?.get("routes") as MutableList<Route>
 
         layoutManager = LinearLayoutManager(this)
         recyclerView = binding.searchResultsRecyclerview
@@ -83,7 +97,7 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
 
         appViewModel.mainPhotos.observe(this, { photoBitmaps ->
             if (photoBitmaps.size == routes.size) {
-                routesAdapter = RouteAdapter(this, null, routes, this)
+                routesAdapter = RouteAdapter(this, null, routes, this, this, true)
                 recyclerView.adapter = routesAdapter
 
                 progressBar.visibility = View.GONE
@@ -92,10 +106,9 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
         })
 
         confirmButton.setOnClickListener {
+            storeSelectedRoutesForNavigation()
             startActivity(Intent(this, MainActivity::class.java))
         }
-
-
     }
 
     override fun onItemClicked(position: Int, bundle: Bundle) {
@@ -104,7 +117,32 @@ class SearchResultsActivity : AppCompatActivity(), OnItemClickedListener {
         routes[position].mainPhotoBitmap = null
 
         intent.putExtra("route", routes[position])
-        intent.putExtra("action", "normal")
+        intent.putExtra("action", "discover")
+
+        storeSelectedRoutesForNavigation()
+
         startActivity(intent)
+    }
+
+    private fun storeSelectedRoutesForNavigation() {
+        val routeIdsSet = mutableSetOf<String>()
+        routesForNavigation.forEach {
+            routeIdsSet.add(it!!.routeId.toString())
+        }
+        checkedRoutesPrefs.edit().putStringSet(GlobalUtils.routeIdsForNavigation,routeIdsSet)
+    }
+
+    override fun onItemChecked(position: Int) {
+        routesForNavigation.add(routes[position])
+    }
+
+    override fun onItemUnchecked(position: Int) {
+        var removeIndex = 0
+        routesForNavigation.forEach {
+            if (routes.indexOf(it) == position) {
+                removeIndex = routesForNavigation.indexOf(it)
+            }
+        }
+        routesForNavigation.removeAt(removeIndex)
     }
 }

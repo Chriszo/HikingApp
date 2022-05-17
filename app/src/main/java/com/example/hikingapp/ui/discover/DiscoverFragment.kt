@@ -466,14 +466,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
 
     private fun navigateToSearchResults() {
         val intent = Intent(context, SearchResultsActivity::class.java)
-        val bundle = Bundle()
 
-        routeSearchResults.forEach {
-            it.mainPhotoBitmap = null
-        }
-
-        bundle.putSerializable("routes", routeSearchResults as Serializable)
-        intent.putExtra("routesBundle", bundle)
+        intent.putExtra("routes", routeSearchResults as Serializable )
         searchTerm = ""
         searchView.setText(searchTerm)
         startActivity(intent)
