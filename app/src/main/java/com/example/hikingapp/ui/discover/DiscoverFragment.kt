@@ -27,8 +27,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.RouteActivity
-import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.databinding.FragmentDiscoverBinding
+import com.example.hikingapp.domain.enums.ActionType
 import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.enums.RouteType
 import com.example.hikingapp.domain.route.Route
@@ -39,10 +39,12 @@ import com.example.hikingapp.persistence.utils.DBUtils
 import com.example.hikingapp.search.SearchFiltersWrapper
 import com.example.hikingapp.search.SearchType
 import com.example.hikingapp.ui.adapters.OnItemCheckedListener
-import com.example.hikingapp.utils.SearchUtils
 import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.RouteListAdapter
 import com.example.hikingapp.ui.search.results.SearchResultsActivity
+import com.example.hikingapp.utils.GlobalUtils
+import com.example.hikingapp.utils.SearchUtils
+import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.viewModels.RouteViewModel
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -63,11 +65,14 @@ import java.util.stream.Collectors
 import kotlin.concurrent.schedule
 
 
-class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, OnItemCheckedListener {
+class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener,
+    OnItemCheckedListener {
 
+    private lateinit var navigableRouteIds: MutableSet<String>
     private var _binding: FragmentDiscoverBinding? = null
 
     private val locationManager by lazy {
+        activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
@@ -106,6 +111,9 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
         requireActivity().applicationContext.getSharedPreferences("chosenRoute", 0)
     }
 
+    private var checkedRoutePrefs: SharedPreferences? = null
+
+
     private val routeViewModel: RouteViewModel by activityViewModels()
     private val userViewModel: UserViewModel by activityViewModels()
     private val applicationViewModel: AppViewModel by activityViewModels()
@@ -117,6 +125,10 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
         super.onAttach(context)
         itemClickedListener = this
         itemCheckedListener = this
+        checkedRoutePrefs =
+            requireActivity().applicationContext.getSharedPreferences("checkedRoutePrefs", 0)
+        navigableRouteIds =
+            checkedRoutePrefs!!.getStringSet(GlobalUtils.routeIdsForNavigation, mutableSetOf())!!
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -247,6 +259,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
             true
         }
 
+
         // LOAD ALL ROUTES
         database.getReference("routes").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -280,13 +293,14 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
                     .collect(Collectors.toList())
 
                 // Check if main photo of route is defined, otherwise download it for firebase storage.
+
+
                 currentRoutes.forEach { route ->
 
                     if (route.mainPhotoBitmap == null) {
 
                         storage?.reference?.child("routes/mainPhotos/route_${route.routeId}_main.jpg")
                             ?.getBytes(1024 * 1024)!!.addOnSuccessListener {
-
 
                                 val routeMainPhotoBitmap = BitmapFactory.decodeByteArray(
                                     it,
@@ -300,7 +314,10 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
                                     route.routeId,
                                     route.javaClass.simpleName,
                                     "route_${route.routeId}_main.jpg",
-                                    PhotoItem("route_${route.routeId}_main.jpg",routeMainPhotoBitmap),
+                                    PhotoItem(
+                                        "route_${route.routeId}_main.jpg",
+                                        routeMainPhotoBitmap
+                                    ),
                                     true
                                 )
 
@@ -313,7 +330,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
                                         "${route.routeId}",
                                         "route_${route.routeId}_main.jpg"
                                     )
-                                        .commit()
+                                        .apply()
                                 }
                                 applicationViewModel.mainPhotos.postValue(temp)
                             }
@@ -330,7 +347,10 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
                             currentRoutes,
                             requireContext(),
                             itemClickedListener,
-                            itemCheckedListener
+                            itemCheckedListener,
+                            userLoggedIn = userViewModel.user.value != null,
+                            navigableRoutes = navigableRouteIds,
+                            actionType = ActionType.NORMAL
                         )
                     routesRecyclerView.adapter = routeListAdapter
                     routesRecyclerView.setHasFixedSize(true)
@@ -338,6 +358,82 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
                     progressDialog.dismiss()
                     routeViewModel.currentRoutes.postValue(currentRoutes)
                 }
+
+                userViewModel.user.observe(viewLifecycleOwner, {
+
+
+                    FirebaseDatabase.getInstance().getReference("selected_routes_nav")
+                        .child(it!!.uid)
+                        .addValueEventListener(object : ValueEventListener {
+                            @RequiresApi(Build.VERSION_CODES.N)
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                if (snapshot.exists()) {
+                                    val routeIdsList = snapshot.value as MutableList<String>
+                                    val routeIdsSet = routeIdsList.stream().map { it.toString() }
+                                        .collect(Collectors.toSet())
+
+                                    checkedRoutePrefs!!.edit().putStringSet(
+                                        GlobalUtils.routeIdsForNavigation,
+                                        routeIdsSet
+                                    ).apply()
+
+                                    val routesForNavigation = currentRoutes.stream()
+                                        .filter { route -> routeIdsSet.contains(route.routeId.toString()) }
+                                        .collect(Collectors.toList())
+
+                                    navigableRouteIds = routeIdsSet
+
+                                    routeViewModel.routesSelectedForNavigation.postValue(
+                                        routesForNavigation
+                                    )
+
+                                    context?:return
+                                    routeListAdapter =
+                                        RouteListAdapter(
+                                            categories,
+                                            currentRoutes,
+                                            requireContext(),
+                                            itemClickedListener,
+                                            itemCheckedListener,
+                                            userLoggedIn = true,
+                                            navigableRoutes = routeIdsSet,
+                                            actionType = ActionType.DISCOVER
+                                        )
+                                    routesRecyclerView.adapter = routeListAdapter
+                                    routesRecyclerView.setHasFixedSize(true)
+
+
+                                    progressDialog.dismiss()
+                                    routeViewModel.currentRoutes.postValue(currentRoutes)
+                                } else {
+                                    routeListAdapter =
+                                        RouteListAdapter(
+                                            categories,
+                                            currentRoutes,
+                                            requireContext(),
+                                            itemClickedListener,
+                                            itemCheckedListener,
+                                            userLoggedIn = it != null,
+                                            navigableRoutes = mutableSetOf(),
+                                            actionType = ActionType.DISCOVER
+                                        )
+                                    routesRecyclerView.adapter = routeListAdapter
+                                    routesRecyclerView.setHasFixedSize(true)
+
+
+                                    progressDialog.dismiss()
+                                    routeViewModel.currentRoutes.postValue(currentRoutes)
+                                }
+                            }
+
+                            override fun onCancelled(error: DatabaseError) {
+                                TODO("Not yet implemented")
+                            }
+
+                        })
+
+
+                })
 
 
                 // TODO add categories to DB(?)
@@ -354,7 +450,10 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
                                 currentRoutes,
                                 requireContext(),
                                 itemClickedListener,
-                                itemCheckedListener
+                                itemCheckedListener,
+                                userLoggedIn = userViewModel.user.value != null,
+                                navigableRoutes = navigableRouteIds!!,
+                                actionType = ActionType.NORMAL
                             )
                         routesRecyclerView.adapter = routeListAdapter
                         routesRecyclerView.setHasFixedSize(true)
@@ -385,6 +484,23 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
 
         return root
 
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        if (userViewModel.user.value != null) {
+
+            checkedRoutePrefs!!.getStringSet(GlobalUtils.routeIdsForNavigation, mutableSetOf())!!
+                .toList().apply {
+                    FirebaseDatabase.getInstance()
+                        .getReference("selected_routes_nav")
+                        .child(userViewModel.user.value!!.uid)
+                        .setValue(this)
+                }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -466,8 +582,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
 
     private fun navigateToSearchResults() {
         val intent = Intent(context, SearchResultsActivity::class.java)
-
-        intent.putExtra("routes", routeSearchResults as Serializable )
+        intent.putExtra("authInfo", userViewModel.user.value)
+        intent.putExtra("routes", routeSearchResults as Serializable)
         searchTerm = ""
         searchView.setText(searchTerm)
         startActivity(intent)
@@ -548,69 +664,104 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
     private fun resetFilterListenersLayouts(view: View) {
 
         view.btn_linear.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-        view.btn_linear.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.btn_linear.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
         view.btn_cyclic.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-        view.btn_cyclic.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.btn_cyclic.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
         view.btn_easy.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-        view.btn_easy.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.btn_easy.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
         view.btn_moderate.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-        view.btn_moderate.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.btn_moderate.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
         view.btn_hard.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-        view.btn_hard.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+        view.btn_hard.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
         view.ratingBar.rating = 0f
     }
 
     private fun setFiltersScreenListeners(view: View) {
         view.btn_linear.setOnClickListener {
             searchFiltersWrapperBuilder.withType(RouteType.LINEAR)
-            view.btn_linear.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_linear.setBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.teal_700
+                )
+            )
             view.btn_linear.setTextColor(context?.resources?.getColor(R.color.white)!!)
 
             view.btn_cyclic.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-            view.btn_cyclic.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_cyclic.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
         }
 
         view.btn_cyclic.setOnClickListener {
             searchFiltersWrapperBuilder.withType(RouteType.CYCLIC)
-            view.btn_cyclic.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_cyclic.setBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.teal_700
+                )
+            )
             view.btn_cyclic.setTextColor(context?.resources?.getColor(R.color.white)!!)
 
             view.btn_linear.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-            view.btn_linear.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_linear.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
         }
 
         view.btn_easy.setOnClickListener {
             searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.EASY)
-            view.btn_easy.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_easy.setBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.teal_700
+                )
+            )
             view.btn_easy.setTextColor(context?.resources?.getColor(R.color.white)!!)
 
             view.btn_moderate.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-            view.btn_moderate.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_moderate.setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.teal_700
+                )
+            )
             view.btn_hard.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-            view.btn_hard.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_hard.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
 
         }
 
         view.btn_moderate.setOnClickListener {
             searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.MODERATE)
-            view.btn_moderate.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_moderate.setBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.teal_700
+                )
+            )
             view.btn_moderate.setTextColor(context?.resources?.getColor(R.color.white)!!)
 
             view.btn_easy.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-            view.btn_easy.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_easy.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
             view.btn_hard.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-            view.btn_hard.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_hard.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
         }
 
         view.btn_hard.setOnClickListener {
             searchFiltersWrapperBuilder.withDifficulty(DifficultyLevel.HARD)
-            view.btn_hard.setBackgroundColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_hard.setBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.teal_700
+                )
+            )
             view.btn_hard.setTextColor(context?.resources?.getColor(R.color.white)!!)
 
             view.btn_moderate.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-            view.btn_moderate.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_moderate.setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.teal_700
+                )
+            )
             view.btn_easy.setBackgroundColor(context?.resources?.getColor(R.color.white)!!)
-            view.btn_easy.setTextColor(ContextCompat.getColor(requireContext(),R.color.teal_700))
+            view.btn_easy.setTextColor(ContextCompat.getColor(requireContext(), R.color.teal_700))
         }
 
         view.ratingBar.setOnRatingBarChangeListener { _, rating, _ ->
@@ -638,6 +789,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
         startActivity(intent)
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onItemChecked(position: Int) {
         var routesForNavigation = routeViewModel.routesSelectedForNavigation.value
         if (routesForNavigation.isNullOrEmpty()) {
@@ -645,7 +797,22 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
         }
         routesForNavigation.add(currentRoutes[position])
         routeViewModel.routesSelectedForNavigation.postValue(routesForNavigation)
+
+        addSelectedRoutesForNavigation(routesForNavigation)
+
         logRouteIds(routesForNavigation)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun addSelectedRoutesForNavigation(routesForNavigation: MutableList<Route>) {
+        val currentRouteIds =
+            routesForNavigation.stream().map { it.routeId.toString() }.collect(Collectors.toSet())
+
+        val existingRouteIds =
+            checkedRoutePrefs!!.getStringSet(GlobalUtils.routeIdsForNavigation, mutableSetOf())
+        existingRouteIds!!.addAll(currentRouteIds)
+        checkedRoutePrefs!!.edit().putStringSet(GlobalUtils.routeIdsForNavigation, existingRouteIds)
+            .apply()
     }
 
 
@@ -657,23 +824,43 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener, On
     override fun onItemUnchecked(position: Int) {
         var routesForNavigation = routeViewModel.routesSelectedForNavigation.value
         var indexToRemove = 0
+        var routeId = ""
         if (!routesForNavigation.isNullOrEmpty()) {
 
             routesForNavigation.forEach { route ->
                 if (currentRoutes.indexOf(route) == position) {
                     indexToRemove = routesForNavigation.indexOf(route)
+                    routeId = route.routeId.toString()
                 }
             }
             routesForNavigation.removeAt(indexToRemove)
             routeViewModel.routesSelectedForNavigation.postValue(routesForNavigation)
+
+            removeRouteFromSelected(routeId)
+
             logRouteIds(routesForNavigation)
+        }
+    }
+
+    private fun removeRouteFromSelected(routeId: String) {
+        val existingIds =
+            checkedRoutePrefs!!.getStringSet(GlobalUtils.routeIdsForNavigation, mutableSetOf())
+
+        if (!existingIds.isNullOrEmpty()) {
+            val updatedIds = mutableSetOf<String>()
+            updatedIds.remove(routeId)
+            checkedRoutePrefs!!.edit().putStringSet(GlobalUtils.routeIdsForNavigation, updatedIds)
+                .apply()
         }
     }
 
 
     // TEST - DEBUG
     private fun logRouteIds(routeList: MutableList<Route>) {
-        Log.i(DiscoverFragment::class.java.simpleName, "#### LOGGING ROUTE IDS SELECTED FOR NAVIGATION... ####")
+        Log.i(
+            DiscoverFragment::class.java.simpleName,
+            "#### LOGGING ROUTE IDS SELECTED FOR NAVIGATION... ####"
+        )
         routeList.forEach {
             Log.i(DiscoverFragment::class.java.simpleName, "logRouteId stored: ${it.routeId}")
         }

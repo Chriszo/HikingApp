@@ -70,6 +70,8 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/route_state" />
 
+
+
             <RelativeLayout
                 android:id="@+id/relative_layout"
                 android:layout_width="match_parent"
@@ -81,7 +83,6 @@
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:src="@drawable/not_selected_icon_foreground"/>
-
 
             </RelativeLayout>
 
@@ -114,12 +115,13 @@
                 app:layout_constraintEnd_toEndOf="@+id/route_imageView"
                 app:layout_constraintTop_toBottomOf="@+id/route_imageView" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="5dp"
-                android:background="@android:color/darker_gray"
-                app:layout_constraintTop_toBottomOf="@+id/relative_layout" />
+            <ImageView
+                android:id="@+id/delete_route"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/difficulty_level"
+                android:src="@drawable/delete_icon_foreground_grey"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

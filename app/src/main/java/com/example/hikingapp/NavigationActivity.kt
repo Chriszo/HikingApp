@@ -42,6 +42,7 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.navigation.SerializableMapPoint
 import com.example.hikingapp.domain.navigation.UserNavigationData
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.firebase.FirebaseUtils
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
@@ -55,6 +56,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -880,10 +882,63 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 
             val routeMapEntity = LocalDatabase.getRouteMapContent(currentRoute!!.routeId)
 
-            mapInfo = mapService.getMapInformation(
-                routeMapEntity!!.routeMapContent,
-                routeMapEntity.routeMapName
-            )
+            if (Objects.isNull(routeMapEntity)) {
+                database.getReference("routeMaps")
+                    .addValueEventListener(object : ValueEventListener {
+                        @RequiresApi(Build.VERSION_CODES.N)
+                        override fun onDataChange(snapshot: DataSnapshot) {
+
+                            val routeMap = (snapshot.value as HashMap<String, *>).entries
+                                .stream()
+                                .filter { routeMapEntry -> routeMapEntry.key.split("_")[1].toLong() == currentRoute!!.routeId }
+                                .map { it.value as String }
+                                .findFirst().orElse(null)
+
+
+
+                            storage.getReference("routeMaps/").child(routeMap)
+                                .getBytes(GlobalUtils.MEGABYTE * 5)
+                                .addOnSuccessListener { routeMapBytes ->
+
+                                    mapInfo =
+                                        mapService.getMapInformation(
+                                            String(routeMapBytes),
+                                            routeMap
+                                        )
+                                    LocalDatabase.saveRouteMapContent(
+                                        currentRoute!!.routeId,
+                                        RouteMapEntity(routeMap, String(routeMapBytes))
+                                    )
+
+                                    loadMap()
+
+                                }.addOnFailureListener {
+                                    if (it is StorageException) {
+                                        when (it.httpResultCode) {
+                                            404 -> throw IllegalArgumentException(
+                                                "[${it.httpResultCode}]: No RouteMap \"$routeMap\" was found in Storage.",
+                                                it.fillInStackTrace()
+                                            )
+                                        }
+                                    } else {
+                                        throw it
+                                    }
+                                }
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            TODO("Not yet implemented")
+                        }
+                    })
+            } else {
+                mapInfo = mapService.getMapInformation(
+                    routeMapEntity!!.routeMapContent,
+                    routeMapEntity.routeMapName
+                )
+                loadMap()
+            }
+
+
 
             when (navigationState) {
                 NavigationState.NOT_STARTED -> userNavigationData = UserNavigationData()
@@ -1031,80 +1086,6 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
             // initialize maneuver arrow view to draw arrows on the map
             val routeArrowOptions = RouteArrowOptions.Builder(this).build()
             routeArrowView = MapboxRouteArrowView(routeArrowOptions)
-
-            mapboxMap.loadStyle(
-                (
-                        style(styleUri = Style.SATELLITE) {
-//                        +geoJsonSource("line") {
-////                            url("asset://seichsou_trail.geojson")
-//                            url("asset://" + mapInfo?.routeGeoJsonFileName)
-//                        }
-//                        +lineLayer(GlobalUtils.LINE_LAYER_ID, GlobalUtils.LINE_SOURCE_ID) {
-//                            lineCap(LineCap.ROUND)
-//                            lineJoin(LineJoin.ROUND)
-//                            lineOpacity(1.0)
-//                            lineWidth(8.0)
-//                            lineColor("#FF0000")
-//                        }
-                            +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
-                                featureCollection(
-                                    FeatureCollection.fromFeatures(
-                                        listOf(
-                                            Feature.fromGeometry(
-                                                Point.fromLngLat(
-                                                    mapInfo!!.origin.longitude(),
-                                                    mapInfo!!.origin.latitude()
-                                                )
-                                            ),
-                                            Feature.fromGeometry(
-                                                Point.fromLngLat(
-                                                    mapInfo!!.destination.longitude(),
-                                                    mapInfo!!.destination.latitude()
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                            }
-
-                            +image(GlobalUtils.RED_MARKER_ID) {
-                                bitmap(
-                                    BitmapFactory.decodeResource(
-                                        resources,
-                                        R.drawable.red_marker
-                                    )
-                                )
-                            }
-                            +symbolLayer(
-                                GlobalUtils.SYMBOL_LAYER_ID,
-                                GlobalUtils.SYMBOL_SOURCE_ID
-                            ) {
-                                iconImage(GlobalUtils.RED_MARKER_ID)
-                                iconAllowOverlap(true)
-                                iconSize(0.5)
-                                iconIgnorePlacement(true)
-                            }
-                        }
-                        ),
-                {
-                    mapView!!.location.addOnIndicatorPositionChangedListener(
-                        onPositionChangedListener
-                    )
-//                    routeLineView.hideOriginAndDestinationPoints(it)
-//                mapboxMap.addOnMapLoadedListener {
-//                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
-//                }
-                },
-                object : OnMapLoadErrorListener {
-                    override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
-                        Log.e(
-                            NavigationActivity::class.java.simpleName,
-                            "Error loading map: " + eventData.message
-                        )
-                    }
-                }
-            )
-
 
             // initialize view interactions
             binding.stop.setOnClickListener {
@@ -1269,6 +1250,98 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
         }
     }
 
+    private fun loadMap() {
+        mapboxMap.loadStyle(
+            (
+                    style(styleUri = Style.SATELLITE) {
+//                        +geoJsonSource("line") {
+////                            url("asset://seichsou_trail.geojson")
+//                            url("asset://" + mapInfo?.routeGeoJsonFileName)
+//                        }
+//                        +lineLayer(GlobalUtils.LINE_LAYER_ID, GlobalUtils.LINE_SOURCE_ID) {
+//                            lineCap(LineCap.ROUND)
+//                            lineJoin(LineJoin.ROUND)
+//                            lineOpacity(1.0)
+//                            lineWidth(8.0)
+//                            lineColor("#FF0000")
+//                        }
+                        +geoJsonSource(GlobalUtils.SYMBOL_SOURCE_ID) {
+                            featureCollection(
+                                FeatureCollection.fromFeatures(
+                                    listOf(
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo!!.origin.longitude(),
+                                                mapInfo!!.origin.latitude()
+                                            )
+                                        ),
+                                        Feature.fromGeometry(
+                                            Point.fromLngLat(
+                                                mapInfo!!.destination.longitude(),
+                                                mapInfo!!.destination.latitude()
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        }
+
+                        +image(GlobalUtils.RED_MARKER_ID) {
+                            bitmap(
+                                BitmapFactory.decodeResource(
+                                    resources,
+                                    R.drawable.red_marker
+                                )
+                            )
+                        }
+                        +symbolLayer(
+                            GlobalUtils.SYMBOL_LAYER_ID,
+                            GlobalUtils.SYMBOL_SOURCE_ID
+                        ) {
+                            iconImage(GlobalUtils.RED_MARKER_ID)
+                            iconAllowOverlap(true)
+                            iconSize(0.5)
+                            iconIgnorePlacement(true)
+                        }
+                    }
+                    ),
+            {
+                mapView!!.location.addOnIndicatorPositionChangedListener(
+                    onPositionChangedListener
+                )
+//                    routeLineView.hideOriginAndDestinationPoints(it)
+//                mapboxMap.addOnMapLoadedListener {
+//                    findRoute(mapInfo!!.jsonRoute.coordinates()[0])
+//                }
+            },
+            object : OnMapLoadErrorListener {
+                override fun onMapLoadError(eventData: MapLoadingErrorEventData) {
+                    Log.e(
+                        NavigationActivity::class.java.simpleName,
+                        "Error loading map: " + eventData.message
+                    )
+                }
+            }
+        )
+
+        initializeMapboxNavigationInstance()
+
+        if (mapboxNavigation.getRoutes().isEmpty()) {
+            // if simulation is enabled (ReplayLocationEngine set to NavigationOptions)
+            // but we're not simulating yet,
+            // push a single location sample to establish origin
+            mapboxReplayer.pushEvents(
+                listOf(
+                    ReplayRouteMapper.mapToUpdateLocation(
+                        eventTimestamp = 0.0,
+                        point = mapInfo!!.origin
+                    )
+                )
+            )
+
+        }
+    }
+
     private fun stopNavigation() {
 
         clearRouteAndStopNavigation()
@@ -1304,6 +1377,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
         finish()
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun playNavigation(resumed: Boolean = false) {
         initializeMapboxNavigationInstance()
         if (mapboxNavigation.getRoutes().isEmpty()) {
@@ -1675,20 +1749,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
             mapboxNavigation.registerArrivalObserver(arrivalObserver)
 
 
-            if (mapboxNavigation.getRoutes().isEmpty()) {
-                // if simulation is enabled (ReplayLocationEngine set to NavigationOptions)
-                // but we're not simulating yet,
-                // push a single location sample to establish origin
-                mapboxReplayer.pushEvents(
-                    listOf(
-                        ReplayRouteMapper.mapToUpdateLocation(
-                            eventTimestamp = 0.0,
-                            point = mapInfo!!.origin
-                        )
-                    )
-                )
-                mapboxReplayer.playFirstLocation()
-            }
+            mapboxReplayer.playFirstLocation()
         }
         // register event listeners
     }

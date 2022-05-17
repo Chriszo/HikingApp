@@ -108,7 +108,13 @@ class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedLi
                 routes = it
                 profileViewModel.user.value?.profileInfo?.completedRoutes =
                     routes.stream().map { it.routeId }.collect(Collectors.toList())
-                routesAdapter = RouteAdapter(requireContext(), null,routes, this)
+                routesAdapter = RouteAdapter(
+                    requireContext(),
+                    null,
+                    routes,
+                    this,
+                    userLoggedIn = authInfo != null
+                )
                 routesRecyclerView.adapter = routesAdapter
             }
         })

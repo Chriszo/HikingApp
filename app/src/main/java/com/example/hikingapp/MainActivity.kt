@@ -2,7 +2,9 @@ package com.example.hikingapp
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -10,6 +12,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -20,15 +23,21 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.databinding.ActivityMainBinding
 import com.example.hikingapp.ui.settings.*
+import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.AppViewModel
 import com.example.hikingapp.viewModels.UserViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.view.*
 import kotlinx.android.synthetic.main.custom_toolbar.view.*
+import java.util.stream.Collectors
 
 class MainActivity : AppCompatActivity() {
 
@@ -45,6 +54,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var db:SQLiteDatabase
     private val storage: FirebaseStorage by lazy {
         FirebaseStorage.getInstance()
+    }
+
+    private val checkedRoutePrefs: SharedPreferences by lazy {
+        this.applicationContext.getSharedPreferences("checkedRoutePrefs", 0)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,14 +80,18 @@ class MainActivity : AppCompatActivity() {
         title.visibility = View.GONE
 
         if (intent.extras?.containsKey("authInfo") == true) {
-            (intent.extras!!["authInfo"] as FirebaseUser?).apply {
-                userViewModel.user.postValue(this)
-                authInfo = this
+            (intent.extras!!["authInfo"] as FirebaseUser?)?.let { user ->
+                userViewModel.user.postValue(user).also {
+                    authInfo = user
+                }
+
                 if (authInfo != null) {
 
                     toolbar.action_bar_user.visibility = View.GONE
                     toolbar.account_icon.visibility = View.VISIBLE
                 } else {
+
+                    checkedRoutePrefs.edit().putStringSet(GlobalUtils.routeIdsForNavigation,mutableSetOf()).apply()
 
                     toolbar.action_bar_user.visibility = View.VISIBLE
                     toolbar.account_icon.visibility = View.GONE
@@ -126,6 +143,25 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
+    }
+
+    private fun setRoutesSelectedForNavigation() {
+        FirebaseDatabase.getInstance().getReference("selected_routes_nav").child(authInfo!!.uid).addListenerForSingleValueEvent(object : ValueEventListener {
+            @RequiresApi(Build.VERSION_CODES.N)
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if(snapshot.exists()) {
+                    val routeIdsList = snapshot.value as MutableList<String>
+                    val routeIdsSet  = routeIdsList.stream().map { it.toString() }.collect(Collectors.toSet())
+
+                    checkedRoutePrefs.edit().putStringSet(GlobalUtils.routeIdsForNavigation,routeIdsSet).apply()
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+
+        })
     }
 
     private fun setMenuItemListeners(optionsMenu: Menu) {

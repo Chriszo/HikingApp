@@ -11,6 +11,7 @@ import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
+import com.example.hikingapp.domain.enums.ActionType
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.utils.PhotoItemDecorator
 
@@ -19,15 +20,24 @@ class RouteListAdapter(
     var routes: List<Route>,
     val context: Context,
     private val itemClickedListener: OnItemClickedListener,
-    private val itemCheckedListener: OnItemCheckedListener
+    private val itemCheckedListener: OnItemCheckedListener,
+    private val userLoggedIn: Boolean,
+    private var navigableRoutes: MutableSet<String> = mutableSetOf(),
+    private val actionType: ActionType = ActionType.NORMAL
 ) : RecyclerView.Adapter<RouteListAdapter.ViewHolder>() {
 
     private var indexesList = mutableListOf<Long>()
 
-    class ViewHolder(view: View, val itemClickedListener: OnItemClickedListener, val itemCheckedListener: OnItemCheckedListener) : RecyclerView.ViewHolder(view), View.OnClickListener {
+    class ViewHolder(
+        view: View,
+        val itemClickedListener: OnItemClickedListener,
+        val itemCheckedListener: OnItemCheckedListener,
+        var navigableRoutes: MutableSet<String>,
+        var actionType: ActionType
+    ) : RecyclerView.ViewHolder(view), View.OnClickListener {
 
-         var category: TextView
-         var recyclerView: RecyclerView
+        var category: TextView
+        var recyclerView: RecyclerView
 
         init {
             category = view.findViewById(R.id.category_title)
@@ -43,7 +53,13 @@ class RouteListAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
 
         val view = LayoutInflater.from(parent.context).inflate(R.layout.route_list, parent, false)
-        return ViewHolder(view, itemClickedListener, itemCheckedListener)
+        return ViewHolder(
+            view,
+            itemClickedListener,
+            itemCheckedListener,
+            navigableRoutes,
+            actionType
+        )
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -57,12 +73,12 @@ class RouteListAdapter(
 
         when (selectedCategory) {
             "Top Rated" -> {
-                indexesList = mutableListOf(0L,1L)
+                indexesList = mutableListOf(0L, 1L)
                 routesCategorizedList.add(routes[0])
                 routesCategorizedList.add(routes[1])
             }
             "Popular" -> {
-                indexesList = mutableListOf(2L,3L)
+                indexesList = mutableListOf(2L, 3L)
                 routesCategorizedList.add(routes[2])
                 routesCategorizedList.add(routes[3])
             }
@@ -72,7 +88,16 @@ class RouteListAdapter(
             }
         }
 
-        val routeAdapter = RouteAdapter(context,indexesList,routesCategorizedList,itemClickedListener, itemCheckedListener)
+        val routeAdapter = RouteAdapter(
+            context,
+            indexesList,
+            routesCategorizedList,
+            itemClickedListener,
+            itemCheckedListener,
+            userLoggedIn = userLoggedIn,
+            navigableRoutes = navigableRoutes,
+            actionType = actionType
+        )
 
         holder.category.text = selectedCategory
         holder.recyclerView.layoutManager = layoutManager
