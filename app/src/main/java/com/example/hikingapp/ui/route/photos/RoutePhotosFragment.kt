@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
@@ -52,8 +53,8 @@ class RoutePhotosFragment : Fragment(), OnItemClickedListener {
 
         val view = inflater.inflate(R.layout.fragment_photos, container, false)
 
-        linearLayoutManager = LinearLayoutManager(context)
-        linearLayoutManager.orientation = LinearLayoutManager.HORIZONTAL
+        linearLayoutManager = GridLayoutManager(context,5)
+        linearLayoutManager.orientation = GridLayoutManager.VERTICAL
         recyclerView = view.findViewById(R.id.sight_photos_recycler_view)
         recyclerView.layoutManager = linearLayoutManager
 

@@ -507,7 +507,7 @@ class ProfileFragment : Fragment() {
                                                 }.addOnFailureListener {
                                                     if (it is StorageException) {
                                                         when (it.httpResultCode) {
-                                                            404 -> throw IllegalStateException("No photo with imageName: $photoName.jpg was found for sight $routeId in Firebase Storage")
+                                                            404 -> throw IllegalStateException("No photo with imageName: $photoName.jpg was found for route $routeId in Firebase Storage")
                                                         }
                                                     } else {
                                                         throw it

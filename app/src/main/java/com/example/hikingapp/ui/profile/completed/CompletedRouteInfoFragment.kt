@@ -1,7 +1,6 @@
 package com.example.hikingapp.ui.profile.completed
 
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,7 +12,7 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.route.Route
@@ -40,7 +39,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
     private lateinit var completedPhotosRecyclerView: RecyclerView
     private lateinit var photosAdapter: PhotoAdapter
-    private lateinit var layoutManager: LinearLayoutManager
+    private lateinit var layoutManager: GridLayoutManager
 
     private lateinit var elevationGraph: GraphView
 
@@ -62,9 +61,9 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
         val elevationProgressBar = view.progress_bar
 
         elevationProgressBar.visibility = View.VISIBLE
-        completedViewModel.elevationData.observe(viewLifecycleOwner,{
+        completedViewModel.elevationData.observe(viewLifecycleOwner, {
             if (!it.isNullOrEmpty()) {
-                drawGraph(it as MutableList<Long>?,view.elevation_graph)
+                drawGraph(it as MutableList<Long>?, view.elevation_graph)
                 view.elevation_graph.visibility = View.VISIBLE
             }
             elevationProgressBar.visibility = View.GONE
@@ -105,7 +104,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
         progressBar.visibility = View.VISIBLE
 
         completedPhotosRecyclerView = view.findViewById(R.id.sight_photos_recycler_view)
-        layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        layoutManager = GridLayoutManager(context, 5, GridLayoutManager.VERTICAL, false)
         completedPhotosRecyclerView.layoutManager = layoutManager
 
         completedViewModel.photos.observe(viewLifecycleOwner, {
@@ -120,7 +119,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
                 completedPhotosRecyclerView.visibility = View.VISIBLE
                 photosLayout.no_photos_found.visibility = View.GONE
                 completedRoutePhotos = it.toMutableList()
-                photosAdapter = PhotoAdapter(context,completedRoutePhotos, this)
+                photosAdapter = PhotoAdapter(context, completedRoutePhotos, this)
                 completedPhotosRecyclerView.adapter = photosAdapter
 
                 val photoItemSpacing = PhotoItemDecorator(5)

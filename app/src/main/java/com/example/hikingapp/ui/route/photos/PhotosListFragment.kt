@@ -45,7 +45,7 @@ class PhotosListFragment : Fragment(), OnItemClickedListener {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_photos, container, false)
 
-        linearLayoutManager = GridLayoutManager(context, 5)
+        linearLayoutManager = GridLayoutManager(context, 5, RecyclerView.VERTICAL,false)
         recyclerView = view.findViewById(R.id.sight_photos_recycler_view)
         recyclerView.layoutManager = linearLayoutManager
 
