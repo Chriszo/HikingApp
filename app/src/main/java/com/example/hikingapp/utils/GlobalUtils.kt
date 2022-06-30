@@ -98,4 +98,32 @@ object GlobalUtils {
         return inSampleSize
     }
 
+    fun convertToCelsius(temperature: Double): Double {
+        return ((temperature - 32) * 5) / 9
+    }
+
+    fun convertToFahrenheit(temperature: Double): Double {
+        return ((temperature * 9) / 5) + 32
+    }
+
+    fun getMetric(value: Double, unit: String?): String {
+
+        return when(unit?.trim()){
+            "m" -> "${"%.2f".format(value)} m"
+            "km" -> "${"%.2f".format((value / 1000))} km"
+            "cm" -> "${"%.2f".format((value * 100))} cm"
+            else -> "${"%.2f".format(value)} m"
+        }
+    }
+
+    fun getTime(timeEstimation: Double?, unit: String?): String {
+
+        return when(unit?.trim()) {
+            "sec" -> "${"%.2f".format(timeEstimation?.times(60))} sec"
+            "hrs" -> "${"%.2f".format(timeEstimation?.div(60))} hrs"
+            "min" -> "${"%.2f".format(timeEstimation)} min"
+            else -> "${"%.2f".format(timeEstimation)} min"
+        }
+    }
+
 }

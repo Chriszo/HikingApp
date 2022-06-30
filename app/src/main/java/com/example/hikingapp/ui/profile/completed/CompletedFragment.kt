@@ -133,6 +133,7 @@ class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedLi
                     intent.putExtra("route", routes[position])
                     intent.putExtra("action", "completed")
                     intent.putExtra("authInfo", authInfo)
+                    intent.putExtra("userSettings", userViewModel.userSettings.value)
                     startActivity(intent)
                 }
 

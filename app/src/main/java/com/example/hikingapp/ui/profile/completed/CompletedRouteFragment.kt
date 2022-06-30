@@ -25,6 +25,7 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.users.PhotoItem
+import com.example.hikingapp.domain.users.settings.UserSettings
 import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.services.map.MapService
@@ -34,6 +35,7 @@ import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 import com.example.hikingapp.ui.route.RouteFragment
 import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.RouteViewModel
+import com.example.hikingapp.viewModels.UserViewModel
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -65,6 +67,8 @@ import kotlin.collections.HashMap
 
 class CompletedRouteFragment : Fragment(), BackButtonListener {
 
+
+    private var userSettings: UserSettings? = null
     private var viewPagerProgressBar: ProgressBar? = null
     private var viewPagerAdapter: ViewPagerAdapter? = null
     private var viewPager: ViewPager2? = null
@@ -74,10 +78,10 @@ class CompletedRouteFragment : Fragment(), BackButtonListener {
         FirebaseStorage.getInstance()
     }
 
-    private val viewModel: RouteViewModel by activityViewModels()
     private lateinit var routeMap: String
 
     private val completedViewModel: CompletedViewModel by activityViewModels()
+    private val userViewModel: UserViewModel by activityViewModels()
 
     private lateinit var route: Route
 
@@ -105,6 +109,9 @@ class CompletedRouteFragment : Fragment(), BackButtonListener {
 
         route = arguments?.get("route") as Route
         authInfo = arguments?.get("authInfo") as FirebaseUser?
+        userSettings = arguments?.get("userSettings") as UserSettings?
+
+        userViewModel.userSettings.postValue(userSettings)
 
         if (completedViewModel.route.value == null) {
             completedViewModel.route.postValue(route)

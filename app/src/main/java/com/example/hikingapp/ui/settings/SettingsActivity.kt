@@ -46,19 +46,22 @@ class SettingsActivity : AppCompatActivity(), BackButtonListener {
                             settingsData["distanceUnit"]!! as String,
                             settingsData["heightUnit"]!! as String,
                             settingsData["timeUnit"]!! as String,
-                            settingsData["showTips"] as Boolean
+                            settingsData["showTips"] as Boolean,
+                            settingsData["temperatureUnit"]!! as String,
                         )
 
                         binding.distanceValue.text = userSettings.distanceUnit
                         binding.heightValue.text = userSettings.heightUnit
                         binding.timeValue.text = userSettings.timeUnit
                         binding.tipsSwitch.isChecked = userSettings.showTips
+                        binding.temperatureValue.text = userSettings.temperatureUnit
 
                     } else {
                         binding.distanceValue.text = "m"
                         binding.heightValue.text = "m"
                         binding.timeValue.text = "min"
                         binding.tipsSwitch.isChecked = false
+                        binding.temperatureValue.text = "°C"
                     }
                     configureSliders(userSettings = userSettings)
                 }
@@ -95,7 +98,8 @@ class SettingsActivity : AppCompatActivity(), BackButtonListener {
                         binding.distanceValue.text.toString(),
                         binding.heightValue.text.toString(),
                         binding.timeValue.text.toString(),
-                        binding.tipsSwitch.isChecked
+                        binding.tipsSwitch.isChecked,
+                        binding.temperatureValue.text.toString()
                     )
                 )
 
@@ -195,6 +199,31 @@ class SettingsActivity : AppCompatActivity(), BackButtonListener {
                 10f -> binding.timeValue.text = "hrs"
             }
         }
+
+        val temperatureSlider = binding.temperatureSlider
+
+        when(userSettings!!.temperatureUnit) {
+            "°C" -> temperatureSlider.value = 0f
+            "°F" -> temperatureSlider.value = 5f
+        }
+
+        temperatureSlider.setLabelFormatter {
+            when(it) {
+                0f -> return@setLabelFormatter "°C"
+                5f -> return@setLabelFormatter "°F"
+                else -> {
+                    return@setLabelFormatter ""
+                }
+            }
+        }
+
+        temperatureSlider.addOnChangeListener { _, value, _ ->
+            when (value) {
+                0f -> binding.temperatureValue.text = "°C"
+                5f -> binding.temperatureValue.text = "°F"
+            }
+        }
+
     }
 
     override fun setBackButtonListener() {

@@ -786,6 +786,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener,
         chosenRoutePreference.edit().putLong("routeId", currentRoutes[position].routeId).commit()
         intent.putExtra("action", "discover")
         intent.putExtra("authInfo", userViewModel.user.value)
+        intent.putExtra("userSettings", userViewModel.userSettings.value)
         startActivity(intent)
     }
 

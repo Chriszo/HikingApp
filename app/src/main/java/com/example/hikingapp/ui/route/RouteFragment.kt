@@ -3,7 +3,6 @@ package com.example.hikingapp.ui.route
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -28,6 +27,7 @@ import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.navigation.SerializableMapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.users.PhotoItem
+import com.example.hikingapp.domain.users.settings.UserSettings
 import com.example.hikingapp.domain.weather.WeatherForecast
 import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
@@ -52,9 +52,7 @@ import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import io.ktor.http.*
 import kotlinx.android.synthetic.main.custom_toolbar.view.*
-import kotlinx.android.synthetic.main.route_fragment.*
 import kotlinx.android.synthetic.main.route_fragment.view.*
-import kotlinx.android.synthetic.main.route_fragment.view.toolbarContainer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -71,6 +69,7 @@ import kotlin.collections.HashMap
 
 class RouteFragment : Fragment(), BackButtonListener {
 
+    private var userSettings: UserSettings? = null
     private val storage: FirebaseStorage by lazy {
         FirebaseStorage.getInstance()
     }
@@ -112,8 +111,10 @@ class RouteFragment : Fragment(), BackButtonListener {
         route = arguments?.get("route") as Route
 
         authInfo = requireArguments()["authInfo"] as FirebaseUser?
-
         userViewModel.user.postValue(authInfo)
+
+        userSettings = requireArguments()["userSettings"] as UserSettings?
+        userViewModel.userSettings.postValue(userSettings)
 
         routeView.toolbarContainer.action_bar_title.text = route.routeName
 
@@ -123,6 +124,7 @@ class RouteFragment : Fragment(), BackButtonListener {
             actionBarUser.visibility = View.GONE
             accountIcon.visibility = View.VISIBLE
             (accountIcon).setImageResource(R.drawable.account_icon_foreground)
+
         } else {
             actionBarUser.visibility = View.VISIBLE
             accountIcon.visibility = View.GONE

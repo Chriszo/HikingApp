@@ -82,15 +82,13 @@ class StatisticsFragment : Fragment() {
                                     totalTimeSpent += userData.timeSpent
                                 }
 
-                                distanceCovered.text = GlobalUtils.getTwoDigitsDistance(
-                                    totalDistance,
-                                    DistanceUnitType.KILOMETERS
-                                )
-                                totalTime.text =
-                                    GlobalUtils.getTimeInMinutes(totalTimeSpent.toDouble())
-                                        .toString() + " min"
+                                userViewModel.userSettings.observe(viewLifecycleOwner,{
 
-                                averageElevation.text = GlobalUtils.getTwoDigitsDistance((elevationSum / elevationCount).toDouble(),DistanceUnitType.METERS)
+                                    distanceCovered.text = GlobalUtils.getMetric(totalDistance, it.distanceUnit)
+                                    totalTime.text = GlobalUtils.getTime(totalTimeSpent.toDouble(), it.timeUnit)
+                                    averageElevation.text = GlobalUtils.getMetric((elevationSum / elevationCount).toDouble(),it.heightUnit)
+                                })
+
                             }
                         }
 
@@ -109,8 +107,5 @@ class StatisticsFragment : Fragment() {
 
 
         return view
-    }
-
-    companion object {
     }
 }

@@ -287,6 +287,7 @@ class SavedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedListen
                     intent.putExtra("route", routes[position])
                     intent.putExtra("action", "saved")
                     intent.putExtra("authInfo", user)
+                    intent.putExtra("userSettings", userViewModel.userSettings.value)
                     startActivity(intent)
                 }
                 Sight::class.java.simpleName -> {

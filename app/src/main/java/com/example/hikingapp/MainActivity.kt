@@ -22,6 +22,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.hikingapp.databinding.ActivityMainBinding
+import com.example.hikingapp.domain.users.settings.UserSettings
 import com.example.hikingapp.ui.settings.*
 import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.AppViewModel
@@ -89,12 +90,16 @@ class MainActivity : AppCompatActivity() {
 
                     toolbar.action_bar_user.visibility = View.GONE
                     toolbar.account_icon.visibility = View.VISIBLE
+
+                    retrieveUserSettings(false)
                 } else {
 
                     checkedRoutePrefs.edit().putStringSet(GlobalUtils.routeIdsForNavigation,mutableSetOf()).apply()
 
                     toolbar.action_bar_user.visibility = View.VISIBLE
                     toolbar.account_icon.visibility = View.GONE
+
+                    retrieveUserSettings(true)
                 }
             }
         }
@@ -142,6 +147,45 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+
+    }
+
+    private fun retrieveUserSettings(loadDefaultSettings: Boolean) {
+
+        var userSettings: UserSettings? = null
+
+        if (!loadDefaultSettings) {
+            FirebaseDatabase.getInstance().getReference("user_settings")
+                .child("user" + authInfo!!.uid)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (snapshot.exists()) {
+                            val settingsData = snapshot.value as HashMap<String, *>
+
+                            userSettings = UserSettings(
+                                settingsData["distanceUnit"]!! as String,
+                                settingsData["heightUnit"]!! as String,
+                                settingsData["timeUnit"]!! as String,
+                                settingsData["showTips"] as Boolean,
+                                settingsData["temperatureUnit"]!! as String,
+                            )
+                        }
+
+                        userSettings?.let {
+                            userViewModel.userSettings.postValue(userSettings)
+                        }
+                    }
+
+                    override fun onCancelled(p0: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
+
+                })
+        } else {
+            userSettings = UserSettings("m", "m", "min", false, "°C")
+            userViewModel.userSettings.postValue(userSettings)
+        }
 
     }
 

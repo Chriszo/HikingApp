@@ -28,6 +28,7 @@ import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.map.MapPoint
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.users.PhotoItem
+import com.example.hikingapp.domain.users.settings.UserSettings
 import com.example.hikingapp.domain.weather.WeatherForecast
 import com.example.hikingapp.persistence.entities.RouteMapEntity
 import com.example.hikingapp.persistence.local.LocalDatabase
@@ -132,9 +133,13 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
             actionBarUser.visibility = View.GONE
             accountIcon.visibility = View.VISIBLE
             (accountIcon).setImageResource(R.drawable.account_icon_foreground)
+
+            retrieveUserSettings(false)
         } else {
             actionBarUser.visibility = View.VISIBLE
             accountIcon.visibility = View.GONE
+
+            retrieveUserSettings(true)
         }
 
         actionBarUser.setOnClickListener {
@@ -472,6 +477,46 @@ class SavedRouteFragment : Fragment(), BackButtonListener {
         routeView.routeRating.rating = route.routeInfo!!.rating!!
         return routeView
     }
+
+    private fun retrieveUserSettings(loadDefaultSettings: Boolean) {
+
+        var userSettings: UserSettings? = null
+
+        if (!loadDefaultSettings) {
+            database.getReference("user_settings")
+                .child("user" + authInfo!!.uid)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (snapshot.exists()) {
+                            val settingsData = snapshot.value as HashMap<String, *>
+
+                            userSettings = UserSettings(
+                                settingsData["distanceUnit"]!! as String,
+                                settingsData["heightUnit"]!! as String,
+                                settingsData["timeUnit"]!! as String,
+                                settingsData["showTips"] as Boolean,
+                                settingsData["temperatureUnit"]!! as String,
+                            )
+                        }
+
+                        userSettings?.let {
+                            userViewModel.userSettings.postValue(userSettings)
+                        }
+                    }
+
+                    override fun onCancelled(p0: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
+
+                })
+        } else {
+            userSettings = UserSettings("m", "m", "min", false, "°C")
+            userViewModel.userSettings.postValue(userSettings)
+        }
+
+    }
+
 
     private fun configureViewPager() {
 

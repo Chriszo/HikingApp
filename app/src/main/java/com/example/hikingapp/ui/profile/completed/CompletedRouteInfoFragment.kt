@@ -21,7 +21,9 @@ import com.example.hikingapp.ui.adapters.OnItemClickedListener
 import com.example.hikingapp.ui.adapters.PhotoAdapter
 import com.example.hikingapp.ui.profile.saved.CompletedViewModel
 import com.example.hikingapp.ui.route.photos.PhotoActivity
+import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.utils.PhotoItemDecorator
+import com.example.hikingapp.viewModels.UserViewModel
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -32,6 +34,7 @@ import kotlinx.android.synthetic.main.fragment_photos.view.*
 class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
     private val completedViewModel: CompletedViewModel by activityViewModels()
+    private val userViewModel: UserViewModel by activityViewModels()
 
     private lateinit var route: Route
     private lateinit var completedRoutePhotos: MutableList<PhotoItem?>
@@ -78,7 +81,8 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
     private fun initializeRouteStatistics(view: View) {
 
         val distanceCovered = view.findViewById(R.id.distance_content) as TextView
-        val routeType = view.findViewById(R.id.type_content) as TextView
+        val elevation = view.findViewById(R.id.elevation_content) as TextView
+//        val routeType = view.findViewById(R.id.type_content) as TextView
         val time = view.findViewById(R.id.time_content) as TextView
 
         // TODO need a NavigationProcess and UserNavigationData object to record navigation data
@@ -86,15 +90,17 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
         completedViewModel.route.observe(viewLifecycleOwner, {
             route = it
             // TODO replace these values with navigation results values for the specific user
-            distanceCovered.text = getString(
-                R.string.completed_distance_content,
-                route.routeInfo!!.distance.toString()
-            )
-            routeType.text = route.routeInfo?.difficultyLevel?.difficultyLevel
-            time.text = getString(
-                R.string.completed_time_content,
-                route.routeInfo?.timeEstimation.toString()
-            )
+
+
+//            routeType.text = route.routeInfo?.difficultyLevel?.difficultyLevel
+
+
+            userViewModel.userSettings.observe(viewLifecycleOwner, { us ->
+
+                distanceCovered.text = GlobalUtils.getMetric(route.routeInfo!!.distance, us.distanceUnit)
+                elevation.text = GlobalUtils.getMetric(route.routeInfo!!.elevationData!!.average(), us.heightUnit)
+                time.text = GlobalUtils.getTime(route.routeInfo?.timeEstimation, us.timeUnit)
+            })
         })
     }
 

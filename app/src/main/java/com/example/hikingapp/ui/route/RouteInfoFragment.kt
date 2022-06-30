@@ -11,7 +11,10 @@ import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.hikingapp.R
+import com.example.hikingapp.domain.users.settings.UserSettings
+import com.example.hikingapp.utils.GlobalUtils
 import com.example.hikingapp.viewModels.RouteViewModel
+import com.example.hikingapp.viewModels.UserViewModel
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -21,6 +24,9 @@ import java.time.LocalDate
 class RouteInfoFragment : Fragment() {
 
     private val viewModel: RouteViewModel by activityViewModels()
+    private val userViewModel: UserViewModel by activityViewModels()
+
+    private var userSettings: UserSettings? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +68,6 @@ class RouteInfoFragment : Fragment() {
         val elevationProgressBar = view.findViewById(R.id.elevation_progress_bar) as ProgressBar
         val weatherProgressBar = view.findViewById(R.id.weather_progress_bar) as ProgressBar
 
-
         viewModel.route.observe(viewLifecycleOwner, { it ->
 
             println("ViewModel observes...")
@@ -70,48 +75,55 @@ class RouteInfoFragment : Fragment() {
             routeType.text = it.routeInfo?.routeType!!.type
             difficultyLevel.text = it.routeInfo?.difficultyLevel!!.difficultyLevel
             rating.text = it.routeInfo?.rating.toString()
-            distance.text = it.routeInfo?.distance.toString()
-            elevation.text = "0"
-            estimatedTime.text = it.routeInfo?.timeEstimation.toString()
+
 
             weatherProgressBar.visibility = View.VISIBLE
 
-            it.weatherForecast?.weatherForecast?.withIndex()?.forEach { weatherData ->
-                when (weatherData.index) {
-                    0 -> {
+            userViewModel.userSettings.observe(viewLifecycleOwner, { us ->
+                userSettings = us
+
+                distance.text = GlobalUtils.getMetric(it.routeInfo?.distance?:0.0, us?.distanceUnit)
+                elevation.text = GlobalUtils.getMetric(it.routeInfo?.distance?:0.0, us?.heightUnit)
+                estimatedTime.text = GlobalUtils.getTime(it.routeInfo?.timeEstimation, us?.timeUnit)
+
+                it.weatherForecast?.weatherForecast?.withIndex()?.forEach { weatherData ->
+                    when (weatherData.index) {
+                        0 -> {
 //                        println(Date(it.value.time!! * 1000))
-                        dayOfWeek1.text = setDayName(weatherData.value.time!!)
-                        temperatureDay1.text = getString(
-                            R.string.celsius_symbol,
-                            weatherData.value.temperatureHigh.toString()
-                        )
+                            dayOfWeek1.text = setDayName(weatherData.value.time!!)
+
+                            temperatureDay1.text = getString(
+                                getTemperatureUnit(),
+                                "%.2f".format(getTemperatureValue(weatherData.value.temperatureHigh))
+                            )
 //                            weatherData.value.temperatureHigh.toString() + " \u2103" // TODO check when condition for Fahrenheit is applied
-                        setImage(conditionsDay1, weatherData.value.icon!!)
-                    }
-                    1 -> {
+                            setImage(conditionsDay1, weatherData.value.icon!!)
+                        }
+                        1 -> {
 //                        println(Date(it.value.time!! * 1000))
-                        dayOfWeek2.text = setDayName(weatherData.value.time!!)
-                        temperatureDay2.text = getString(
-                            R.string.celsius_symbol,
-                            weatherData.value.temperatureHigh.toString()
-                        )
+                            dayOfWeek2.text = setDayName(weatherData.value.time!!)
+                            temperatureDay2.text = getString(
+                                getTemperatureUnit(),
+                                "%.2f".format(getTemperatureValue(weatherData.value.temperatureHigh))
+                            )
 //                            weatherData.value.temperatureHigh.toString() + " \u2103"
-                        setImage(conditionsDay2, weatherData.value.icon!!)
-                    }
-                    2 -> {
+                            setImage(conditionsDay2, weatherData.value.icon!!)
+                        }
+                        2 -> {
 //                        println(Date(it.value.time!! * 1000))
-                        dayOfWeek3.text = setDayName(weatherData.value.time!!)
-                        temperatureDay3.text = getString(
-                            R.string.celsius_symbol,
-                            weatherData.value.temperatureHigh.toString()
-                        )
+                            dayOfWeek3.text = setDayName(weatherData.value.time!!)
+                            temperatureDay3.text = getString(
+                                getTemperatureUnit(),
+                                "%.2f".format(getTemperatureValue(weatherData.value.temperatureHigh))
+                            )
 //                            weatherData.value.temperatureHigh.toString() + getString(R.string.celsius_symbol)
-                        setImage(conditionsDay3, weatherData.value.icon!!)
+                            setImage(conditionsDay3, weatherData.value.icon!!)
+                        }
                     }
                 }
-            }
-            weatherProgressBar.visibility = View.GONE
-            view.weather_info.visibility = View.VISIBLE
+                weatherProgressBar.visibility = View.GONE
+                view.weather_info.visibility = View.VISIBLE
+            })
         })
 
         elevationProgressBar.visibility = View.VISIBLE
@@ -124,6 +136,21 @@ class RouteInfoFragment : Fragment() {
 
 
         return view
+    }
+
+    private fun getTemperatureUnit(): Int {
+        userSettings?.let {
+            return if (it.temperatureUnit.trim() == "°F") R.string.fahrenheit_symbol else R.string.celsius_symbol
+        }
+
+        return R.string.celsius_symbol
+    }
+
+    private fun getTemperatureValue(temperatureHigh: Double?): Double {
+        userSettings?.let {
+            return if (it.temperatureUnit.trim() == "°F") GlobalUtils.convertToFahrenheit(temperatureHigh!!) else temperatureHigh!!
+        }
+        return temperatureHigh!!
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

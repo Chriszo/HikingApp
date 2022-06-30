@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.domain.route.Route
+import com.example.hikingapp.domain.users.settings.UserSettings
 import com.example.hikingapp.ui.profile.completed.CompletedRouteFragment
 import com.example.hikingapp.ui.profile.saved.SavedRouteFragment
 import com.example.hikingapp.ui.route.RouteFragment
@@ -21,9 +22,12 @@ class RouteActivity : AppCompatActivity() {
             } else null
         val action: String? = intent.extras?.get("action") as String?
 
+        val userSettings: UserSettings? = intent.extras?.get("userSettings") as UserSettings?
+
         val bundle = Bundle()
         bundle.putSerializable("route", route)
         bundle.putParcelable("authInfo", authInfo)
+        bundle.putSerializable("userSettings", userSettings)
         bundle.putString("action", action)
 
         action.apply {
