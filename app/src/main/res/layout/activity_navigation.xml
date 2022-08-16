@@ -372,7 +372,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:backgroundTint="@color/white"
-                android:contentDescription="@string/switch_map_style"
+                android:contentDescription="@string/toggle_checkpoints"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/cameraButton"
                 app:srcCompat="@drawable/pin_icon_foreground" />

@@ -77,6 +77,7 @@ import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
 import com.mapbox.maps.extension.style.image.image
 import com.mapbox.maps.extension.style.layers.generated.lineLayer
 import com.mapbox.maps.extension.style.layers.generated.symbolLayer
+import com.mapbox.maps.extension.style.layers.properties.generated.IconAnchor
 import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
 import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
@@ -1305,6 +1306,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
                             iconImage(GlobalUtils.RED_MARKER_ID)
                             iconAllowOverlap(true)
                             iconSize(0.5)
+                            iconAnchor(IconAnchor.BOTTOM)
                             iconIgnorePlacement(true)
                         }
                     }
@@ -1450,14 +1452,16 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
         // Create an instance of the Annotation API and get the PointAnnotationManager.
         bitmapFromDrawableRes(
             this@NavigationActivity,
-            R.drawable.pin_custom_icon
+            R.drawable.checkpoint_icon_foreground
         )?.let {
             val annotationApi = mapView!!.annotations
             pointAnnotationManager = annotationApi?.createPointAnnotationManager(mapView!!)
+
             // Set options for the resulting symbol layer.
             val pointAnnotationOptions: PointAnnotationOptions = PointAnnotationOptions()
                 // Define a geographic coordinate.
                 .withPoint(checkpoint)
+                .withIconAnchor(IconAnchor.BOTTOM)
                 // Specify the bitmap you assigned to the point annotation
                 // The bitmap will be added to map style automatically.
                 .withIconImage(it)
@@ -1935,6 +1939,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
             mapMatchingBuilder.waypointIndices(*(checkPoints.stream().map { it.index }
                 .collect(Collectors.toList())).toTypedArray())
         }
+//        mapMatchingBuilder.waypointIndices(0, filteredCoordintates.size-1)
         if (reversedRoute) {
             mapMatchingBuilder.coordinates(filteredCoordintates.reversed())
         } else {

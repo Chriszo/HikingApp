@@ -55,5 +55,6 @@
     <string name="no_sights_on_completed_routes">No Sights on Completed Routes</string>
     <string name="no_photos_found">No Photos found</string>
     <string name="no_reviews_found">No Reviews found</string>
+    <string name="toggle_checkpoints">Toggle Checkpoints</string>
 
 </resources>
