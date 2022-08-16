@@ -99,7 +99,7 @@ class CompletedRouteInfoFragment : Fragment(), OnItemClickedListener {
 
                 distanceCovered.text = GlobalUtils.getMetric(route.routeInfo!!.distance, us.distanceUnit)
                 elevation.text = GlobalUtils.getMetric(route.routeInfo!!.elevationData!!.average(), us.heightUnit)
-                time.text = GlobalUtils.getTime(route.routeInfo?.timeEstimation, us.timeUnit)
+//                time.text = GlobalUtils.getTime(route.routeInfo?.timeEstimation, us.timeUnit)
             })
         })
     }

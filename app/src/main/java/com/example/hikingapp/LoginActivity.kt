@@ -133,7 +133,7 @@ class LoginActivity : AppCompatActivity() {
                                     userSettings = UserSettings(
                                         settingsData["distanceUnit"]!! as String,
                                         settingsData["heightUnit"]!! as String,
-                                        settingsData["timeUnit"]!! as String,
+//                                        settingsData["timeUnit"]!! as String,
                                         settingsData["showTips"] as Boolean,
                                         settingsData["temperatureUnit"]!! as String,
                                     )

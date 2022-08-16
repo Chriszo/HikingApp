@@ -1193,16 +1193,20 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
             binding.switchMapStyle.setOnClickListener {
                 if (binding.mapStyleOptions.visibility == View.GONE) {
                     binding.mapStyleOptions.visibility = View.VISIBLE
+                    binding.switchMapStyle.alpha = 0.6f
                 } else if (binding.mapStyleOptions.visibility == View.VISIBLE) {
                     binding.mapStyleOptions.visibility = View.GONE
+                    binding.switchMapStyle.alpha = 1.0f
                 }
             }
 
             binding.navToggle.setOnClickListener {
                 if (binding.navOptions.visibility == View.GONE) {
                     binding.navOptions.visibility = View.VISIBLE
+                    binding.navToggle.alpha = 0.6f
                 } else if (binding.navOptions.visibility == View.VISIBLE) {
                     binding.navOptions.visibility = View.GONE
+                    binding.navToggle.alpha = 1.0f
                 }
             }
 

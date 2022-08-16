@@ -5,7 +5,7 @@ import java.io.Serializable
 class UserSettings(
     val distanceUnit: String,
     val heightUnit: String,
-    val timeUnit: String,
+//    val timeUnit: String,
     val showTips: Boolean,
     val temperatureUnit: String
 ) : Serializable {

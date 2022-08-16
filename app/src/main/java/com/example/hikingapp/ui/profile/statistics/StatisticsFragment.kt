@@ -85,7 +85,7 @@ class StatisticsFragment : Fragment() {
                                 userViewModel.userSettings.observe(viewLifecycleOwner,{
 
                                     distanceCovered.text = GlobalUtils.getMetric(totalDistance, it.distanceUnit)
-                                    totalTime.text = GlobalUtils.getTime(totalTimeSpent.toDouble(), it.timeUnit)
+//                                    totalTime.text = GlobalUtils.getTime(totalTimeSpent.toDouble(), it.timeUnit)
                                     averageElevation.text = GlobalUtils.getMetric((elevationSum / elevationCount).toDouble(),it.heightUnit)
                                 })
 

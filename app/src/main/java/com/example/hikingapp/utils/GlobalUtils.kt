@@ -111,6 +111,7 @@ object GlobalUtils {
         return when(unit?.trim()){
             "m" -> "${"%.2f".format(value)} m"
             "km" -> "${"%.2f".format((value / 1000))} km"
+            "mi" -> "${"%.2f".format((value / 1000) * 0.6213712)} mi"
             "cm" -> "${"%.2f".format((value * 100))} cm"
             else -> "${"%.2f".format(value)} m"
         }

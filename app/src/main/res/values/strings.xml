@@ -3,6 +3,7 @@
     <string name="title_discover">Discover</string>
     <string name="title_navigation">Navigate</string>
     <string name="title_profile">Profile</string>
+    <string name="title_history">History</string>
     <string name="sample_map">Show map</string>
     <string name="route">Go to Route</string>
     <string name="to_home">To Home</string>

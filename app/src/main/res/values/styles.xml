@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="BottomNavigationView.Inactive" parent="@style/TextAppearance.AppCompat.Caption">
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">22sp</item>
         <item name="android:gravity">center</item>
     </style>
 
     <style name="BottomNavigationView.Active" parent="@style/TextAppearance.AppCompat.Caption">
-        <item name="android:textSize">22sp</item>
+        <item name="android:textSize">26sp</item>
         <item name="android:gravity">center</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="InnerNavigation.Inactive" parent="@style/TextAppearance.AppCompat.Caption">
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">17sp</item>
         <item name="android:gravity">center</item>
     </style>
 
     <style name="InnerNavigation.Active" parent="@style/TextAppearance.AppCompat.Caption">
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">19sp</item>
         <item name="android:gravity">center</item>
         <item name="android:textStyle">bold</item>
     </style>

@@ -14,6 +14,6 @@
     <item
         android:id="@+id/navigation_profile"
         android:icon="@drawable/account_icon_foreground_black"
-        android:title="@string/title_profile" />
+        android:title="@string/title_history" />
 
 </menu>

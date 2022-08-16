@@ -84,7 +84,7 @@ class RouteInfoFragment : Fragment() {
 
                 distance.text = GlobalUtils.getMetric(it.routeInfo?.distance?:0.0, us?.distanceUnit)
                 elevation.text = GlobalUtils.getMetric(it.routeInfo?.distance?:0.0, us?.heightUnit)
-                estimatedTime.text = GlobalUtils.getTime(it.routeInfo?.timeEstimation, us?.timeUnit)
+//                estimatedTime.text = GlobalUtils.getTime(it.routeInfo?.timeEstimation, us?.timeUnit)
 
                 it.weatherForecast?.weatherForecast?.withIndex()?.forEach { weatherData ->
                     when (weatherData.index) {

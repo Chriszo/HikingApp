@@ -36,41 +36,41 @@ class SettingsActivity : AppCompatActivity(), BackButtonListener {
 
             FirebaseDatabase.getInstance().getReference("user_settings")
                 .child("user${authInfo!!.uid}").addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
+                    override fun onDataChange(snapshot: DataSnapshot) {
 
-                    var userSettings: UserSettings? = null
-                    if (snapshot.exists()) {
-                        val settingsData = snapshot.value as HashMap<String, *>
+                        var userSettings: UserSettings? = null
+                        if (snapshot.exists()) {
+                            val settingsData = snapshot.value as HashMap<String, *>
 
-                        userSettings = UserSettings(
-                            settingsData["distanceUnit"]!! as String,
-                            settingsData["heightUnit"]!! as String,
-                            settingsData["timeUnit"]!! as String,
-                            settingsData["showTips"] as Boolean,
-                            settingsData["temperatureUnit"]!! as String,
-                        )
+                            userSettings = UserSettings(
+                                settingsData["distanceUnit"]!! as String,
+                                settingsData["heightUnit"]!! as String,
+//                                settingsData["timeUnit"]!! as String,
+                                settingsData["showTips"] as Boolean,
+                                settingsData["temperatureUnit"]!! as String,
+                            )
 
-                        binding.distanceValue.text = userSettings.distanceUnit
-                        binding.heightValue.text = userSettings.heightUnit
-                        binding.timeValue.text = userSettings.timeUnit
-                        binding.tipsSwitch.isChecked = userSettings.showTips
-                        binding.temperatureValue.text = userSettings.temperatureUnit
+                            binding.distanceValue.text = userSettings.distanceUnit
+                            binding.heightValue.text = userSettings.heightUnit
+//                            binding.timeValue.text = userSettings.timeUnit
+                            binding.tipsSwitch.isChecked = userSettings.showTips
+                            binding.temperatureValue.text = userSettings.temperatureUnit
 
-                    } else {
-                        binding.distanceValue.text = "m"
-                        binding.heightValue.text = "m"
-                        binding.timeValue.text = "min"
-                        binding.tipsSwitch.isChecked = false
-                        binding.temperatureValue.text = "°C"
+                        } else {
+                            binding.distanceValue.text = "m"
+                            binding.heightValue.text = "m"
+//                            binding.timeValue.text = "min"
+                            binding.tipsSwitch.isChecked = false
+                            binding.temperatureValue.text = "°C"
+                        }
+                        configureSliders(userSettings = userSettings)
                     }
-                    configureSliders(userSettings = userSettings)
-                }
 
-                override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
-                }
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
 
-            })
+                })
 
 
             configureButtons()
@@ -97,7 +97,7 @@ class SettingsActivity : AppCompatActivity(), BackButtonListener {
                     UserSettings(
                         binding.distanceValue.text.toString(),
                         binding.heightValue.text.toString(),
-                        binding.timeValue.text.toString(),
+//                        binding.timeValue.text.toString(),
                         binding.tipsSwitch.isChecked,
                         binding.temperatureValue.text.toString()
                     )
@@ -118,61 +118,43 @@ class SettingsActivity : AppCompatActivity(), BackButtonListener {
     }
 
     private fun configureSliders(userSettings: UserSettings?) {
-        val distanceSlider = binding.distanceSlider
+
+        val distanceSwitch = binding.distanceSwitch
 
         when (userSettings?.distanceUnit) {
-            "cm" -> distanceSlider.value = 0f
-            "m" -> distanceSlider.value = 5f
-            "km" -> distanceSlider.value = 10f
+            "km" -> distanceSwitch.isChecked = false
+            "mi" -> distanceSwitch.isChecked = true
         }
 
-        distanceSlider.setLabelFormatter {
-            when (it) {
-                0f -> return@setLabelFormatter "cm"
-                5f -> return@setLabelFormatter "m"
-                10f -> return@setLabelFormatter "km"
-                else -> {
-                    return@setLabelFormatter ""
-                }
+        distanceSwitch.setOnClickListener {
+
+            if (distanceSwitch.isChecked) {
+                binding.distanceValue.text = "mi"
+                distanceSwitch.textOn = "mi"
+            } else {
+                binding.distanceValue.text = "km"
+                distanceSwitch.textOn = "km"
             }
         }
 
-        distanceSlider.addOnChangeListener { _, value, _ ->
-            when (value) {
-                0f -> binding.distanceValue.text = "cm"
-                5f -> binding.distanceValue.text = "m"
-                10f -> binding.distanceValue.text = "km"
-            }
-        }
-
-        val heightSlider = binding.heightSlider
+        val heightSwitch = binding.heightSwitch
 
         when (userSettings?.heightUnit) {
-            "cm" -> heightSlider.value = 0f
-            "m" -> heightSlider.value = 5f
-            "km" -> heightSlider.value = 10f
+            "km" -> heightSwitch.isChecked = false
+            "mi" -> heightSwitch.isChecked = true
         }
 
-        heightSlider.setLabelFormatter {
-            when (it) {
-                0f -> return@setLabelFormatter "cm"
-                5f -> return@setLabelFormatter "m"
-                10f -> return@setLabelFormatter "km"
-                else -> {
-                    return@setLabelFormatter ""
-                }
+        heightSwitch.setOnClickListener {
+            if (heightSwitch.isChecked) {
+                binding.heightValue.text = "mi"
+                heightSwitch.textOn = "mi"
+            } else {
+                binding.heightValue.text = "km"
+                heightSwitch.textOn = "km"
             }
         }
 
-        heightSlider.addOnChangeListener { _, value, _ ->
-            when (value) {
-                0f -> binding.heightValue.text = "cm"
-                5f -> binding.heightValue.text = "m"
-                10f -> binding.heightValue.text = "km"
-            }
-        }
-
-        val timeSlider = binding.timeSlider
+        /*val timeSlider = binding.timeSlider
 
         when (userSettings?.timeUnit) {
             "sec" -> timeSlider.value = 0f
@@ -198,31 +180,47 @@ class SettingsActivity : AppCompatActivity(), BackButtonListener {
                 5f -> binding.timeValue.text = "min"
                 10f -> binding.timeValue.text = "hrs"
             }
-        }
+        }*/
 
-        val temperatureSlider = binding.temperatureSlider
+        val temperatureSwitch = binding.temperatureSwitch
 
-        when(userSettings!!.temperatureUnit) {
-            "°C" -> temperatureSlider.value = 0f
-            "°F" -> temperatureSlider.value = 5f
-        }
+        temperatureSwitch.setOnClickListener {
 
-        temperatureSlider.setLabelFormatter {
-            when(it) {
-                0f -> return@setLabelFormatter "°C"
-                5f -> return@setLabelFormatter "°F"
-                else -> {
-                    return@setLabelFormatter ""
-                }
+            if (temperatureSwitch.isChecked) {
+                binding.temperatureValue.text = "°C"
+                temperatureSwitch.textOn = "°C"
+            } else {
+                binding.temperatureValue.text = "°F"
+                temperatureSwitch.textOn = "°F"
             }
         }
 
-        temperatureSlider.addOnChangeListener { _, value, _ ->
-            when (value) {
-                0f -> binding.temperatureValue.text = "°C"
-                5f -> binding.temperatureValue.text = "°F"
-            }
+        when (userSettings!!.temperatureUnit) {
+            "°C" -> temperatureSwitch.isChecked = true
+            "°F" -> temperatureSwitch.isChecked = false
         }
+
+/*when(userSettings!!.temperatureUnit) {
+    "°C" -> temperatureSwitch.text = "°C"
+    "°F" -> temperatureSwitch.text = "°F"
+}
+
+temperatureSlider.setLabelFormatter {
+    when(it) {
+        0f -> return@setLabelFormatter "°C"
+        5f -> return@setLabelFormatter "°F"
+        else -> {
+            return@setLabelFormatter ""
+        }
+    }
+}
+
+temperatureSlider.addOnChangeListener { _, value, _ ->
+    when (value) {
+        0f -> binding.temperatureValue.text = "°C"
+        5f -> binding.temperatureValue.text = "°F"
+    }
+}*/
 
     }
 
