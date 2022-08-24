@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@id/map_fragment">
 
             <ProgressBar
                 android:id="@+id/progress_bar"
@@ -28,13 +28,37 @@
 
         </RelativeLayout>
 
+        <fragment
+            android:id="@+id/map_fragment"
+            class="com.example.hikingapp.ui.navigation.MapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_percent="0.6"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            android:maxHeight="400dp"
+            app:layout_constraintTop_toTopOf="parent"/>
+r
         <LinearLayout
             android:id="@+id/results_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/map_fragment"
+            android:layout_marginVertical="10dp"
             android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/elevation_profile_title"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:gravity="center_vertical"
+                android:background="@drawable/side_nav_bar"
+                android:paddingStart="10dp"
+                android:text="Nearest Routes"
+                android:textColor="@android:color/white"
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/no_results_text"
@@ -51,7 +75,8 @@
                 android:id="@+id/search_results_recyclerview"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"/>
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="5dp"/>
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

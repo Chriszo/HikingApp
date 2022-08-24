@@ -18,6 +18,7 @@ import com.example.hikingapp.domain.enums.ActionType
 import com.example.hikingapp.domain.enums.DifficultyLevel
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.persistence.local.LocalDatabase
+import com.example.hikingapp.ui.navigation.NavigationFragment
 
 class RouteAdapter(
     val context: Context,
@@ -48,9 +49,9 @@ class RouteAdapter(
         var nameView: TextView
         var stateView: TextView
         var ratingView: RatingBar
-        var difficultyLevelView: TextView
-        var selectedForNavigationView: ImageView?
-        var deleteNavigableRouteView: ImageView?
+        var difficultyLevelView: TextView? = null
+        var selectedForNavigationView: ImageView? = null
+//        var deleteNavigableRouteView: ImageView? = null
         var routeIsChecked = false
 
         init {
@@ -59,72 +60,74 @@ class RouteAdapter(
             nameView = view.findViewById(R.id.route_name)
             stateView = view.findViewById(R.id.route_state)
             ratingView = view.findViewById(R.id.routeRating)
-            difficultyLevelView = view.findViewById(R.id.difficulty_level)
-            selectedForNavigationView = view.findViewById(R.id.navigation_selected) as ImageView
-            deleteNavigableRouteView = view.findViewById(R.id.delete_route) as ImageView
+            if (itemClickedListener !is NavigationFragment) {
 
-            when(actionType) {
-                ActionType.DISCOVER -> {
-                    selectedForNavigationView!!.visibility = View.VISIBLE
-                    deleteNavigableRouteView!!.visibility = View.GONE
-                }
-                ActionType.NAVIGATION -> {
-                    selectedForNavigationView!!.visibility = View.GONE
-                    deleteNavigableRouteView!!.visibility = View.VISIBLE
-                }
-                ActionType.NORMAL -> {
+                difficultyLevelView = view.findViewById(R.id.difficulty_level)
+                selectedForNavigationView = view.findViewById(R.id.navigation_selected) as ImageView
+//                deleteNavigableRouteView = view.findViewById(R.id.delete_route) as ImageView
 
-                    selectedForNavigationView!!.visibility = View.GONE
-                    deleteNavigableRouteView!!.visibility = View.GONE
-                }
-                ActionType.SEARCH -> {
-                    if (userLoggedIn) {
-
+                when (actionType) {
+                    ActionType.DISCOVER -> {
                         selectedForNavigationView!!.visibility = View.VISIBLE
-                        deleteNavigableRouteView!!.visibility = View.GONE
-                    } else {
+//                        deleteNavigableRouteView!!.visibility = View.GONE
+                    }
+                    ActionType.NAVIGATION -> {
                         selectedForNavigationView!!.visibility = View.GONE
-                        deleteNavigableRouteView!!.visibility = View.GONE
+//                        deleteNavigableRouteView!!.visibility = View.VISIBLE
                     }
-                }
-            }
-//            if (itemCheckedListener == null || !userLoggedIn) {
-//                selectedForNavigationView!!.visibility = View.GONE
-//                deleteNavigableRouteView!!.visibility = View.GONE
-//            } else if (itemCheckedListener != null && onSearch) {
-//            } else if (itemCheckedListener != null && !onSearch) {
-//                selectedForNavigationView!!.visibility = View.GONE
-//                deleteNavigableRouteView!!.visibility = View.VISIBLE
-//            }
+                    ActionType.NORMAL -> {
 
-            selectedForNavigationView?.let {
-                it.setOnClickListener {
-                    if (routeIsChecked) {
-                        selectedForNavigationView!!.setImageResource(R.drawable.not_selected_icon_foreground)
-                        routeIsChecked = false
+                        selectedForNavigationView!!.visibility = View.GONE
+//                        deleteNavigableRouteView!!.visibility = View.GONE
+                    }
+                    ActionType.SEARCH -> {
+                        if (userLoggedIn) {
 
-                        if (onSearch) {
-                            itemCheckedListener!!.onItemUnchecked(adapterPosition)
+                            selectedForNavigationView!!.visibility = View.VISIBLE
+//                            deleteNavigableRouteView!!.visibility = View.GONE
                         } else {
-                            itemCheckedListener!!.onItemUnchecked(indexesList!![adapterPosition].toInt())
-                        }
-
-                    } else {
-                        selectedForNavigationView!!.setImageResource(R.drawable.selected_icon_foreground)
-                        routeIsChecked = true
-                        if (onSearch) {
-                            itemCheckedListener!!.onItemChecked(adapterPosition)
-                        } else {
-                            itemCheckedListener!!.onItemChecked(indexesList!![adapterPosition].toInt())
+                            selectedForNavigationView!!.visibility = View.GONE
+//                            deleteNavigableRouteView!!.visibility = View.GONE
                         }
                     }
                 }
-            }
-
-            deleteNavigableRouteView?.let{
-                it.setOnClickListener {
-                    this.itemCheckedListener!!.onItemChecked(adapterPosition)
+                if (itemCheckedListener == null || !userLoggedIn) {
+                    selectedForNavigationView!!.visibility = View.GONE
+//                    deleteNavigableRouteView!!.visibility = View.GONE
+                } else if (itemCheckedListener != null && !onSearch) {
+                    selectedForNavigationView!!.visibility = View.GONE
+//                    deleteNavigableRouteView!!.visibility = View.VISIBLE
                 }
+
+                selectedForNavigationView?.let {
+                    it.setOnClickListener {
+                        if (routeIsChecked) {
+                            selectedForNavigationView!!.setImageResource(R.drawable.not_selected_icon_foreground)
+                            routeIsChecked = false
+
+                            if (onSearch) {
+                                itemCheckedListener!!.onItemUnchecked(adapterPosition)
+                            } else {
+                                itemCheckedListener!!.onItemUnchecked(indexesList!![adapterPosition].toInt())
+                            }
+
+                        } else {
+                            selectedForNavigationView!!.setImageResource(R.drawable.selected_icon_foreground)
+                            routeIsChecked = true
+                            if (onSearch) {
+                                itemCheckedListener!!.onItemChecked(adapterPosition)
+                            } else {
+                                itemCheckedListener!!.onItemChecked(indexesList!![adapterPosition].toInt())
+                            }
+                        }
+                    }
+                }
+
+//                deleteNavigableRouteView?.let {
+//                    it.setOnClickListener {
+//                        this.itemCheckedListener!!.onItemChecked(adapterPosition)
+//                    }
+//                }
             }
         }
 
@@ -142,9 +145,29 @@ class RouteAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        var view: View? = null
+        if (isNavigationFragment()) {
+            view =
+                LayoutInflater.from(parent.context).inflate(R.layout.route_item_min, parent, false)
+        } else {
+            view = LayoutInflater.from(parent.context).inflate(R.layout.route_item, parent, false)
+        }
 
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.route_item, parent, false)
-        return ViewHolder(context, view, indexesList, itemClickedListener, itemCheckedListener, onSearch, userLoggedIn = userLoggedIn, navigableRoutes, actionType)
+        return ViewHolder(
+            context,
+            view,
+            indexesList,
+            itemClickedListener,
+            itemCheckedListener,
+            onSearch,
+            userLoggedIn = userLoggedIn,
+            navigableRoutes,
+            actionType
+        )
+    }
+
+    private fun isNavigationFragment(): Boolean {
+        return itemClickedListener is NavigationFragment
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -162,26 +185,30 @@ class RouteAdapter(
             context.getString(R.string.secondary_text, routes[position].stateName)
         holder.ratingView.rating = routes[position].routeInfo!!.rating!!
 
-        val difficultyLevelText = routes[position].routeInfo!!.difficultyLevel!!.difficultyLevel
+        if (!isNavigationFragment()) {
 
 
-        holder.difficultyLevelView.text = difficultyLevelText
-        when (routes[position].routeInfo!!.difficultyLevel!!) {
-            DifficultyLevel.EASY -> holder.difficultyLevelView.background =
-                ContextCompat.getDrawable(holder.view.context, R.drawable.rounded_green)
-            DifficultyLevel.MODERATE -> holder.difficultyLevelView.background =
-                ContextCompat.getDrawable(holder.view.context, R.drawable.rounded_yellow)
-            DifficultyLevel.HARD -> holder.difficultyLevelView.background =
-                ContextCompat.getDrawable(holder.view.context, R.drawable.rounded_red)
-        }
+            val difficultyLevelText = routes[position].routeInfo!!.difficultyLevel!!.difficultyLevel
 
 
-        holder.routeIsChecked = navigableRoutes.contains(routes[position].routeId.toString())
+            holder.difficultyLevelView!!.text = difficultyLevelText
+            when (routes[position].routeInfo!!.difficultyLevel!!) {
+                DifficultyLevel.EASY -> holder.difficultyLevelView!!.background =
+                    ContextCompat.getDrawable(holder.view.context, R.drawable.rounded_green)
+                DifficultyLevel.MODERATE -> holder.difficultyLevelView!!.background =
+                    ContextCompat.getDrawable(holder.view.context, R.drawable.rounded_yellow)
+                DifficultyLevel.HARD -> holder.difficultyLevelView!!.background =
+                    ContextCompat.getDrawable(holder.view.context, R.drawable.rounded_red)
+            }
 
-        if (holder.routeIsChecked) {
-            holder.selectedForNavigationView!!.setImageResource(R.drawable.selected_icon_foreground)
-        } else {
-            holder.selectedForNavigationView!!.setImageResource(R.drawable.not_selected_icon_foreground)
+
+            holder.routeIsChecked = navigableRoutes.contains(routes[position].routeId.toString())
+
+            if (holder.routeIsChecked) {
+                holder.selectedForNavigationView!!.setImageResource(R.drawable.selected_icon_foreground)
+            } else {
+                holder.selectedForNavigationView!!.setImageResource(R.drawable.not_selected_icon_foreground)
+            }
         }
     }
 
