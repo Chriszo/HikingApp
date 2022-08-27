@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.example.hikingapp.domain.enums.DistanceUnitType
 import com.example.hikingapp.domain.route.Route
+import com.mapbox.geojson.Point
+import com.mapbox.turf.TurfMeasurement
 
 object GlobalUtils {
 
@@ -35,23 +37,30 @@ object GlobalUtils {
 
     fun getTwoDigitsDistance(
         rawDistance: Double,
-        distanceUnitType: DistanceUnitType
+        distanceUnitType: DistanceUnitType,
+        transform: Boolean = true
     ): String {
         /*if (DistanceUnitType.KILOMETERS == distanceUnitType) {
             return String.format("%.2f", rawDistance).toDouble()
                 .div(1000.0)
         }
         return String.format("%.2f", rawDistance).toDouble()*/
-        when (distanceUnitType) {
-            DistanceUnitType.METERS -> return String.format(
-                "%.2f",
-                rawDistance
-            ) + DistanceUnitType.METERS.distanceUnit
-            DistanceUnitType.KILOMETERS -> return String.format(
-                "%.2f",
-                (rawDistance.div(1000.0))
-            ) + DistanceUnitType.KILOMETERS.distanceUnit
+
+        if (transform) {
+            when (distanceUnitType) {
+                DistanceUnitType.METERS -> return String.format(
+                    "%.2f",
+                    rawDistance
+                ) + DistanceUnitType.METERS.distanceUnit
+                DistanceUnitType.KILOMETERS -> return String.format(
+                    "%.2f",
+                    (rawDistance.div(1000.0))
+                ) + DistanceUnitType.KILOMETERS.distanceUnit
+            }
+        } else {
+            return String.format("%.2f", rawDistance) + DistanceUnitType.KILOMETERS.distanceUnit
         }
+
     }
 
     fun getTimeInMinutes(seconds: Double): Double {
@@ -66,7 +75,7 @@ object GlobalUtils {
         // First decode with inJustDecodeBounds=true to check dimensions
         return BitmapFactory.Options().run {
             inJustDecodeBounds = true
-            BitmapFactory.decodeByteArray(byteArray,0,byteArray.size, this)
+            BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size, this)
 
             // Calculate inSampleSize
             inSampleSize = calculateInSampleSize(this, reqWidth, reqHeight)
@@ -74,11 +83,15 @@ object GlobalUtils {
             // Decode bitmap with inSampleSize set
             inJustDecodeBounds = false
 
-            BitmapFactory.decodeByteArray(byteArray,0,byteArray.size, this)
+            BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size, this)
         }
     }
 
-    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+    private fun calculateInSampleSize(
+        options: BitmapFactory.Options,
+        reqWidth: Int,
+        reqHeight: Int
+    ): Int {
         // Raw height and width of image
         val (height: Int, width: Int) = options.run { outHeight to outWidth }
         var inSampleSize = 1
@@ -108,7 +121,7 @@ object GlobalUtils {
 
     fun getMetric(value: Double, unit: String?): String {
 
-        return when(unit?.trim()){
+        return when (unit?.trim()) {
             "m" -> "${"%.2f".format(value)} m"
             "km" -> "${"%.2f".format((value / 1000))} km"
             "mi" -> "${"%.2f".format((value / 1000) * 0.6213712)} mi"
@@ -119,7 +132,7 @@ object GlobalUtils {
 
     fun getTime(timeEstimation: Double?, unit: String?): String {
 
-        return when(unit?.trim()) {
+        return when (unit?.trim()) {
             "sec" -> "${"%.2f".format(timeEstimation?.times(60))} sec"
             "hrs" -> "${"%.2f".format(timeEstimation?.div(60))} hrs"
             "min" -> "${"%.2f".format(timeEstimation)} min"

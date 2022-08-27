@@ -62,6 +62,8 @@ import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
 import com.jjoe64.graphview.series.PointsGraphSeries
 import com.mapbox.api.directions.v5.DirectionsCriteria
+import com.mapbox.api.directions.v5.MapboxDirections
+import com.mapbox.api.directions.v5.models.DirectionsResponse
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.api.matching.v5.MapboxMapMatching
@@ -211,6 +213,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
     private var mapInfo: MapInfo? = null
 
     private lateinit var navigationDataPrefs: SharedPreferences
+    private var fromNavigationFragment = false
 
     private val mapService: MapService by lazy {
         MapServiceImpl()
@@ -731,7 +734,6 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 
         elevationQuery.enqueueCall(object : Callback<FeatureCollection> {
 
-            @RequiresApi(Build.VERSION_CODES.N)
             override fun onResponse(
                 call: Call<FeatureCollection>,
                 response: Response<FeatureCollection>
@@ -746,7 +748,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
                         }
                         ?.max()
                         ?.ifPresent { max ->
-                            if (Objects.isNull(userNavigationData)) {
+                            if (userNavigationData == null) {
                                 userNavigationData = UserNavigationData(currentRoute!!.routeId)
                             }
                             userNavigationData?.currentElevation?.add(max)
@@ -843,6 +845,8 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
         if (intent?.extras?.containsKey("authInfo") == true && intent!!.extras!!.get("authInfo") != null) {
 
             navigationDataPrefs = getSharedPreferences("navaDataPrefs", MODE_PRIVATE)
+
+            fromNavigationFragment = intent!!.extras!!.containsKey("fromNavigationFragment") == true && intent!!.extras!!.get("fromNavigationFragment") == true
 
 
             userAuthInfo = intent!!.extras!!.get("authInfo") as FirebaseUser?
@@ -943,6 +947,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 
             when (navigationState) {
                 NavigationState.NOT_STARTED -> userNavigationData = UserNavigationData()
+                NavigationState.STOPPED -> userNavigationData = UserNavigationData()
                 NavigationState.SAVED_PAUSED -> {
                     userNavigationData =
                         loadUserNavigationData(userAuthInfo!!.uid, currentRoute!!.routeId)
@@ -979,9 +984,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
                 enabled = true
             }
             // initialize Mapbox Navigation
-            if (!MapboxNavigationProvider.isCreated()) {
-                initializeMapboxNavigationInstance()
-            }
+            initializeMapboxNavigationInstance()
 
 
             // initialize Navigation Camera
@@ -1102,7 +1105,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
             }
             binding.lostButton.setOnClickListener {
                 binding.pause.performClick()
-                database.getReference("contacts").child("${userAuthInfo!!.uid}")
+                database.getReference("contacts").child(userAuthInfo!!.uid)
                     .addValueEventListener(object : ValueEventListener {
                         @RequiresApi(Build.VERSION_CODES.N)
                         override fun onDataChange(snapshot: DataSnapshot) {
@@ -1134,6 +1137,10 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 
             binding.findLastCheckpoint.setOnClickListener {
                 binding.play.performClick()
+            }
+
+            binding.stopNavigation.setOnClickListener {
+                binding.stop.performClick()
             }
 
             binding.recenter.setOnClickListener {
@@ -1352,7 +1359,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 
         clearRouteAndStopNavigation()
 //                onNavigationMode = false
-        var intent: Intent?
+        val intent: Intent?
         if (routeCompleted) {
             intent = Intent(this, EndOfNavigationActivity::class.java)
             userNavigationData?.timeSpent = System.currentTimeMillis() - timeCounter
@@ -1427,6 +1434,10 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
                     .build()
             )
         }
+
+//        if (fromNavigationFragment) {
+            mapboxNavigation.resetTripSession()
+//        }
     }
 
     private fun saveNavigationStateLocally(navigationState: String?) {
@@ -1746,6 +1757,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
         super.onStart()
         println("INTO START")
 
+
         if (intent?.extras?.containsKey("authInfo") == true && intent!!.extras!!.get("authInfo") != null) {
             mapboxNavigation.registerRoutesObserver(routesObserver)
             mapboxNavigation.registerOffRouteObserver(offRouteObserver)
@@ -1788,6 +1800,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
         if (navigationState != NavigationState.FINISHED && navigationState != null && navigationState != NavigationState.STOPPED) {
             saveNavigationStateLocally(null)
         }
+        finish()
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -1933,6 +1946,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
             .steps(true)
             .bannerInstructions(true)
             .voiceInstructions(true)
+
         //TODO Find a more efficient way to compute route points for the obtaining of instructions. This is fully customized to current route at fillopapou.
 
         if (wayPointsIncluded) {
@@ -2013,7 +2027,9 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
     private fun clearRouteAndStopNavigation() {
         // clear
         mapboxNavigation.setRoutes(listOf())
-        userNavigationData!!.timeSpent = System.currentTimeMillis() - timeCounter
+        userNavigationData?.let {
+            it.timeSpent = System.currentTimeMillis() - timeCounter
+        }
         // stop simulation
         mapboxReplayer.stop()
 
@@ -2150,6 +2166,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
                 emptyList<Long>().toMutableList()
             )
         }
+        c.close()
         return userNavigationData
     }
 }

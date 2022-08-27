@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.navigation.UserNavigationData
+import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.users.PhotoItem
 import com.example.hikingapp.domain.users.reviews.Review
 import com.example.hikingapp.persistence.entities.ImageEntity
@@ -24,6 +25,7 @@ class LocalDatabase {
         private val routeMapStorage = mutableMapOf<Long, RouteMapEntity?>()
         private val reviewsStorage = mutableMapOf<Long, MutableList<Review>>()
         private val photosData = mutableMapOf<String,Bitmap>()
+        private var routesLocalStorage = mutableListOf<Route>()
 
         @RequiresApi(Build.VERSION_CODES.N)
         fun saveImage(
@@ -69,7 +71,7 @@ class LocalDatabase {
             return photosData[imageName]
         }
 
-        fun getAllImages(): MutableMap<String,Bitmap>? {
+        fun getAllImages(): MutableMap<String,Bitmap> {
             return photosData
         }
 
@@ -170,6 +172,15 @@ class LocalDatabase {
         fun getReviewsForRoute(routeId: Long): MutableList<Review> {
             return reviewsStorage[routeId] ?: mutableListOf()
         }
+
+        fun saveRoutes(routes: MutableList<Route>) {
+            routesLocalStorage = routes
+        }
+
+        fun getRoutes(): MutableList<Route> {
+            return routesLocalStorage
+        }
+
     }
 
 

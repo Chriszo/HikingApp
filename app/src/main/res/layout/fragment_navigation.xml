@@ -24,7 +24,7 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone"
                 android:layout_centerInParent="true"
-                android:layout_marginTop="100dp"/>
+                android:layout_marginTop="200dp"/>
 
         </RelativeLayout>
 
@@ -32,11 +32,11 @@
             android:id="@+id/map_fragment"
             class="com.example.hikingapp.ui.navigation.MapFragment"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="400dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_percent="0.6"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
+            android:minHeight="400dp"
             android:maxHeight="400dp"
             app:layout_constraintTop_toTopOf="parent"/>
 r

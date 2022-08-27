@@ -16,9 +16,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.R
 import com.example.hikingapp.domain.enums.ActionType
 import com.example.hikingapp.domain.enums.DifficultyLevel
+import com.example.hikingapp.domain.enums.DistanceUnitType
+import com.example.hikingapp.domain.map.MapInfo
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.persistence.local.LocalDatabase
 import com.example.hikingapp.ui.navigation.NavigationFragment
+import com.example.hikingapp.utils.GlobalUtils
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.mapbox.geojson.Point
+import com.mapbox.turf.TurfMeasurement
 
 class RouteAdapter(
     val context: Context,
@@ -29,7 +38,8 @@ class RouteAdapter(
     private val onSearch: Boolean = false,
     private val userLoggedIn: Boolean,
     private val navigableRoutes: MutableSet<String> = mutableSetOf(),
-    private val actionType: ActionType = ActionType.NORMAL
+    private val actionType: ActionType = ActionType.NORMAL,
+    private val currentLocation: Point? = null
 ) : RecyclerView.Adapter<RouteAdapter.ViewHolder>() {
 
     class ViewHolder(
@@ -41,7 +51,8 @@ class RouteAdapter(
         private val onSearch: Boolean,
         private val userLoggedIn: Boolean,
         private val navigableRoutes: MutableSet<String>,
-        private val actionType: ActionType
+        private val actionType: ActionType,
+        private val currentLocation: Point?
     ) :
         RecyclerView.ViewHolder(view), View.OnClickListener {
 
@@ -50,6 +61,7 @@ class RouteAdapter(
         var stateView: TextView
         var ratingView: RatingBar
         var difficultyLevelView: TextView? = null
+        var distanceFrom: TextView? = null
         var selectedForNavigationView: ImageView? = null
 //        var deleteNavigableRouteView: ImageView? = null
         var routeIsChecked = false
@@ -60,7 +72,9 @@ class RouteAdapter(
             nameView = view.findViewById(R.id.route_name)
             stateView = view.findViewById(R.id.route_state)
             ratingView = view.findViewById(R.id.routeRating)
-            if (itemClickedListener !is NavigationFragment) {
+            if (itemClickedListener is NavigationFragment) {
+                distanceFrom = view.findViewById(R.id.route_distance_from)
+            } else {
 
                 difficultyLevelView = view.findViewById(R.id.difficulty_level)
                 selectedForNavigationView = view.findViewById(R.id.navigation_selected) as ImageView
@@ -162,7 +176,8 @@ class RouteAdapter(
             onSearch,
             userLoggedIn = userLoggedIn,
             navigableRoutes,
-            actionType
+            actionType,
+            currentLocation
         )
     }
 
@@ -209,6 +224,29 @@ class RouteAdapter(
             } else {
                 holder.selectedForNavigationView!!.setImageResource(R.drawable.not_selected_icon_foreground)
             }
+        } else {
+//            FirebaseDatabase.getInstance().getReference("mapData")
+//                    .child("route_${routes[position].routeId}").child("origin").addValueEventListener(object :
+//                    ValueEventListener {
+//                    override fun onDataChange(snapshot: DataSnapshot) {
+//                        if (snapshot.exists()) {
+//                            routes[position].mapInfo = MapInfo()
+//                            val origin = snapshot.value as HashMap<String, Double>
+//                            routes[position].mapInfo?.apply {
+//                                this.origin = Point.fromLngLat(
+//                                    origin["longitude"] as Double,
+//                                    origin["latitude"] as Double
+//                                )
+                                holder.distanceFrom!!.text = "( ${GlobalUtils.getTwoDigitsDistance(TurfMeasurement.distance(currentLocation!!, routes[position].mapInfo!!.origin),DistanceUnitType.KILOMETERS, false)} )"
+//                            }
+//                        }
+//                    }
+//
+//                    override fun onCancelled(error: DatabaseError) {
+//                        TODO("Not yet implemented")
+//                    }
+//
+//                })
         }
     }
 

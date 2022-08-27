@@ -357,84 +357,8 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener,
 
                     progressDialog.dismiss()
                     routeViewModel.currentRoutes.postValue(currentRoutes)
+                    LocalDatabase.saveRoutes(currentRoutes)
                 }
-
-                userViewModel.user.observe(viewLifecycleOwner, {
-
-
-                    FirebaseDatabase.getInstance().getReference("selected_routes_nav")
-                        .child(it!!.uid)
-                        .addValueEventListener(object : ValueEventListener {
-                            @RequiresApi(Build.VERSION_CODES.N)
-                            override fun onDataChange(snapshot: DataSnapshot) {
-                                if (snapshot.exists()) {
-                                    val routeIdsList = snapshot.value as MutableList<String>
-                                    val routeIdsSet = routeIdsList.stream().map { it.toString() }
-                                        .collect(Collectors.toSet())
-
-                                    checkedRoutePrefs!!.edit().putStringSet(
-                                        GlobalUtils.routeIdsForNavigation,
-                                        routeIdsSet
-                                    ).apply()
-
-                                    val routesForNavigation = currentRoutes.stream()
-                                        .filter { route -> routeIdsSet.contains(route.routeId.toString()) }
-                                        .collect(Collectors.toList())
-
-                                    navigableRouteIds = routeIdsSet
-
-                                    routeViewModel.routesSelectedForNavigation.postValue(
-                                        routesForNavigation
-                                    )
-
-                                    context?:return
-                                    routeListAdapter =
-                                        RouteListAdapter(
-                                            categories,
-                                            currentRoutes,
-                                            requireContext(),
-                                            itemClickedListener,
-                                            itemCheckedListener,
-                                            userLoggedIn = true,
-                                            navigableRoutes = routeIdsSet,
-                                            actionType = ActionType.DISCOVER
-                                        )
-                                    routesRecyclerView.adapter = routeListAdapter
-                                    routesRecyclerView.setHasFixedSize(true)
-
-
-                                    progressDialog.dismiss()
-                                    routeViewModel.currentRoutes.postValue(currentRoutes)
-                                } else {
-                                    routeListAdapter =
-                                        RouteListAdapter(
-                                            categories,
-                                            currentRoutes,
-                                            requireContext(),
-                                            itemClickedListener,
-                                            itemCheckedListener,
-                                            userLoggedIn = it != null,
-                                            navigableRoutes = mutableSetOf(),
-                                            actionType = ActionType.DISCOVER
-                                        )
-                                    routesRecyclerView.adapter = routeListAdapter
-                                    routesRecyclerView.setHasFixedSize(true)
-
-
-                                    progressDialog.dismiss()
-                                    routeViewModel.currentRoutes.postValue(currentRoutes)
-                                }
-                            }
-
-                            override fun onCancelled(error: DatabaseError) {
-                                TODO("Not yet implemented")
-                            }
-
-                        })
-
-
-                })
-
 
                 // TODO add categories to DB(?)
 
@@ -460,6 +384,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener,
 
                         progressDialog.dismiss()
                         routeViewModel.currentRoutes.postValue(currentRoutes)
+                        LocalDatabase.saveRoutes(currentRoutes)
 
                     }
                 })
@@ -783,7 +708,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener,
 
         val intent = Intent(context, RouteActivity::class.java)
         intent.putExtra("route", currentRoutes[position])
-        chosenRoutePreference.edit().putLong("routeId", currentRoutes[position].routeId).commit()
+        chosenRoutePreference.edit().putLong("routeId", currentRoutes[position].routeId).apply()
         intent.putExtra("action", "discover")
         intent.putExtra("authInfo", userViewModel.user.value)
         intent.putExtra("userSettings", userViewModel.userSettings.value)
@@ -823,7 +748,7 @@ class DiscoverFragment : Fragment(), OnItemClickedListener, LocationListener,
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onItemUnchecked(position: Int) {
-        var routesForNavigation = routeViewModel.routesSelectedForNavigation.value
+        val routesForNavigation = routeViewModel.routesSelectedForNavigation.value
         var indexToRemove = 0
         var routeId = ""
         if (!routesForNavigation.isNullOrEmpty()) {
