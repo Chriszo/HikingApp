@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/sight_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp">
+
+    <ImageView
+        android:id="@+id/route_imageView"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginVertical="5dp"
+        android:src="@mipmap/olympus_foreground"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/avatars"
+        android:scaleType="fitXY"
+        />
+
+    <TextView
+        android:id="@+id/route_name"
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:ellipsize="none"
+        android:singleLine="false"
+        android:text="TextView"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@id/route_imageView"
+        app:layout_constraintTop_toTopOf="@+id/route_imageView" />
+
+    <TextView
+        android:id="@+id/route_state"
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:ellipsize="none"
+        android:singleLine="false"
+        android:text="TextView"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/route_name"
+        app:layout_constraintTop_toBottomOf="@+id/route_name" />
+
+    <TextView
+        android:id="@+id/route_distance_from"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:ellipsize="none"
+        android:singleLine="false"
+        android:text="distance_from"
+        android:textSize="13sp"
+        app:layout_constraintStart_toStartOf="@id/routeRating"
+        app:layout_constraintTop_toBottomOf="@+id/routeRating" />
+
+    <RatingBar
+        android:id="@+id/routeRating"
+        android:layout_width="233dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="60dp"
+        android:numStars="5"
+        android:rating="3"
+        android:scaleX="0.3"
+        android:scaleY="0.3"
+        android:theme="@style/RatingBar"
+        android:transformPivotX="10dp"
+        android:isIndicator="true"
+        app:layout_constraintStart_toEndOf="@id/route_name"
+        app:layout_constraintTop_toTopOf="@id/route_name" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="5dp"
+        android:background="@android:color/darker_gray"
+        app:layout_constraintTop_toBottomOf="@+id/route_imageView" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

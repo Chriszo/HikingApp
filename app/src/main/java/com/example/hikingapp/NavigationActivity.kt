@@ -50,6 +50,7 @@ import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.ui.navigation.MapFragment
 import com.example.hikingapp.utils.ElevationDataUtils
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.ar.core.codelabs.hellogeospatial.HelloGeoActivity
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -1178,7 +1179,8 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 //                    navigationDataPrefs.edit().putBoolean("onNavigation", false).apply()
 //                }
 
-                val arIntent = Intent(this, ArActivity::class.java)
+//                val arIntent = Intent(this, ArActivity::class.java)
+                val arIntent = Intent(this, HelloGeoActivity::class.java)
                 arIntent.putExtra("routeId", currentRoute!!.routeId)
                 arIntent.putExtra("authInfo", userAuthInfo)
                 arIntent.putExtra("route", currentRoute)
