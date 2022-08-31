@@ -22,7 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HikingApp.NoActionBar">
         <activity
-            android:name=".anchors.ArActivity"
+            android:name=".ar.geospatial.GeoARActivity"
             android:exported="false" />
         <activity
             android:name=".ui.settings.DeleteContactActivity"

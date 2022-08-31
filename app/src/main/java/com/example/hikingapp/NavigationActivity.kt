@@ -33,7 +33,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.example.hikingapp.anchors.ArActivity
+import com.example.hikingapp.ar.geospatial.GeoARActivity
 import com.example.hikingapp.databinding.ActivityNavigationBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DistanceUnitType
@@ -63,8 +63,6 @@ import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
 import com.jjoe64.graphview.series.PointsGraphSeries
 import com.mapbox.api.directions.v5.DirectionsCriteria
-import com.mapbox.api.directions.v5.MapboxDirections
-import com.mapbox.api.directions.v5.models.DirectionsResponse
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.api.matching.v5.MapboxMapMatching
@@ -1180,8 +1178,7 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 //                }
 
 //                val arIntent = Intent(this, ArActivity::class.java)
-                val arIntent = Intent(this, HelloGeoActivity::class.java)
-                arIntent.putExtra("routeId", currentRoute!!.routeId)
+                val arIntent = Intent(this, GeoARActivity::class.java)
                 arIntent.putExtra("authInfo", userAuthInfo)
                 arIntent.putExtra("route", currentRoute)
 //                arIntent.putExtra("currentLocation", currentLocation)
