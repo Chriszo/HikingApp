@@ -14,8 +14,8 @@
             android:id="@+id/info_nav_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:itemTextAppearanceActive="@style/InnerNavigation.Active"
-            app:itemTextAppearanceInactive="@style/InnerNavigation.Inactive"
+            app:itemTextAppearanceActive="@style/History.Active"
+            app:itemTextAppearanceInactive="@style/History.Inactive"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:menu="@menu/profile_menu" />
