@@ -181,8 +181,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:labelVisibilityMode="labeled"
-                    app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
-                    app:itemTextAppearanceInactive="@style/BottomNavigationView.Inactive"
+                    app:itemTextAppearanceActive="@style/RouteInfo.Active"
+                    app:itemTextAppearanceInactive="@style/RouteInfo.Inactive"
                     app:menu="@menu/route_nav_menu" />
 
             </LinearLayout>
