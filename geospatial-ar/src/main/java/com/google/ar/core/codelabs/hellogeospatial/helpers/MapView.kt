@@ -23,6 +23,7 @@ import android.graphics.LightingColorFilter
 import android.graphics.Paint
 import android.util.Log
 import androidx.annotation.ColorInt
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -33,7 +34,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.ar.core.codelabs.hellogeospatial.HelloGeoActivity
 import com.google.ar.core.codelabs.hellogeospatial.R
 
-class MapView(val activity: HelloGeoActivity, val googleMap: GoogleMap) {
+class MapView(val activity: AppCompatActivity, val googleMap: GoogleMap) {
   private val CAMERA_MARKER_COLOR: Int = Color.argb(255, 0, 255, 0)
   private val EARTH_MARKER_COLOR: Int = Color.argb(255, 125, 125, 125)
 

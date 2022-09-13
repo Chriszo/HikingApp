@@ -76,7 +76,7 @@ class GeoARActivity : AppCompatActivity() {
     // Sets up an example renderer using our HelloGeoRenderer.
     SampleRender(view.surfaceView, renderer, assets)
 
-    FirebaseDatabase.getInstance().getReference("anchors").addListenerForSingleValueEvent(object:
+    FirebaseDatabase.getInstance().getReference("anchors").child("route_${currentRoute.routeId}").addListenerForSingleValueEvent(object:
       ValueEventListener {
       override fun onDataChange(snapshot: DataSnapshot) {
 
@@ -89,7 +89,7 @@ class GeoARActivity : AppCompatActivity() {
           val anchors = snapshot.value as List<HashMap<String, Double>>
 
           anchors.forEach { anchor ->
-            val latitude = anchor["latitutde"] as Double
+            val latitude = anchor["latitude"] as Double
             val longitude = anchor["longitude"] as Double
             val altitude = earth!!.cameraGeospatialPose.altitude - 1
             val qx = 0f

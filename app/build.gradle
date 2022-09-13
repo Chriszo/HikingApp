@@ -73,7 +73,7 @@ dependencies {
     implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.15.0'
     implementation 'com.google.ar.sceneform:core:1.15.0'
     implementation 'com.google.android.gms:play-services-auth:16+'
-    implementation project(":helpers")
+//    implementation project(":helpers")
     implementation project(":geospatial-ar")
     implementation 'com.google.ar.sceneform:assets:1.17.1'
 
