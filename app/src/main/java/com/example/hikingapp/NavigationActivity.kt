@@ -33,7 +33,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.example.hikingapp.anchors.ArActivity
+import com.example.hikingapp.ar.geospatial.GeoARActivity
 import com.example.hikingapp.databinding.ActivityNavigationBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.enums.DistanceUnitType
@@ -50,6 +50,7 @@ import com.example.hikingapp.services.map.MapServiceImpl
 import com.example.hikingapp.ui.navigation.MapFragment
 import com.example.hikingapp.utils.ElevationDataUtils
 import com.example.hikingapp.utils.GlobalUtils
+import com.google.ar.core.codelabs.hellogeospatial.HelloGeoActivity
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -62,8 +63,6 @@ import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
 import com.jjoe64.graphview.series.PointsGraphSeries
 import com.mapbox.api.directions.v5.DirectionsCriteria
-import com.mapbox.api.directions.v5.MapboxDirections
-import com.mapbox.api.directions.v5.models.DirectionsResponse
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.api.matching.v5.MapboxMapMatching
@@ -1178,8 +1177,8 @@ class NavigationActivity : AppCompatActivity(), BackButtonListener, LocalDBExecu
 //                    navigationDataPrefs.edit().putBoolean("onNavigation", false).apply()
 //                }
 
-                val arIntent = Intent(this, ArActivity::class.java)
-                arIntent.putExtra("routeId", currentRoute!!.routeId)
+//                val arIntent = Intent(this, ArActivity::class.java)
+                val arIntent = Intent(this, GeoARActivity::class.java)
                 arIntent.putExtra("authInfo", userAuthInfo)
                 arIntent.putExtra("route", currentRoute)
 //                arIntent.putExtra("currentLocation", currentLocation)
