@@ -47,7 +47,7 @@
         </LinearLayout>
 
 
-        <View
+       <!-- <View
             android:id="@+id/completed_sight_divider"
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -85,7 +85,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp" />
 
-        </LinearLayout>
+        </LinearLayout>-->
 
     </LinearLayout>
 

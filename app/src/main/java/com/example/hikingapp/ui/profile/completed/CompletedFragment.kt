@@ -62,12 +62,12 @@ class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedLi
         })
 
         initializeCompletedRoutes(view)
-        initializeCompletedSights(view)
+//        initializeCompletedSights(view)
 
         return view
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
+   /* @RequiresApi(Build.VERSION_CODES.N)
     private fun initializeCompletedSights(view: View) {
         sightsRecyclerView = view.findViewById(R.id.completedSightsRView)
         sightsLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
@@ -89,7 +89,7 @@ class CompletedFragment : Fragment(), OnItemClickedListener, OnItemLongClickedLi
                 sightsRecyclerView.adapter = sightsAdapter
             }
         })
-    }
+    }*/
 
     @RequiresApi(Build.VERSION_CODES.N)
     private fun initializeCompletedRoutes(view: View) {

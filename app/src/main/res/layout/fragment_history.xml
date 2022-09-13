@@ -18,7 +18,7 @@
             app:itemTextAppearanceInactive="@style/History.Inactive"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:menu="@menu/profile_menu" />
+            app:menu="@menu/history_menu" />
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/profileFragmentContainer"
@@ -28,7 +28,7 @@
             app:defaultNavHost="false"
             app:layout_constraintStart_toStartOf="@id/info_nav_view"
             app:layout_constraintTop_toBottomOf="@id/info_nav_view"
-            app:navGraph="@navigation/profile_navigation" />
+            app:navGraph="@navigation/history_navigation" />
 
         <FrameLayout
             android:layout_width="match_parent"

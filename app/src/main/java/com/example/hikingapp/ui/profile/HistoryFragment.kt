@@ -20,7 +20,7 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hikingapp.LoginActivity
 import com.example.hikingapp.R
-import com.example.hikingapp.databinding.FragmentProfileBinding
+import com.example.hikingapp.databinding.FragmentHistoryBinding
 import com.example.hikingapp.domain.culture.Sight
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.users.PhotoItem
@@ -38,11 +38,11 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
 import io.ktor.http.*
-import kotlinx.android.synthetic.main.fragment_profile.view.*
+import kotlinx.android.synthetic.main.fragment_history.view.*
 import java.util.*
 import java.util.stream.Collectors
 
-class ProfileFragment : Fragment() {
+class HistoryFragment : Fragment() {
 
 
     private val storage: FirebaseStorage by lazy {
@@ -53,7 +53,7 @@ class ProfileFragment : Fragment() {
     private val routeViewModel: RouteViewModel by activityViewModels()
     private val applicationViewModel: AppViewModel by activityViewModels()
 
-    private var _binding: FragmentProfileBinding? = null
+    private var _binding: FragmentHistoryBinding? = null
 
     private lateinit var savedRoutes: MutableList<Route>
     private lateinit var completedRoutes: MutableList<Route>
@@ -90,7 +90,7 @@ class ProfileFragment : Fragment() {
 
         if (userViewModel.user.value == null && inProdMode) {
             val redirectIntent = Intent(context, LoginActivity::class.java)
-            redirectIntent.putExtra(GlobalUtils.LAST_PAGE, ProfileFragment::class.java.simpleName)
+            redirectIntent.putExtra(GlobalUtils.LAST_PAGE, HistoryFragment::class.java.simpleName)
             startActivity(redirectIntent)
         } else {
 
@@ -104,7 +104,7 @@ class ProfileFragment : Fragment() {
             progressDialog.setCanceledOnTouchOutside(false)
             progressDialog.show()
 
-            _binding = FragmentProfileBinding.inflate(inflater, container, false)
+            _binding = FragmentHistoryBinding.inflate(inflater, container, false)
             val root: View = binding.root
 
             /*if (inProdMode) {

@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.hikingapp.databinding.ActivityLoginBinding
 import com.example.hikingapp.domain.route.Route
 import com.example.hikingapp.domain.users.settings.UserSettings
-import com.example.hikingapp.ui.profile.ProfileFragment
+import com.example.hikingapp.ui.profile.HistoryFragment
 import com.example.hikingapp.ui.profile.statistics.StatisticsFragment
 import com.example.hikingapp.ui.route.photos.PhotoActivity
 import com.example.hikingapp.utils.GlobalUtils
@@ -110,7 +110,7 @@ class LoginActivity : AppCompatActivity() {
                     redirectIntent = Intent(this@LoginActivity, MainActivity::class.java)
                     redirectIntent!!.putExtra(
                         GlobalUtils.LAST_PAGE,
-                        ProfileFragment::class.java.simpleName
+                        HistoryFragment::class.java.simpleName
                     )
                     redirectIntent!!.putExtra("authInfo", user)
                     startActivity(redirectIntent)
