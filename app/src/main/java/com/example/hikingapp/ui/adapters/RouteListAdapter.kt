@@ -83,8 +83,9 @@ class RouteListAdapter(
                 routesCategorizedList.add(routes[3])
             }
             "Easy" -> {
-                indexesList = mutableListOf(4L)
+                indexesList = mutableListOf(4L, 5L)
                 routesCategorizedList.add(routes[4])
+                routesCategorizedList.add(routes[5])
             }
         }
 
